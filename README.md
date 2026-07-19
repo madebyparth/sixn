@@ -1,5 +1,7 @@
 # SIXN | Premium E-Commerce Storefront
 
+![SIXN Storefront Showcase Banner](assets/website.png)
+
 SIXN is a premium, feature-rich, and highly secure e-commerce storefront built with **Flask** and **MongoDB**. Designed for maximum visual impact, it integrates **Twilio OTP** authentication, **Razorpay** payment gateway, a **custom Wallet system** for store credit, and **Shiprocket** automated shipping logistics.
 
 ---
@@ -169,7 +171,8 @@ Open your browser and navigate to `http://127.0.0.1:5000`.
 │   ├── user-media/          # User default profile placeholders
 │   ├── web-media/           # Store theme assets and visual logos
 │   ├── content.json         # Seeding layout data for MongoDB
-│   └── products.json        # Seeding product catalog data for MongoDB
+│   ├── products.json        # Seeding product catalog data for MongoDB
+│   └── website.png          # Main repository banner / screenshot
 ├── services/                # Integration microservices
 │   ├── data/                # Temporary service cache files (git-ignored)
 │   └── shiprocket_service.py # Shiprocket API courier service handler
