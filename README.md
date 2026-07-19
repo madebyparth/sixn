@@ -1,6 +1,6 @@
 # SIXN | Premium E-Commerce Storefront
 
-![SIXN Storefront Showcase Banner](assets/website.png)
+![SIXN Storefront Showcase Banner](assets/web-media/website.png)
 
 SIXN is a premium, feature-rich, and highly secure e-commerce storefront built with **Flask** and **MongoDB**. Designed for maximum visual impact, it integrates **Twilio OTP** authentication, **Razorpay** payment gateway, a **custom Wallet system** for store credit, and **Shiprocket** automated shipping logistics.
 
