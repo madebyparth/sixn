@@ -1,0 +1,12 @@
+Flask
+Flask-Login
+Flask-Bcrypt
+python-dotenv
+twilio
+razorpay
+Flask-WTF
+Flask-Limiter
+cryptography
+pymongo
+dnspython
+requests

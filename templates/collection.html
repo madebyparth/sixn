@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+
+{% block title %}Collection - SIXN{% endblock %}
+
+{% block content %}
+<!-- Category Bar -->
+<div id="category-bar" class="sticky z-40 bg-[#0a0a0a]/95 backdrop-blur-md border-b border-gray-800/50"
+    style="top: var(--navbar-height);">
+    <div class="max-w-7xl mx-auto px-6 py-1.5 overflow-x-auto hide-scrollbar">
+        <div class="flex items-center justify-center gap-2 min-w-max">
+            <a href="/collection"
+                class="category-pill px-4 py-2 text-xs uppercase tracking-wider font-medium rounded-full border transition-all duration-300 whitespace-nowrap"
+                data-category="">
+                All
+            </a>
+            <a href="/collection/new-arrivals"
+                class="category-pill px-4 py-2 text-xs uppercase tracking-wider font-medium rounded-full border transition-all duration-300 whitespace-nowrap"
+                data-category="new-arrivals">
+                New Arrivals
+            </a>
+            <a href="/collection/men"
+                class="category-pill px-4 py-2 text-xs uppercase tracking-wider font-medium rounded-full border transition-all duration-300 whitespace-nowrap"
+                data-category="men">
+                Men
+            </a>
+            <a href="/collection/women"
+                class="category-pill px-4 py-2 text-xs uppercase tracking-wider font-medium rounded-full border transition-all duration-300 whitespace-nowrap"
+                data-category="women">
+                Women
+            </a>
+            <a href="/collection/kids"
+                class="category-pill px-4 py-2 text-xs uppercase tracking-wider font-medium rounded-full border transition-all duration-300 whitespace-nowrap"
+                data-category="kids">
+                Kids
+            </a>
+            <a href="/collection/accessories"
+                class="category-pill px-4 py-2 text-xs uppercase tracking-wider font-medium rounded-full border transition-all duration-300 whitespace-nowrap"
+                data-category="accessories">
+                Accessories
+            </a>
+            <a href="/collection/electronics"
+                class="category-pill px-4 py-2 text-xs uppercase tracking-wider font-medium rounded-full border transition-all duration-300 whitespace-nowrap"
+                data-category="electronics">
+                Electronics
+            </a>
+            <a href="/collection/home-decor"
+                class="category-pill px-4 py-2 text-xs uppercase tracking-wider font-medium rounded-full border transition-all duration-300 whitespace-nowrap"
+                data-category="home-decor">
+                Home & Kitchen
+            </a>
+            <a href="/collection/jewellery"
+                class="category-pill px-4 py-2 text-xs uppercase tracking-wider font-medium rounded-full border transition-all duration-300 whitespace-nowrap"
+                data-category="jewellery">
+                Jewellery
+            </a>
+            <a href="/collection/sale"
+                class="category-pill sale-pill px-4 py-2 text-xs uppercase tracking-wider font-medium rounded-full border transition-all duration-300 whitespace-nowrap"
+                data-category="sale">
+                Sale
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+    .hide-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
+    .hide-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+
+    .category-pill {
+        color: #9ca3af;
+        border-color: rgba(255, 255, 255, 0.1);
+        background: transparent;
+    }
+
+    .category-pill:hover {
+        color: #fff;
+        border-color: rgba(255, 255, 255, 0.3);
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    .category-pill.active {
+        color: #fff;
+        border-color: #AB0A17;
+        background: rgba(171, 10, 23, 0.15);
+    }
+
+    .category-pill.sale-pill {
+        color: #AB0A17;
+        border-color: rgba(171, 10, 23, 0.3);
+    }
+
+    .category-pill.sale-pill:hover,
+    .category-pill.sale-pill.active {
+        color: #fff;
+        background: #AB0A17;
+        border-color: #AB0A17;
+    }
+</style>
+
+<!-- Header -->
+<div class="pt-32 pb-12 px-6 text-center bg-[#0a0a0a]">
+    <h1 id="collection-title"
+        class="text-4xl md:text-6xl font-display font-bold text-white mb-4 uppercase tracking-tight">Loading...</h1>
+    <p id="collection-desc" class="text-gray-400 max-w-xl mx-auto text-lg"></p>
+</div>
+
+<!-- Products Grid -->
+<div class="px-6 py-12 max-w-7xl mx-auto min-h-[50vh]">
+    <div id="products-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <!-- Injected via JS -->
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const categoryId = "{{ category_id or '' }}";
+
+    // Highlight active category pill
+    document.querySelectorAll('.category-pill').forEach(pill => {
+        const pillCategory = pill.dataset.category;
+        const isActive = (
+            (pillCategory === '' && (!categoryId || categoryId === '' || categoryId === 'None')) ||
+            (pillCategory === categoryId)
+        );
+        if (isActive) {
+            pill.classList.add('active');
+        }
+    });
+
+    // Adjust category bar position based on announcement bar
+    function adjustCategoryBarPosition() {
+        const categoryBar = document.getElementById('category-bar');
+        const announcementDismissed = sessionStorage.getItem('announcementDismissed') === 'true';
+        if (categoryBar) {
+            categoryBar.style.top = announcementDismissed ? '42px' : '88px';
+        }
+    }
+    adjustCategoryBarPosition();
+
+    // Fetch Data
+    Promise.all([
+        fetch('/assets/products.json').then(res => res.json()),
+        fetch('/assets/content.json').then(res => res.json())
+    ]).then(([productsData, contentData]) => {
+
+        // Resolve Category Info
+        let categoryInfo = null;
+
+        // Handle empty/null category - show all products
+        if (!categoryId || categoryId === '' || categoryId === 'None') {
+            categoryInfo = { title: 'All Products', description: 'Explore our complete collection of premium fashion.' };
+        } else if (categoryId === 'sale') {
+            categoryInfo = { title: 'On Sale', description: 'Exclusive discounts on premium items.' };
+        } else if (categoryId === 'new-arrivals') {
+            categoryInfo = { title: 'New Arrivals', description: 'Experience the latest trends in premium fashion.' };
+        } else {
+            categoryInfo = contentData.categories.find(c => c.id === categoryId);
+            if (!categoryInfo) {
+                // Fallback for unknown category
+                categoryInfo = { title: categoryId.replace('-', ' '), description: 'Collection' };
+            }
+        }
+
+        // Update Header
+        document.getElementById('collection-title').textContent = categoryInfo.title;
+        document.getElementById('collection-desc').textContent = categoryInfo.description;
+
+        // Filter Products
+        let filteredProducts = productsData;
+        if (categoryId === 'sale') {
+            filteredProducts = productsData.filter(p => p.onSale);
+        } else if (categoryId === 'new-arrivals') {
+            filteredProducts = productsData.filter(p => p.isNew);
+        } else if (categoryId && categoryId !== '' && categoryId !== 'None' && categoryId !== 'all') {
+            filteredProducts = productsData.filter(p => p.category === categoryId);
+        }
+
+        // Render Grid
+        const container = document.getElementById('products-grid');
+        if (filteredProducts.length === 0) {
+            container.innerHTML = '<p class="col-span-full text-center text-gray-500 py-20 text-xl">No products found in this collection.</p>';
+        } else {
+            container.innerHTML = filteredProducts.map(p => `
+                   <a href="/product/${p.id}" class="group block">
+                        <div class="relative bg-[#151515] aspect-[4/5] mb-4 overflow-hidden rounded-sm">
+                            ${p.isNew ? '<span class="absolute top-4 left-4 bg-white text-black text-[10px] font-bold px-2 py-1 uppercase tracking-wider z-10">New</span>' : ''}
+                            ${p.onSale ? '<span class="absolute top-4 right-4 bg-[#AB0A17] text-white text-[10px] font-bold px-2 py-1 uppercase tracking-wider z-10">Sale</span>' : ''}
+                            ${p.inStock === false ? '<div class="absolute inset-0 bg-black/60 flex items-center justify-center z-10"><span class="bg-red-500 text-white text-xs font-bold px-3 py-1 uppercase tracking-widest">Out of Stock</span></div>' : ''}
+                            <img src="${p.image}" alt="${p.name}" class="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500 ${p.inStock === false ? 'grayscale' : ''}">
+                             <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                                <button class="bg-white text-black font-bold uppercase text-xs px-6 py-3 hover:bg-[#AB0A17] hover:text-white transition-colors tracking-widest translate-y-4 group-hover:translate-y-0 duration-300">${p.inStock === false ? 'View' : 'View Details'}</button>
+                             </div>
+                        </div>
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h3 class="text-white font-bold text-lg leading-tight group-hover:text-[#AB0A17] transition-colors">${p.name}</h3>
+                                <p class="text-gray-500 text-xs mt-1">${p.brand}</p>
+                            </div>
+                            <div class="text-right">
+                                ${p.onSale ? `<span class="text-[#AB0A17] font-bold block">${formatPrice(p.price)}</span>` : `<span class="text-white font-bold">${formatPrice(p.price)}</span>`}
+                            </div>
+                        </div>
+                    </a>
+                `).join('');
+        }
+
+        // Cart count updated via base.html logic on load
+
+    }).catch(err => console.error(err));
+</script>
+{% endblock %}

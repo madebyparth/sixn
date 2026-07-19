@@ -1,0 +1,1028 @@
+{% extends "base.html" %}
+
+{% block title %}Product Details - SIXN{% endblock %}
+
+{% block body_classes %}flex flex-col{% endblock %}
+
+{% block content %}
+<!-- Main Content -->
+<main class="flex-grow pt-32 pb-20 px-6 max-w-7xl mx-auto w-full">
+    <div id="loading" class="text-center py-20 text-white">Loading product...</div>
+
+    <div id="product-container" class="hidden grid grid-cols-1 md:grid-cols-2 gap-12 items-center min-h-[60vh]">
+        <!-- Left: Media Gallery -->
+        <div class="flex flex-col gap-4">
+            <!-- Main Viewport -->
+            <div
+                class="relative w-full aspect-square bg-[#151515] rounded-xl overflow-hidden flex items-center justify-center group shadow-2xl border border-white/5 cursor-zoom-in">
+
+                <!-- Media Container (Slideshow) -->
+                <div id="media-viewport" class="w-full h-full flex items-center justify-center p-8"
+                    onclick="openFullscreen()">
+                    <!-- Dynamic Image or Video will be injected here -->
+                    <img id="p-image" src="" alt=""
+                        class="max-w-full max-h-full object-contain drop-shadow-2xl transition-all duration-500">
+                </div>
+
+                <!-- Navigation Arrows -->
+                <button onclick="prevMedia()"
+                    class="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-[#AB0A17] text-white p-3 rounded-full opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all z-10">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7">
+                        </path>
+                    </svg>
+                </button>
+                <button onclick="nextMedia()"
+                    class="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-[#AB0A17] text-white p-3 rounded-full opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all z-10">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </button>
+
+                <!-- Media Counter -->
+                <div
+                    class="absolute bottom-4 right-4 bg-black/60 backdrop-blur-md text-white text-[10px] font-bold px-3 py-1 rounded-full border border-white/10 tracking-widest uppercase">
+                    <span id="media-current">1</span> / <span id="media-total">1</span>
+                </div>
+            </div>
+
+            <!-- Thumbnails Strip -->
+            <div id="image-thumbnails" class="flex gap-3 overflow-x-auto py-2 no-scrollbar">
+                <!-- Thumbnails will be injected here -->
+            </div>
+        </div>
+
+        <!-- Right: Details -->
+        <div class="flex flex-col gap-6">
+            <div>
+                <p id="p-brand" class="text-[#AB0A17] font-bold uppercase tracking-widest text-sm mb-2">Brand</p>
+                <h1 id="p-name" class="text-4xl md:text-5xl font-display font-bold text-white leading-tight">Product
+                    Name</h1>
+                <div class="flex items-center gap-2 mt-4" id="p-rating-summary">
+                    <div class="flex text-[#AB0A17]" id="p-stars-summary">
+                        <!-- Stars will be injected -->
+                    </div>
+                    <span id="p-rating-count"
+                        class="text-gray-500 text-xs font-bold uppercase tracking-widest leading-none"></span>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <span id="p-price" class="text-3xl font-bold text-white">$0.00</span>
+                <span id="p-sale-tag"
+                    class="hidden bg-[#AB0A17] text-white text-xs font-bold px-2 py-1 uppercase tracking-wider rounded-sm">Sale</span>
+            </div>
+
+            <div class="h-px bg-gray-800 my-2"></div>
+
+            <p id="p-desc" class="text-gray-400 leading-relaxed text-lg">
+                Description loading...
+            </p>
+
+            <!-- Size Selector -->
+            <div id="size-selector-container">
+                <label class="block text-gray-500 text-xs font-bold uppercase tracking-widest mb-3">Select Size</label>
+                <div class="flex flex-wrap gap-3" id="p-sizes-list">
+                    <!-- Sizes injected via JS -->
+                </div>
+            </div>
+
+            <!-- Color Selector -->
+            <div id="color-selector-container">
+                <label class="block text-gray-500 text-xs font-bold uppercase tracking-widest mb-3">Available
+                    Colors</label>
+                <div class="flex flex-wrap gap-3" id="p-colors-list">
+                    <!-- Colors injected via JS -->
+                </div>
+            </div>
+
+            <div class="flex gap-4 mt-8">
+                <button id="btn-add-to-cart" onclick="validateAndAddToCart()"
+                    class="flex-1 bg-white text-black font-extrabold uppercase text-base px-8 py-4 hover:bg-[#AB0A17] hover:text-white transition-all shadow-xl tracking-widest disabled:opacity-50 disabled:cursor-not-allowed">
+                    Add to Cart
+                </button>
+                <button id="btn-buy-now" onclick="validateAndBuyNow()"
+                    class="flex-1 border-2 border-white text-white font-extrabold uppercase text-base px-8 py-4 hover:bg-white hover:text-black transition-all shadow-xl tracking-widest disabled:opacity-50 disabled:cursor-not-allowed">
+                    Buy Now
+                </button>
+            </div>
+
+            <div class="flex gap-8 text-gray-500 text-sm mt-4">
+                <div id="p-stock-status" class="flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg> <span>In Stock</span>
+                </div>
+                <div class="flex items-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg> Fast Delivery</div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Fullscreen Viewer Overlay -->
+    <div id="fullscreen-viewer"
+        class="fixed inset-0 z-[100] bg-black/95 backdrop-blur-xl hidden flex items-center justify-center opacity-0 transition-opacity duration-300"
+        onclick="if(event.target === this || event.target.id === 'fullscreen-media-container') closeFullscreen()">
+        <button onclick="closeFullscreen()"
+            class="absolute top-8 right-8 text-white/50 hover:text-white z-[110] transition-colors">
+            <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+
+        <button onclick="prevMedia()"
+            class="absolute left-8 top-1/2 -translate-y-1/2 bg-white/5 hover:bg-white/20 text-white p-6 rounded-full transition-all z-[110]">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+            </svg>
+        </button>
+
+        <button onclick="nextMedia()"
+            class="absolute right-8 top-1/2 -translate-y-1/2 bg-white/5 hover:bg-white/20 text-white p-6 rounded-full transition-all z-[110]">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+            </svg>
+        </button>
+
+        <div id="fullscreen-media-container"
+            class="w-full h-full flex items-center justify-center p-4 md:p-12 overflow-hidden">
+            <!-- Fullscreen content injected here -->
+        </div>
+
+        <div
+            class="absolute bottom-8 left-1/2 -translate-x-1/2 text-white/50 font-bold tracking-widest text-xs uppercase">
+            Click image to zoom • Esc to close
+        </div>
+    </div>
+
+    <!-- Ratings & Reviews Section -->
+    <div class="max-w-7xl mx-auto w-full px-6 py-20 border-t border-gray-900 mt-20">
+        <div class="flex flex-col md:flex-row justify-between items-start gap-12">
+            <!-- Left: Stats -->
+            <div class="w-full md:w-1/3">
+                <h2 class="text-3xl font-display font-bold text-white mb-8 uppercase tracking-widest">Customer Reviews
+                </h2>
+                <div class="bg-[#0a0a0a] p-8 rounded-xl border border-white/5 shadow-2xl">
+                    <div class="flex items-end gap-4 mb-6">
+                        <span id="p-avg-rating" class="text-6xl font-bold text-white">0.0</span>
+                        <div class="flex flex-col gap-1">
+                            <div class="flex text-[#AB0A17]" id="p-stars-detail">
+                                <!-- Stars -->
+                            </div>
+                            <span class="text-gray-500 text-xs font-bold uppercase tracking-widest"
+                                id="p-review-count-text">Based on 0 reviews</span>
+                        </div>
+                    </div>
+
+                    <!-- Rating Bars -->
+                    <div class="space-y-3" id="p-rating-bars">
+                        <!-- Progress bars for 5,4,3,2,1 stars -->
+                    </div>
+                </div>
+
+                <div class="mt-8" id="write-review-container">
+                    <button onclick="toggleReviewForm()"
+                        class="w-full border-2 border-[#AB0A17] text-[#AB0A17] hover:bg-[#AB0A17] hover:text-white transition-all font-bold uppercase tracking-widest py-4">
+                        Write a Review
+                    </button>
+                </div>
+            </div>
+
+            <!-- Right: Reviews List -->
+            <div class="w-full md:w-2/3">
+                <div class="flex justify-between items-center mb-10 pb-4 border-b border-gray-900">
+                    <h3 class="text-xl font-bold text-white uppercase tracking-widest">Most Recent</h3>
+                </div>
+
+                <div id="reviews-list" class="space-y-8">
+                    <!-- Reviews injected here -->
+                    <div class="text-gray-500 text-center py-12">No reviews yet. Be the first to share your thoughts!
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Confirm Delete Modal -->
+    <div id="confirm-delete-modal" class="fixed inset-0 z-[110] hidden items-center justify-center p-6">
+        <div class="absolute inset-0 bg-black/90 backdrop-blur-md" onclick="closeConfirmDelete()"></div>
+        <div
+            class="bg-[#111] border border-white/10 w-full max-w-sm rounded-sm relative z-10 overflow-hidden shadow-2xl animate-fade-in p-8 text-center">
+            <div
+                class="w-16 h-16 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                    </path>
+                </svg>
+            </div>
+            <h3 class="text-white font-bold uppercase tracking-widest text-lg mb-2">Delete Review?</h3>
+            <p class="text-gray-500 text-xs mb-8 uppercase tracking-wider leading-relaxed">This action cannot be undone.
+                Are you sure you want to remove your feedback?</p>
+            <div class="flex gap-4">
+                <button onclick="closeConfirmDelete()"
+                    class="flex-1 border border-gray-800 text-white font-bold uppercase tracking-widest py-3 text-[10px] hover:bg-white/5 transition-colors">Cancel</button>
+                <button id="confirm-delete-btn"
+                    class="flex-1 bg-red-600 text-white font-bold uppercase tracking-widest py-3 text-[10px] hover:bg-red-500 transition-colors shadow-lg shadow-red-600/20">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Review Modal -->
+    <div id="review-modal" class="fixed inset-0 z-[100] hidden items-center justify-center p-6">
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-md" onclick="closeReviewModal()"></div>
+        <div
+            class="bg-[#111] border border-white/10 w-full max-w-lg rounded-sm relative z-10 overflow-hidden shadow-2xl animate-fade-in">
+            <div class="absolute top-0 left-0 w-full h-1 bg-[#AB0A17]"></div>
+            <div class="p-8">
+                <div class="flex justify-between items-center mb-8">
+                    <h3 id="review-modal-title"
+                        class="text-xl font-display font-bold text-white uppercase tracking-widest">Rate this Product
+                    </h3>
+                    <button onclick="closeReviewModal()" class="text-gray-500 hover:text-white transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="space-y-6">
+                    <div>
+                        <label class="text-[10px] text-gray-500 font-bold uppercase tracking-[0.2em] block mb-4">Your
+                            Rating</label>
+                        <div class="flex gap-4 text-4xl">
+                            {% for i in range(1, 6) %}
+                            <button onclick="setFormRating({{ i }})"
+                                class="star-btn text-gray-800 hover:text-[#AB0A17] transition-all transform hover:scale-110 active:scale-95"
+                                data-star="{{ i }}">★</button>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div>
+                        <label
+                            class="text-[10px] text-gray-500 font-bold uppercase tracking-[0.2em] block mb-2">Detailed
+                            Review</label>
+                        <textarea id="review-comment"
+                            class="w-full bg-[#0a0a0a] border border-gray-800 p-4 text-white text-sm focus:border-[#AB0A17] outline-none h-40 transition-colors resize-none mb-6"
+                            placeholder="Share your experience with this product..."></textarea>
+                    </div>
+
+                    <button onclick="submitReview()" id="submit-review-btn"
+                        class="w-full bg-white text-black font-extrabold uppercase py-4 tracking-[0.2em] text-xs hover:bg-[#AB0A17] hover:text-white transition-all shadow-xl">
+                        Submit Review
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report Modal -->
+    <div id="report-modal" class="fixed inset-0 z-[100] hidden items-center justify-center p-6">
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-md" onclick="closeReportModal()"></div>
+        <div
+            class="bg-[#111] border border-white/10 w-full max-w-md rounded-sm relative z-10 overflow-hidden shadow-2xl animate-fade-in">
+            <div class="absolute top-0 left-0 w-full h-1 bg-red-500"></div>
+            <div class="p-8">
+                <div class="flex justify-between items-center mb-8">
+                    <h3 class="text-xl font-display font-bold text-white uppercase tracking-widest">Report Review</h3>
+                    <button onclick="closeReportModal()" class="text-gray-500 hover:text-white transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="space-y-6">
+                    <div>
+                        <label class="text-[10px] text-gray-500 font-bold uppercase tracking-[0.2em] block mb-2">Reason
+                            for reporting</label>
+                        <select id="report-reason-select"
+                            class="w-full bg-[#0a0a0a] border border-gray-800 p-4 text-white text-sm focus:border-red-500 outline-none transition-colors mb-4">
+                            <option value="Spam">Spam</option>
+                            <option value="Inappropriate Content">Inappropriate Content</option>
+                            <option value="Incorrect Information">Incorrect Information</option>
+                            <option value="Other">Other</option>
+                        </select>
+                        <textarea id="report-reason-text"
+                            class="w-full bg-[#0a0a0a] border border-gray-800 p-4 text-white text-sm focus:border-red-500 outline-none h-32 transition-colors resize-none mb-6"
+                            placeholder="Please provide more details (optional)..."></textarea>
+                    </div>
+
+                    <button onclick="submitReportReview()" id="submit-report-btn"
+                        class="w-full bg-white text-black font-extrabold uppercase py-4 tracking-[0.2em] text-xs hover:bg-red-500 hover:text-white transition-all shadow-xl">
+                        Submit Report
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}
+
+{% block footer %}
+<!-- Specific footer override if needed, or default from base is fine. 
+         Original product.html had a simple footer. Let's use the base one for consistency, 
+         or override to match original if user really wanted simple one. 
+         Base footer is better. Keeping default. -->
+{{ super() }}
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const productId = parseInt("{{ product_id }}");
+    let currentProduct = null;
+    let productMedia = [];
+    let currentMediaIndex = 0;
+    let selectedSize = null;
+    let selectedColor = null;
+
+    function escapeHtml(text) {
+        if (!text) return "";
+        return String(text)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;")
+            .replace(/`/g, "&#096;"); // Escape backticks
+    }
+
+    function isVideo(url) {
+        if (!url) return false;
+        return url.toLowerCase().match(/\.(mp4|webm|ogg)$/) !== null;
+    }
+
+    // Fetch Data
+    fetch('/assets/products.json').then(res => res.json())
+        .then(products => {
+            currentProduct = products.find(p => p.id === productId);
+
+            if (!currentProduct) {
+                document.getElementById('loading').textContent = "Product not found.";
+                return;
+            }
+
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('product-container').classList.remove('hidden');
+
+            // Handle media - support both old single image and new images array
+            if (currentProduct.images && Array.isArray(currentProduct.images) && currentProduct.images.length > 0) {
+                productMedia = currentProduct.images;
+            } else if (currentProduct.image) {
+                productMedia = [currentProduct.image];
+            }
+
+            // Populate Data
+            document.title = `${currentProduct.name} - SIXN`;
+            document.getElementById('p-brand').textContent = currentProduct.brand;
+            document.getElementById('p-name').textContent = currentProduct.name;
+            document.getElementById('p-price').textContent = formatPrice(currentProduct.price);
+
+            // Set Description
+            const defaultDesc = `${currentProduct.subtitleLeft || ''} ${currentProduct.subtitleRight || ''} - Experience premium quality with the ${currentProduct.name}. Designed for style and comfort.`;
+            // Reverting to textContent for description as per standard, user complained about XSS protection breaking images?
+            // If user wants HTML in description, we should use innerHTML.
+            // "images etc... just the div link is visible" -> suggests they want HTML.
+            document.getElementById('p-desc').innerHTML = currentProduct.description || defaultDesc;
+
+            if (currentProduct.onSale) {
+                document.getElementById('p-sale-tag').classList.remove('hidden');
+            }
+
+            // Handle Availability
+            if (currentProduct.inStock === false) {
+                const cartBtn = document.getElementById('btn-add-to-cart');
+                const buyBtn = document.getElementById('btn-buy-now');
+                const stockStatus = document.getElementById('p-stock-status');
+
+                cartBtn.disabled = true;
+                cartBtn.textContent = 'Out of Stock';
+                buyBtn.disabled = true;
+                buyBtn.classList.add('opacity-50', 'cursor-not-allowed');
+
+                stockStatus.classList.remove('text-gray-500');
+                stockStatus.classList.add('text-red-500');
+                stockStatus.querySelector('span').textContent = 'Out of Stock';
+                stockStatus.querySelector('svg').innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>';
+            }
+
+            // Render Sizes
+            const sizeContainer = document.getElementById('p-sizes-list');
+            if (currentProduct.showSizes === false) {
+                document.getElementById('size-selector-container').classList.add('hidden');
+            } else {
+                const sizes = currentProduct.availableSizes || [];
+                if (sizes.length === 0) {
+                    sizeContainer.innerHTML = '<p class="text-gray-600 text-sm">No sizes available</p>';
+                } else {
+                    // Removed escapeHtml
+                    sizeContainer.innerHTML = sizes.map(s => `
+                        <button onclick="selectSize(this)" 
+                            class="min-w-[3rem] h-12 px-3 border border-gray-700 text-gray-400 hover:border-white hover:text-white transition-all flex items-center justify-center font-bold uppercase tracking-widest text-xs">
+                            ${s}
+                        </button>
+                    `).join('');
+                }
+            }
+
+            // Render Colors
+            const colorContainer = document.getElementById('p-colors-list');
+            const colors = currentProduct.availableColors || [];
+            if (colors.length === 0) {
+                document.getElementById('color-selector-container').classList.add('hidden');
+            } else {
+                // Removed escapeHtml
+                colorContainer.innerHTML = colors.map(c => `
+                    <button onclick="selectColor(this)" 
+                        data-name="${c.name}"
+                        data-color='${JSON.stringify(c)}'
+                        class="group relative w-10 h-10 rounded-full border-2 transition-all flex items-center justify-center ${c.available ? 'border-gray-700 hover:border-white' : 'opacity-30 cursor-not-allowed border-gray-800'}"
+                        style="background-color: ${c.hex}"
+                        ${!c.available ? 'disabled' : ''}
+                        title="${c.name} ${!c.available ? '(Out of Stock)' : ''}">
+                        <span class="absolute -top-8 left-1/2 -translate-x-1/2 bg-black text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">${c.name}</span>
+                        <div class="hidden w-4 h-4 rounded-full border-2 border-white pointer-events-none"></div>
+                    </button>
+                `).join('');
+
+                // Select first available color by default
+                const firstAvailable = colors.find(c => c.available);
+                if (firstAvailable) {
+                    // Logic handled in init if needed
+                }
+            }
+
+
+            // Initialize Media
+            document.getElementById('media-total').textContent = productMedia.length;
+            updateMediaView();
+            renderThumbnails();
+
+        }).catch(err => {
+            console.error(err);
+            document.getElementById('loading').textContent = "Error loading product.";
+        });
+
+    // --- MEDIA & DATA LOGIC ---
+    function updateMediaView() {
+        const viewport = document.getElementById('media-viewport');
+        const currentMedia = productMedia[currentMediaIndex];
+        const isVid = isVideo(currentMedia);
+
+        viewport.innerHTML = isVid ?
+            `<video src="${currentMedia}" class="max-w-full max-h-full object-contain drop-shadow-2xl rounded-lg" autoplay muted loop controls></video>` :
+            `<img src="${currentMedia}" class="max-w-full max-h-full object-contain drop-shadow-2xl transition-all duration-500 scale-100 hover:scale-105">`;
+
+        document.getElementById('media-current').textContent = currentMediaIndex + 1;
+
+        // Highlight active thumbnail
+        document.querySelectorAll('#image-thumbnails button').forEach((btn, idx) => {
+            if (idx === currentMediaIndex) {
+                btn.classList.add('border-[#AB0A17]', 'scale-110');
+                btn.classList.remove('border-gray-700');
+            } else {
+                btn.classList.remove('border-[#AB0A17]', 'scale-110');
+                btn.classList.add('border-gray-700');
+            }
+        });
+    }
+
+    function renderThumbnails() {
+        const container = document.getElementById('image-thumbnails');
+
+        if (productMedia.length <= 1) {
+            container.style.display = 'none';
+            return;
+        }
+
+        container.innerHTML = productMedia.map((url, index) => {
+            const isVid = isVideo(url);
+            return `
+        <button onclick="selectMedia(${index})" 
+                    class="w-20 h-20 flex-shrink-0 rounded-lg border-2 overflow-hidden transition-all duration-300 relative ${index === currentMediaIndex ? 'border-[#AB0A17] scale-110' : 'border-gray-700 hover:border-gray-500'}">
+            ${isVid ?
+                    `<video src="${url}" class="w-full h-full object-cover" muted></video>
+                         <div class="absolute inset-0 flex items-center justify-center bg-black/20">
+                            <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.333-5.89a1.5 1.5 0 000-2.538L6.3 2.841z"></path></svg>
+                         </div>` :
+                    `<img src="${url}" class="w-full h-full object-cover">`
+                }
+                </button>
+            `;
+        }).join('');
+    }
+
+    function selectMedia(index) {
+        currentMediaIndex = index;
+        updateMediaView();
+    }
+
+    function nextMedia() {
+        currentMediaIndex = (currentMediaIndex + 1) % productMedia.length;
+        updateMediaView();
+    }
+
+    function prevMedia() {
+        currentMediaIndex = (currentMediaIndex - 1 + productMedia.length) % productMedia.length;
+        updateMediaView();
+    }
+
+    function selectSize(btn) {
+        // Deselect others
+        document.querySelectorAll('#p-sizes-list button').forEach(b => {
+            b.classList.remove('border-white', 'text-white', 'bg-white/10');
+            b.classList.add('border-gray-700', 'text-gray-400');
+        });
+        // Select clicked
+        btn.classList.add('border-white', 'text-white', 'bg-white/10');
+        btn.classList.remove('border-gray-700', 'text-gray-400');
+
+        // Update State
+        selectedSize = btn.innerText.trim();
+    }
+
+    function selectColor(btn) {
+        // Safe JSON parsing from data attribute
+        const colorData = btn.getAttribute('data-color');
+        if (!colorData) return;
+        const colorObj = JSON.parse(colorData);
+
+        document.querySelectorAll('#p-colors-list button').forEach(b => {
+            b.classList.remove('border-white', 'scale-110');
+            b.classList.add('border-gray-700');
+            b.querySelector('div').classList.add('hidden');
+        });
+        btn.classList.add('border-white', 'scale-110');
+        btn.classList.remove('border-gray-700');
+        btn.querySelector('div').classList.remove('hidden');
+
+        // Update State
+        selectedColor = colorObj;
+
+        // Switch Media if color specific media exists
+        if (colorObj && colorObj.images && colorObj.images.length > 0) {
+            productMedia = colorObj.images;
+        } else {
+            // Revert to general product media
+            if (currentProduct.images && Array.isArray(currentProduct.images) && currentProduct.images.length > 0) {
+                productMedia = currentProduct.images;
+            } else if (currentProduct.image) {
+                productMedia = [currentProduct.image];
+            }
+        }
+
+        currentMediaIndex = 0;
+        document.getElementById('media-total').textContent = productMedia.length;
+        updateMediaView();
+        renderThumbnails();
+    }
+
+    function validateAndAddToCart() {
+        if (!validateSelection()) return;
+        const productToAdd = { ...currentProduct, selectedSize, selectedColor };
+        addToCart(productToAdd);
+    }
+
+    function validateAndBuyNow() {
+        if (!validateSelection()) return;
+        const item = { ...currentProduct, quantity: 1, selectedSize, selectedColor };
+        checkAuthAndProceed(item);
+    }
+
+    async function checkAuthAndProceed(item) {
+        if (!CURRENT_USER) {
+            toggleAuth();
+            return;
+        }
+        localStorage.setItem('sixn_checkout_items', JSON.stringify([item]));
+        window.location.href = '/checkout';
+    }
+
+    function validateSelection() {
+        // Check Size
+        if (currentProduct.showSizes !== false && currentProduct.availableSizes && currentProduct.availableSizes.length > 0) {
+            if (!selectedSize) {
+                showError("Please select a size.");
+                return false;
+            }
+        }
+        // Check Color
+        if (currentProduct.availableColors && currentProduct.availableColors.length > 0) {
+            if (!selectedColor) {
+                showError("Please select a color.");
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // --- FULLSCREEN VIEWER LOGIC ---
+    let isZoomed = false;
+
+    function openFullscreen() {
+        const viewer = document.getElementById('fullscreen-viewer');
+        const container = document.getElementById('fullscreen-media-container');
+        const currentMedia = productMedia[currentMediaIndex];
+        const isVid = isVideo(currentMedia);
+
+        container.innerHTML = isVid ?
+            `<video src="${currentMedia}" class="max-w-full max-h-full object-contain rounded-lg" autoplay muted loop controls></video>` :
+            `<img src="${currentMedia}" id="fullscreen-img" class="max-w-full max-h-full object-contain transition-transform duration-500 cursor-zoom-in" onclick="toggleZoom(event)">`;
+
+        viewer.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+        void viewer.offsetWidth;
+        viewer.classList.replace('opacity-0', 'opacity-100');
+        isZoomed = false;
+    }
+
+    function closeFullscreen() {
+        const viewer = document.getElementById('fullscreen-viewer');
+        viewer.classList.replace('opacity-100', 'opacity-0');
+        setTimeout(() => {
+            viewer.classList.add('hidden');
+            document.body.style.overflow = '';
+        }, 300);
+    }
+
+    function toggleZoom(e) {
+        if (isVideo(productMedia[currentMediaIndex])) return;
+        const img = document.getElementById('fullscreen-img');
+        isZoomed = !isZoomed;
+
+        if (isZoomed) {
+            img.style.transform = 'scale(2.5)';
+            img.classList.replace('cursor-zoom-in', 'cursor-zoom-out');
+
+            // Allow panning if zoomed
+            img.onmousemove = (e) => {
+                if (!isZoomed) return;
+                const { left, top, width, height } = img.getBoundingClientRect();
+                const x = (e.clientX - left) / width;
+                const y = (e.clientY - top) / height;
+                img.style.transformOrigin = `${x * 100}% ${y * 100}%`;
+            };
+        } else {
+            img.style.transform = 'scale(1)';
+            img.style.transformOrigin = 'center';
+            img.classList.replace('cursor-zoom-out', 'cursor-zoom-in');
+            img.onmousemove = null;
+        }
+    }
+
+    // --- REVIEW LOGIC ---
+    let reviewRating = 0;
+    let isEditing = false;
+    let editReviewId = null;
+
+    function openReviewModal() {
+        document.getElementById('review-modal').classList.remove('hidden');
+        document.getElementById('review-modal').classList.add('flex');
+    }
+
+    function openEditReview(id) {
+        const review = window.allProductReviews.find(r => r.id === id);
+        if (!review) return;
+
+        isEditing = true;
+        editReviewId = id;
+
+        // Populate form
+        setFormRating(review.rating);
+        document.getElementById('review-comment').value = review.comment || '';
+        document.getElementById('submit-review-btn').textContent = "Update Review";
+
+        openReviewModal();
+    }
+
+    function closeReviewModal() {
+        document.getElementById('review-modal').classList.add('hidden');
+        document.getElementById('review-modal').classList.remove('flex');
+
+        // Reset form state after transition
+        setTimeout(() => {
+            reviewRating = 0;
+            isEditing = false;
+            editReviewId = null;
+            document.getElementById('review-comment').value = '';
+            document.getElementById('submit-review-btn').textContent = "Submit Review";
+            document.querySelectorAll('.star-btn').forEach(btn => {
+                btn.classList.remove('text-[#AB0A17]');
+                btn.classList.add('text-gray-800');
+            });
+        }, 300);
+    }
+
+    function setFormRating(r) {
+        reviewRating = r;
+        document.querySelectorAll('.star-btn').forEach(btn => {
+            const star = parseInt(btn.getAttribute('data-star'));
+            if (star <= r) {
+                btn.classList.add('text-[#AB0A17]');
+                btn.classList.remove('text-gray-800');
+            } else {
+                btn.classList.remove('text-[#AB0A17]');
+                btn.classList.add('text-gray-800');
+            }
+        });
+    }
+
+    async function submitReview() {
+        if (reviewRating === 0) {
+            showError("Please select a star rating.");
+            return;
+        }
+
+        const comment = document.getElementById('review-comment').value;
+        const btn = document.getElementById('submit-review-btn');
+        const originalText = btn.textContent;
+
+        btn.disabled = true;
+        btn.textContent = isEditing ? "Updating..." : "Submitting...";
+
+        try {
+            const url = isEditing ? '/api/ratings/edit' : '/api/ratings/submit';
+            const payload = isEditing
+                ? { rating_id: editReviewId, rating: reviewRating, comment }
+                : { product_id: productId, rating: reviewRating, comment };
+
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                closeReviewModal();
+                showSuccess(isEditing ? "Review updated." : "Review submitted successfully!");
+                setTimeout(() => loadRatings(), 500);
+            } else {
+                showError(data.error || "Submission failed.");
+            }
+        } catch (e) {
+            console.error(e);
+            showError("Connection error. Please try again.");
+        } finally {
+            btn.disabled = false;
+            // Restore text if modal is still open (failed) or before reset
+            if (!document.getElementById('review-modal').classList.contains('hidden')) {
+                btn.textContent = originalText;
+            }
+        }
+    }
+
+    function confirmDeleteReview(id) {
+        if (!confirm("Are you sure you want to delete this review?")) return;
+
+        fetch('/api/ratings/delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ rating_id: id })
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    showSuccess("Review deleted.");
+                    loadRatings();
+                } else {
+                    showError(data.error || "Delete failed.");
+                }
+            })
+            .catch(() => showError("Connection error."));
+    }
+
+    // --- REPORT LOGIC ---
+    function openReportModal() {
+        // Assume reportReview(id) calls this after setting some state? 
+        // Or is this called directly? HTML says onclick="reportReview('${r.id}')".
+        // reportReview needs to set context and open modal.
+        // We will implement reportReview below.
+    }
+
+    let reportReviewId = null;
+
+    function reportReview(id) {
+        if (!CURRENT_USER) {
+            toggleAuth();
+            return;
+        }
+        reportReviewId = id;
+        document.getElementById('report-modal').classList.remove('hidden');
+        document.getElementById('report-modal').classList.add('flex');
+    }
+
+    function closeReportModal() {
+        document.getElementById('report-modal').classList.add('hidden');
+        document.getElementById('report-modal').classList.remove('flex');
+        reportReviewId = null;
+        document.getElementById('report-reason-text').value = '';
+    }
+
+    async function submitReportReview() {
+        if (!reportReviewId) return;
+
+        const reason = document.getElementById('report-reason-select').value;
+        const details = document.getElementById('report-reason-text').value;
+        const btn = document.getElementById('submit-report-btn');
+
+        btn.disabled = true;
+        const originalText = btn.textContent;
+        btn.textContent = "Reporting...";
+
+        try {
+            // Mock API call for report
+            await new Promise(r => setTimeout(r, 1000));
+            closeReportModal();
+            showSuccess("Report submitted for review.");
+        } catch (e) {
+            showError("Failed to submit report.");
+        } finally {
+            btn.disabled = false;
+            btn.textContent = originalText;
+        }
+    }
+
+    // Dropdown toggle
+    function toggleReviewMenu(e, id) {
+        e.stopPropagation();
+        const menu = document.getElementById(`menu-${id}`);
+        const allMenus = document.querySelectorAll('[id^="menu-"]');
+        allMenus.forEach(m => {
+            if (m.id !== `menu-${id}`) m.classList.add('hidden');
+        });
+        menu.classList.toggle('hidden');
+    }
+
+    // Close menus on click away
+    window.addEventListener('click', () => {
+        document.querySelectorAll('[id^="menu-"]').forEach(m => m.classList.add('hidden'));
+    });
+
+    async function toggleReviewForm() {
+        if (!CURRENT_USER) {
+            toggleAuth();
+            showError("Please log in to write a review.");
+            return;
+        }
+
+        const btn = document.querySelector('#write-review-container button');
+
+        // Check eligibility
+        btn.disabled = true;
+        const originalText = btn.textContent;
+        btn.textContent = "Checking eligibility...";
+
+        try {
+            const res = await fetch(`/api/ratings/check_eligibility/${productId}`);
+            const data = await res.json();
+
+            if (data.eligible) {
+                openReviewModal();
+            } else {
+                showError(data.error || "You are not eligible to rate this product.");
+            }
+        } catch (e) {
+            showError("Connection error. Please try again.");
+        } finally {
+            btn.disabled = false;
+            btn.textContent = originalText;
+        }
+    }
+
+    function renderStars(rating, size = 'w-4 h-4') {
+        let starsHtml = '';
+        for (let i = 1; i <= 5; i++) {
+            if (i <= Math.floor(rating)) {
+                starsHtml += `<span class="${size}">★</span>`;
+            } else if (i === Math.ceil(rating) && rating % 1 !== 0) {
+                starsHtml += `<span class="${size} relative overflow-hidden"><span class="absolute inset-0">☆</span><span class="absolute inset-0 w-1/2 overflow-hidden">★</span></span>`;
+            } else {
+                starsHtml += `<span class="${size}">☆</span>`;
+            }
+        }
+        return starsHtml;
+    }
+
+    async function loadRatings() {
+        try {
+            const res = await fetch(`/api/ratings/${productId}`);
+            const data = await res.json();
+
+            // Update Summary
+            document.getElementById('p-stars-summary').innerHTML = renderStars(data.average);
+            document.getElementById('p-rating-count').textContent = `(${data.count} Reviews)`;
+
+            // Update Details
+            document.getElementById('p-avg-rating').textContent = data.average.toFixed(1);
+            document.getElementById('p-stars-detail').innerHTML = renderStars(data.average, 'w-6 h-6');
+            document.getElementById('p-review-count-text').textContent = `Based on ${data.count} reviews`;
+
+            // Render Reviews List
+            window.allProductReviews = data.ratings || [];
+            const reviewsContainer = document.getElementById('reviews-list');
+            if (data.count === 0) {
+                reviewsContainer.innerHTML = '<div class="text-gray-500 text-center py-12">No reviews yet. Be the first to share your thoughts!</div>';
+            } else {
+                reviewsContainer.innerHTML = [...data.ratings].reverse().map(r => {
+                    const isOwnReview = CURRENT_USER && CURRENT_USER.id === r.user_id;
+                    return `
+        <div class="border-b border-gray-900 pb-8 animate-fade-in relative group">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <div class="flex text-[#AB0A17] mb-2">${renderStars(r.rating)}</div>
+                                <div class="flex items-center gap-2">
+                                    <h4 class="text-white font-bold uppercase text-xs tracking-widest">${r.user_name}</h4>
+                                    <span class="flex items-center gap-1 text-[9px] font-bold text-green-500 uppercase tracking-widest bg-green-500/10 px-2 py-0.5 rounded-full border border-green-500/20">
+                                        <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+                                        </svg>
+                                        Verified Purchase
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-4">
+                                <span class="text-gray-600 text-[10px] font-bold uppercase tracking-widest">${new Date(r.created_at).toLocaleDateString()}</span>
+                                <div class="relative">
+                                    <button onclick="toggleReviewMenu(event, '${r.id}')" class="text-gray-600 hover:text-white transition-colors p-1">
+                                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                                        </svg>
+                                    </button>
+                                    <div id="menu-${r.id}" class="hidden absolute right-0 mt-2 w-36 bg-[#111] border border-white/10 shadow-2xl z-20 py-1 scale-95 origin-top-right transition-all">
+                                        ${isOwnReview ? `
+                                            <button onclick="openEditReview('${r.id}')" class="w-full text-left px-4 py-2 text-xs font-bold uppercase tracking-wider text-gray-400 hover:text-white hover:bg-white/5 transition-colors">Edit</button>
+                                            <button onclick="confirmDeleteReview('${r.id}')" class="w-full text-left px-4 py-2 text-xs font-bold uppercase tracking-wider text-red-500/70 hover:text-red-500 hover:bg-red-500/5 transition-colors">Delete</button>
+                                        ` : `
+                                            <button onclick="reportReview('${r.id}')" class="w-full text-left px-4 py-2 text-xs font-bold uppercase tracking-wider text-gray-400 hover:text-[#AB0A17] hover:bg-[#AB0A17]/5 transition-colors">Report</button>
+                                        `}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="text-gray-400 text-sm leading-relaxed">${r.comment || 'No comment provided.'}</p>
+                        ${r.is_edited ? '<span class="text-[8px] text-gray-600 font-bold uppercase mt-2 block">Edited</span>' : ''}
+                    </div>
+            `}).join('');
+            }
+
+            // Render Bars
+            const barContainer = document.getElementById('p-rating-bars');
+            const counts = [0, 0, 0, 0, 0]; // for 1,2,3,4,5 stars
+            data.ratings.forEach(r => counts[r.rating - 1]++);
+
+            let barsHtml = '';
+            for (let i = 5; i >= 1; i--) {
+                const count = counts[i - 1];
+                const pct = data.count > 0 ? (count / data.count) * 100 : 0;
+                barsHtml += `
+            <div class="flex items-center gap-4 text-xs">
+                        <span class="text-gray-500 w-3 font-bold">${i}</span>
+                        <div class="flex-1 h-1.5 bg-gray-900 rounded-full overflow-hidden">
+                            <div class="h-full bg-[#AB0A17]" style="width: ${pct}%"></div>
+                        </div>
+                        <span class="text-gray-600 w-8 font-mono">${Math.round(pct)}%</span>
+                    </div>
+                `;
+            }
+            barContainer.innerHTML = barsHtml;
+
+        } catch (e) { console.error("Ratings load error", e); }
+    }
+
+    // Call load ratings on init
+    loadRatings();
+
+    // Listen for auth to re-render with correct edit permissions
+    window.addEventListener('authLoaded', () => {
+        console.log("Auth loaded, re-rendering ratings...");
+        loadRatings();
+    });
+
+    // Escape to close
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeFullscreen();
+        if (!document.getElementById('fullscreen-viewer').classList.contains('hidden')) {
+            if (e.key === 'ArrowRight') nextMedia();
+            if (e.key === 'ArrowLeft') prevMedia();
+        }
+    });
+
+    // Update fullscreen if open when navigating
+    const originalUpdateView = updateMediaView;
+    updateMediaView = function () {
+        originalUpdateView();
+        const viewer = document.getElementById('fullscreen-viewer');
+        if (!viewer.classList.contains('hidden')) {
+            openFullscreen(); // Refresh content
+        }
+    };
+</script>
+{% endblock %}

@@ -1,0 +1,838 @@
+{% extends "base.html" %}
+{% block lenis_script %}{% endblock %}
+
+{% block title %}My Orders - SIXN{% endblock %}
+
+{% block content %}
+<div class="pt-32 pb-20 px-6 min-h-screen">
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-3xl md:text-5xl font-display font-bold text-white uppercase mb-12 flex items-center gap-4">
+            <span class="text-[#AB0A17]">Profile</span> / <span id="page-title">My Orders</span>
+        </h1>
+
+        <!-- Tabs -->
+        <div class="flex gap-8 border-b border-gray-800 mb-12 overflow-x-auto">
+            <button onclick="switchTab('orders')" id="tab-orders"
+                class="text-xl font-bold uppercase pb-4 border-b-2 border-[#AB0A17] text-white tracking-widest transition-colors whitespace-nowrap">Order
+                History</button>
+            <button onclick="switchTab('buy-again')" id="tab-buy-again"
+                class="text-xl font-bold uppercase pb-4 border-b-2 border-transparent text-gray-500 hover:text-white tracking-widest transition-colors whitespace-nowrap">Buy
+                Again</button>
+            <a href="/addresses"
+                class="text-xl font-bold uppercase pb-4 border-b-2 border-transparent text-gray-500 hover:text-white tracking-widest transition-colors whitespace-nowrap">My
+                Addresses</a>
+        </div>
+
+        <!-- Orders Section -->
+        <div id="section-orders" class="space-y-8">
+            {% if orders %}
+            {% for order in orders %}
+            <div class="bg-[#111] border border-gray-800 rounded p-6 md:p-8">
+                <div
+                    class="flex flex-col md:flex-row justify-between md:items-center gap-4 mb-6 border-b border-gray-800 pb-6">
+                    <div class="space-y-1">
+                        <p class="text-xs text-gray-500 uppercase tracking-widest">Order ID</p>
+                        <p class="text-white font-mono text-sm">#{{ order.razorpay_order_id }}</p>
+                    </div>
+                    <div class="space-y-1">
+                        <p class="text-xs text-gray-500 uppercase tracking-widest">Date</p>
+                        <p class="text-white text-sm">{{ order.created_at[:10] }}</p>
+                    </div>
+                    <div class="space-y-1">
+                        <p class="text-xs text-gray-500 uppercase tracking-widest">Status</p>
+                        {% if order.status == 'cancelled' %}
+                        <span
+                            class="inline-block px-3 py-1 bg-red-900/30 text-red-500 text-xs font-bold uppercase rounded border border-red-900/50">Cancelled</span>
+                        {% elif order.status == 'cod_pending' %}
+                        <span
+                            class="inline-block px-3 py-1 bg-amber-900/30 text-amber-500 text-xs font-bold uppercase rounded border border-amber-900/50">COD
+                            Pending</span>
+                        {% else %}
+                        <span
+                            class="inline-block px-3 py-1 bg-green-900/30 text-green-500 text-xs font-bold uppercase rounded border border-green-900/50">{{
+                            order.status | upper }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="space-y-1 md:text-right mr-4">
+                            <p class="text-xs text-gray-500 uppercase tracking-widest">Total</p>
+                            <p class="text-[#AB0A17] font-bold text-xl order-total" data-amount="{{ order.amount }}">{{
+                                order.amount }}</p>
+                        </div>
+                        <div class="relative">
+                            <button onclick="toggleOrderMenu(event, '{{ order.id }}')"
+                                class="p-2 text-gray-500 hover:text-white transition-colors bg-white/5 rounded-full">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path
+                                        d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                                </svg>
+                            </button>
+                            <div id="menu-{{ order.id }}"
+                                class="absolute right-0 mt-2 w-48 bg-[#111] border border-white/10 shadow-2xl z-30 py-2 origin-top-right transition-all duration-200 opacity-0 scale-95 pointer-events-none">
+                                <button onclick="showOrderDetails('{{ order.id }}')"
+                                    class="w-full text-left px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-gray-400 hover:text-white hover:bg-white/5 transition-colors border-b border-white/5">View
+                                    Details</button>
+                                <button
+                                    onclick="window.location.href='/track-order?order_id={{ order.shiprocket_order_id or order.id }}'"
+                                    class="w-full text-left px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-gray-400 hover:text-white hover:bg-white/5 transition-colors border-b border-white/5">Track
+                                    Order</button>
+                                <button onclick="downloadInvoice('{{ order.id }}')"
+                                    class="w-full text-left px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-gray-400 hover:text-white hover:bg-white/5 transition-colors border-b border-white/5">Download
+                                    Invoice</button>
+                                <button onclick="window.location.href='/contact'"
+                                    class="w-full text-left px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-gray-400 hover:text-white hover:bg-white/5 transition-colors border-b border-white/5">Need
+                                    Help?</button>
+                                {% if order.status != 'cancelled' %}
+                                <button onclick="openCancelModal('{{ order.id }}')"
+                                    class="w-full text-left px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-red-500/70 hover:text-red-500 hover:bg-red-500/5 transition-colors">Cancel
+                                    Order</button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {% for item in order.get('items', []) %}
+                    <a href="/product/{{ item.id }}"
+                        class="flex gap-4 items-start bg-[#0a0a0a] p-4 rounded border border-gray-800/50 hover:border-[#AB0A17] transition-all group">
+                        <div class="w-16 h-16 bg-[#1a1a1a] rounded overflow-hidden flex-shrink-0">
+                            <img src="{{ item.image }}"
+                                class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <h4
+                                class="text-white font-bold text-sm truncate group-hover:text-[#AB0A17] transition-colors">
+                                {{ item.name }}</h4>
+                            <p class="text-gray-500 text-xs uppercase">{{ item.brand }}</p>
+                            <p class="text-gray-400 text-xs mt-2">Qty: {{ item.quantity }}</p>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+            {% else %}
+            <div class="text-center py-20 bg-[#111] border border-gray-800 rounded">
+                <p class="text-gray-500 text-xl font-display uppercase tracking-wider mb-8">No orders yet.</p>
+                <a href="/"
+                    class="bg-white text-black font-extrabold uppercase px-8 py-3 hover:bg-[#AB0A17] hover:text-white transition-colors">Start
+                    Shopping</a>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Buy Again Section (Hidden initially) -->
+        <div id="section-buy-again" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <!-- Populated via JS -->
+            <div id="buy-again-loader" class="col-span-full text-center text-gray-500 py-20">Loading your favorites...
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Cancellation Modal -->
+<div id="cancel-modal"
+    class="fixed inset-0 z-[110] hidden items-center justify-center p-6 bg-black/90 backdrop-blur-md">
+    <div
+        class="bg-[#111] border border-white/10 w-full max-w-lg rounded-sm relative overflow-hidden shadow-2xl animate-fade-in p-8">
+        <div class="absolute top-0 left-0 w-full h-1 bg-red-600"></div>
+
+        <div class="flex justify-between items-center mb-8">
+            <h3 class="text-xl font-display font-bold text-white uppercase tracking-widest">Cancel Order</h3>
+            <button onclick="closeCancelModal()" class="text-gray-500 hover:text-white transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path d="M6 18L18 6M6 6l12 12" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    </path>
+                </svg>
+            </button>
+        </div>
+
+        <p class="text-gray-500 text-xs mb-8 uppercase tracking-widest leading-relaxed">Please let us know why you'd
+            like to cancel this order. This information helps us improve our service.</p>
+
+        <div class="space-y-6">
+            <div>
+                <label class="text-[10px] text-gray-500 font-bold uppercase tracking-[0.2em] block mb-3">Reason for
+                    Cancellation</label>
+                <select id="cancel-reason-select" onchange="toggleCustomReason()"
+                    class="w-full bg-[#0a0a0a] border border-gray-800 p-4 text-white text-sm focus:border-red-600 outline-none transition-colors mb-4 rounded-sm">
+                    <option value="" disabled selected>Select a reason...</option>
+                    <option value="Changed my mind">Changed my mind</option>
+                    <option value="Found better price elsewhere">Found better price elsewhere</option>
+                    <option value="Order taken too long to ship">Order taken too long to ship</option>
+                    <option value="Ordered by mistake">Ordered by mistake</option>
+                    <option value="Other">Other (Please specify)</option>
+                </select>
+
+                <textarea id="cancel-custom-reason"
+                    class="hidden w-full bg-[#0a0a0a] border border-gray-800 p-4 text-white text-sm focus:border-red-600 outline-none h-32 transition-colors resize-none mb-6 rounded-sm"
+                    placeholder="Please provide more details..."></textarea>
+            </div>
+
+            <div class="flex gap-4">
+                <button onclick="closeCancelModal()"
+                    class="flex-1 border border-gray-800 text-white font-bold uppercase tracking-widest py-4 text-xs hover:bg-white/5 transition-colors">Go
+                    Back</button>
+                <button onclick="submitOrderCancellation()" id="confirm-cancel-btn"
+                    class="flex-1 bg-red-600 text-white font-extrabold uppercase py-4 tracking-[0.2em] text-xs hover:bg-red-500 transition-all shadow-xl shadow-red-600/20">
+                    Confirm
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+<!-- Refund Warning Modal -->
+<div id="refund-warning-modal"
+    class="fixed inset-0 z-[120] hidden items-center justify-center p-6 bg-black/95 backdrop-blur-md">
+    <div
+        class="bg-[#111] border border-white/10 w-full max-w-sm rounded-sm p-8 text-center shadow-2xl animate-scale-up">
+        <div
+            class="w-16 h-16 bg-amber-500/10 rounded-full flex items-center justify-center mx-auto mb-6 text-amber-500">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
+                </path>
+            </svg>
+        </div>
+        <h3 class="text-xl font-display font-bold text-white uppercase tracking-widest mb-4">Refund Policy</h3>
+        <p class="text-gray-400 text-sm leading-relaxed mb-8">
+            Your refund will be initiated and credited to your original payment method within <span
+                class="text-white font-bold">7 working days</span>.
+        </p>
+        <div class="flex gap-4">
+            <button onclick="closeRefundWarning()"
+                class="flex-1 border border-gray-800 text-gray-400 font-bold uppercase tracking-widest py-3 text-xs hover:text-white hover:bg-white/5 transition-colors">Go
+                Back</button>
+            <button onclick="proceedToCancel()"
+                class="flex-1 bg-[#AB0A17] text-white font-bold uppercase tracking-widest py-3 text-xs hover:bg-orange-700 transition-colors">Proceed</button>
+        </div>
+    </div>
+</div>
+
+<div id="order-details-modal"
+    class="fixed inset-0 z-[110] flex items-center justify-center p-6 bg-black/90 backdrop-blur-md transition-opacity duration-300 opacity-0 pointer-events-none">
+    <div id="order-details-content"
+        class="bg-[#111] border border-white/10 w-full max-w-2xl rounded-sm relative overflow-hidden shadow-2xl flex flex-col max-h-[90vh] transition-all duration-300 opacity-0 scale-95">
+        <div class="absolute top-0 left-0 w-full h-1 bg-[#AB0A17]"></div>
+
+        <div class="p-8 border-b border-white/5 flex justify-between items-center bg-[#151515] flex-shrink-0">
+            <h3 class="text-xl font-display font-bold text-white uppercase tracking-widest">Order Details</h3>
+            <button onclick="closeDetailsModal()" class="text-gray-500 hover:text-white transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path d="M6 18L18 6M6 6l12 12" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    </path>
+                </svg>
+            </button>
+        </div>
+
+        <div class="p-8 overflow-y-auto flex-1 space-y-10 custom-scrollbar overscroll-contain" data-lenis-prevent>
+            <!-- Order Status & Date -->
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">Status</p>
+                    <div id="detail-status"></div>
+                </div>
+                <div>
+                    <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">Order Date</p>
+                    <p id="detail-date" class="text-white font-bold text-sm"></p>
+                </div>
+            </div>
+
+            <!-- Items -->
+            <div>
+                <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-4">Items Ordered</p>
+                <div id="detail-items" class="space-y-3"></div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t border-white/5">
+                <!-- Shipping -->
+                <div>
+                    <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-3">Shipping Address</p>
+                    <div id="detail-address" class="text-gray-400 text-sm leading-relaxed"></div>
+                </div>
+                <!-- Payment -->
+                <div>
+                    <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-3">Payment Info</p>
+                    <p class="text-gray-400 text-xs mb-1">Order ID: <span id="detail-razor-order"
+                            class="text-white font-mono lowercase"></span></p>
+                    <p id="detail-payment-id-row" class="text-gray-400 text-xs">Payment ID: <span id="detail-razor-pay"
+                            class="text-white font-mono lowercase"></span></p>
+                    <p id="detail-payment-method" class="text-gray-400 text-xs mt-2 flex items-center gap-2"></p>
+                    <div class="mt-4 pt-4 border-t border-white/5 flex justify-between items-center">
+                        <span class="text-xs text-gray-500 font-bold uppercase">Total Amount</span>
+                        <span id="detail-total" class="text-[#AB0A17] font-display font-bold text-2xl"></span>
+                    </div>
+                </div>
+            </div>
+
+
+            <div id="detail-cancellation" class="hidden p-4 bg-red-950/20 border border-red-500/20 rounded">
+                <p class="text-[10px] text-red-500 font-bold uppercase tracking-widest mb-1">Cancellation Reason</p>
+                <p id="detail-cancel-reason" class="text-red-400/80 text-xs italic"></p>
+            </div>
+        </div>
+
+        <div class="p-6 bg-[#151515] border-t border-white/5 flex justify-end gap-4 flex-shrink-0">
+            <button onclick="downloadInvoiceFromModal()"
+                class="px-6 py-3 border border-gray-800 text-white text-[10px] font-bold uppercase tracking-widest hover:bg-white/5 transition-colors">Download
+                Invoice</button>
+            <button onclick="closeDetailsModal()"
+                class="px-8 py-3 bg-[#AB0A17] text-white text-[10px] font-bold uppercase tracking-widest hover:bg-orange-700 transition-colors">Close</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const ordersData = {{ orders | tojson | safe }};
+    let buyAgainLoaded = false;
+    let isReturnMode = false; // Flag to track if we are returning or cancelling
+
+    // Check query param for tab
+    window.addEventListener('DOMContentLoaded', () => {
+        // Format Order Totals
+        document.querySelectorAll('.order-total').forEach(el => {
+            const amount = parseFloat(el.getAttribute('data-amount') || 0);
+            el.textContent = formatPrice(amount);
+        });
+
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('tab') === 'buy-again') {
+            switchTab('buy-again');
+        }
+
+        // Sync Status for active orders
+        ordersData.forEach(order => {
+            if (['paid', 'confirmed', 'shipped', 'out_for_delivery', 'cod_pending'].includes(order.status)) {
+                syncOrderStatus(order.id);
+            }
+            // If already delivered, ensure UI shows Return (handled by template usually, but dynamic update helps)
+            if (order.status === 'delivered') {
+                updateOrderUI(order.id, 'delivered');
+            }
+        });
+    });
+
+    async function syncOrderStatus(orderId) {
+        try {
+            const res = await fetch('/api/orders/sync-status', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ order_id: orderId })
+            });
+            const data = await res.json();
+            if (res.ok && data.status) {
+                // Update local data
+                const order = ordersData.find(o => o.id === orderId);
+                if (order && order.status !== data.status) {
+                    order.status = data.status;
+                    updateOrderUI(orderId, data.status);
+                }
+            }
+        } catch (e) {
+            console.error("Status Sync Error:", e);
+        }
+    }
+
+    function updateOrderUI(orderId, status) {
+        // Find status element
+        // Since we are inside a loop in template, we need a way to ID the status badge.
+        // But the template structure is generic. 
+        // We'd need to add IDs to specific elements in the HTML loop to target them.
+        // Let's assume user refreshes for now? Or we try to reload page?
+        // Ideally we should reload if status changes to 'delivered' to show 'Return' button correctly 
+        // if we didn't use IDs.
+        // BUT, we can use the Menu Button context to change text dynamically.
+
+        // Simpler approach: If status becomes 'delivered', page reload might be cleanest to update ALL UI.
+        // Or we update the specific menu item if open?
+
+        // For 'delivered', we want to show 'Return Order'. 
+        if (status === 'delivered') {
+            // Find the specific order menu
+            const menu = document.getElementById(`menu-${orderId}`);
+            if (menu) {
+                // Try to find the cancel button inside
+                // It might not exist if template didn't render it (e.g. if cancelled).
+                // Status check in template: { % if order.status != 'cancelled' % }
+                // So for 'paid' it exists.
+                // We want to change text to "Return Order"
+                const btn = menu.querySelector('button[onclick^="openCancelModal"]');
+                if (btn) {
+                    btn.textContent = "Return Order";
+                    btn.onclick = () => openReturnModal(orderId);
+                    btn.classList.remove('text-red-500/70', 'hover:text-red-500', 'hover:bg-red-500/5');
+                    btn.classList.add('text-amber-500/70', 'hover:text-amber-500', 'hover:bg-amber-500/5');
+                }
+            }
+
+            // Update Status Badge (Searching by text content is flaky, let's reload if status changed significantly)
+            // window.location.reload(); // Might be too aggressive?
+            // properly updating DOM is better.
+        }
+    }
+
+    function switchTab(tab) {
+        const tOrders = document.getElementById('tab-orders');
+        const tBuy = document.getElementById('tab-buy-again');
+        const sOrders = document.getElementById('section-orders');
+        const sBuy = document.getElementById('section-buy-again');
+        const title = document.getElementById('page-title');
+
+        if (tab === 'orders') {
+            tOrders.classList.remove('text-gray-500', 'border-transparent');
+            tOrders.classList.add('text-white', 'border-[#AB0A17]');
+            tBuy.classList.remove('text-white', 'border-[#AB0A17]');
+            tBuy.classList.add('text-gray-500', 'border-transparent');
+            sOrders.classList.remove('hidden');
+            sBuy.classList.add('hidden');
+            title.textContent = "My Orders";
+            window.history.pushState({}, '', '/orders');
+        } else {
+            tBuy.classList.remove('text-gray-500', 'border-transparent');
+            tBuy.classList.add('text-white', 'border-[#AB0A17]');
+            tOrders.classList.remove('text-white', 'border-[#AB0A17]');
+            tOrders.classList.add('text-gray-500', 'border-transparent');
+            sBuy.classList.remove('hidden');
+            sOrders.classList.add('hidden');
+            title.textContent = "Buy Again";
+            window.history.pushState({}, '', '/orders?tab=buy-again');
+            loadBuyAgain();
+        }
+    }
+
+    function loadBuyAgain() {
+        if (buyAgainLoaded) return;
+
+        const allItems = ordersData.flatMap(o => o.items || []);
+
+        const uniqueItems = [];
+        const seen = new Set();
+        allItems.forEach(i => {
+            if (!seen.has(i.id)) {
+                seen.add(i.id);
+                uniqueItems.push(i);
+            }
+        });
+
+        const container = document.getElementById('section-buy-again');
+        if (uniqueItems.length === 0) {
+            container.innerHTML = '<p class="col-span-full text-center text-gray-500 py-20">No matching products found.</p>';
+        } else {
+            container.innerHTML = uniqueItems.map(p => `
+                <div class="bg-[#111] p-4 rounded border border-gray-800 group hover:border-[#AB0A17] transition-colors flex flex-col h-full">
+                    <a href="/product/${p.id}" class="aspect-square bg-[#0a0a0a] rounded overflow-hidden mb-4 block relative">
+                        <img src="${p.image}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                    </a>
+                    <h3 class="text-white font-bold mb-1 truncate">${p.name}</h3>
+                    <div class="mt-auto flex justify-between items-center">
+                        <p class="text-[#AB0A17] font-bold text-sm">${formatPrice(p.price)}</p>
+                        <button onclick='addToCartAndOpen(${JSON.stringify(p)})' class="bg-white text-black font-bold uppercase text-[10px] px-3 py-1 hover:bg-[#AB0A17] hover:text-white transition-colors">Quick Add</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        buyAgainLoaded = true;
+    }
+
+    // --- ORDER MENU & CANCELLATION ---
+    let orderToCancel = null;
+    let currentDetailOrderId = null;
+
+    function toggleOrderMenu(event, id) {
+        event.stopPropagation();
+        const menu = document.getElementById(`menu-${id}`);
+        const isOpen = !menu.classList.contains('pointer-events-none');
+
+        // Close all other menus
+        document.querySelectorAll('[id^="menu-"]').forEach(m => {
+            if (m.id !== `menu-${id}`) {
+                m.classList.add('opacity-0', 'scale-95', 'pointer-events-none');
+            }
+        });
+
+        // Toggle current menu
+        if (isOpen) {
+            menu.classList.add('opacity-0', 'scale-95', 'pointer-events-none');
+        } else {
+            menu.classList.remove('opacity-0', 'scale-95', 'pointer-events-none');
+            menu.classList.add('opacity-100', 'scale-100');
+
+            // Check status on open to ensure button is correct immediately if data updated in background
+            const ord = ordersData.find(o => o.id === id);
+            if (ord && ord.status === 'delivered') {
+                const btn = menu.querySelector('button[onclick^="openCancelModal"]');
+                if (btn && btn.textContent.trim() !== "Return Order") {
+                    btn.textContent = "Return Order";
+                    btn.onclick = () => openReturnModal(id);
+                    btn.classList.remove('text-red-500/70', 'hover:text-red-500', 'hover:bg-red-500/5');
+                    btn.classList.add('text-amber-500/70', 'hover:text-amber-500', 'hover:bg-amber-500/5');
+                }
+            }
+        }
+    }
+
+    // Close menus on click outside
+    window.addEventListener('click', () => {
+        document.querySelectorAll('[id^="menu-"]').forEach(m => {
+            m.classList.add('opacity-0', 'scale-95', 'pointer-events-none');
+            m.classList.remove('opacity-100', 'scale-100');
+        });
+    });
+
+    function showOrderDetails(id) {
+        const order = ordersData.find(o => o.id === id);
+        if (!order) return;
+
+        currentDetailOrderId = id;
+
+        // Populate Data
+        document.getElementById('detail-date').textContent = new Date(order.created_at).toLocaleDateString() + ' ' + new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        document.getElementById('detail-razor-order').textContent = order.razorpay_order_id || 'N/A';
+        document.getElementById('detail-razor-pay').textContent = order.razorpay_payment_id || 'Pending';
+        document.getElementById('detail-total').textContent = formatPrice(order.amount);
+
+        // Status Badge
+        const statusEl = document.getElementById('detail-status');
+        const paymentMethodEl = document.getElementById('detail-payment-method');
+        const paymentIdRow = document.getElementById('detail-payment-id-row');
+
+        if (order.status === 'cancelled') {
+            statusEl.innerHTML = '<span class="inline-block px-2 py-0.5 bg-red-900/30 text-red-500 text-[10px] font-bold uppercase tracking-widest rounded border border-red-900/50">Cancelled</span>';
+            document.getElementById('detail-cancellation').classList.remove('hidden');
+            document.getElementById('detail-cancel-reason').textContent = order.cancellation_reason || 'Reason not specified.';
+        } else if (order.status === 'cod_pending') {
+            statusEl.innerHTML = '<span class="inline-block px-2 py-0.5 bg-amber-900/30 text-amber-500 text-[10px] font-bold uppercase tracking-widest rounded border border-amber-900/50">COD Pending</span>';
+            document.getElementById('detail-cancellation').classList.add('hidden');
+        } else {
+            statusEl.innerHTML = `<span class="inline-block px-2 py-0.5 bg-green-900/30 text-green-500 text-[10px] font-bold uppercase tracking-widest rounded border border-green-900/50">${order.status.toUpperCase()}</span>`;
+            document.getElementById('detail-cancellation').classList.add('hidden');
+        }
+
+        // Payment Method Display
+        if (order.payment_method === 'cod') {
+            paymentMethodEl.innerHTML = '<svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg><span class="text-amber-500 font-bold uppercase text-[10px]">Cash on Delivery</span>';
+            paymentIdRow.classList.add('hidden');
+        } else {
+            paymentMethodEl.innerHTML = '<svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg><span class="text-green-500 font-bold uppercase text-[10px]">Paid Online</span>';
+            paymentIdRow.classList.remove('hidden');
+        }
+
+        // Address
+        const addr = order.address || {};
+        document.getElementById('detail-address').innerHTML = `
+            <p class="font-bold text-white mb-1 uppercase tracking-tighter">${addr.street || ''}</p>
+            ${addr.landmark ? `<p class="text-gray-600 text-xs italic">${addr.landmark}</p>` : ''}
+            <p>${addr.city || ''}, ${addr.state || ''}</p>
+            <p>${addr.zip || ''}</p>
+            <p class="font-bold text-gray-500 mt-1">${addr.country || 'India'}</p>
+        `;
+
+        // Items
+        document.getElementById('detail-items').innerHTML = order.items.map(item => `
+            <div class="flex items-center gap-4 bg-white/5 p-3 rounded-sm">
+                <div class="w-12 h-12 bg-black rounded overflow-hidden flex-shrink-0 border border-white/10">
+                    <img src="${item.image}" class="w-full h-full object-cover">
+                </div>
+                <div class="flex-1 min-w-0">
+                    <h4 class="text-white font-bold text-xs truncate uppercase tracking-tighter">${item.name}</h4>
+                    <p class="text-gray-500 text-[9px] uppercase tracking-widest mt-0.5">${item.brand || 'Original'}</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-white font-mono text-[10px]">${item.quantity} x ${formatPrice(item.price)}</p>
+                    <p class="text-[#AB0A17] font-bold text-xs mt-0.5">${formatPrice(item.price * item.quantity)}</p>
+                </div>
+            </div>
+        `).join('');
+
+        const modal = document.getElementById('order-details-modal');
+        const content = document.getElementById('order-details-content');
+
+        modal.classList.remove('opacity-0', 'pointer-events-none');
+        modal.classList.add('opacity-100', 'pointer-events-auto');
+
+        setTimeout(() => {
+            content.classList.remove('opacity-0', 'scale-95');
+            content.classList.add('opacity-100', 'scale-100');
+        }, 50);
+
+        document.body.style.overflow = 'hidden';
+        // Stop Lenis smooth scroll so modal can scroll
+        if (typeof lenis !== 'undefined') lenis.stop();
+    }
+
+    function closeDetailsModal() {
+        const modal = document.getElementById('order-details-modal');
+        const content = document.getElementById('order-details-content');
+
+        content.classList.remove('opacity-100', 'scale-100');
+        content.classList.add('opacity-0', 'scale-95');
+
+        setTimeout(() => {
+            modal.classList.remove('opacity-100', 'pointer-events-auto');
+            modal.classList.add('opacity-0', 'pointer-events-none');
+        }, 200);
+
+        document.body.style.overflow = '';
+        // Restart Lenis smooth scroll
+        if (typeof lenis !== 'undefined') lenis.start();
+    }
+
+    function downloadInvoiceFromModal() {
+        if (currentDetailOrderId) {
+            downloadInvoice(currentDetailOrderId);
+        }
+    }
+
+    function downloadInvoice(id) {
+        const order = ordersData.find(o => o.id === id);
+        if (!order) return;
+
+        const printWindow = window.open('', '_blank');
+        const addr = order.address || {};
+        const itemsHtml = order.items.map(item => `
+            <tr>
+                <td style="padding: 12px; border-bottom: 1px solid #eee;">${item.name}<br/><small style="color:#888">${item.brand || ''}</small></td>
+                <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
+                <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: right;">${formatPrice(item.price)}</td>
+                <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: right; font-weight: bold;">${formatPrice(item.price * item.quantity)}</td>
+            </tr>
+        `).join('');
+
+        printWindow.document.write(`
+            <html>
+                <head>
+                    <title>Invoice - ${order.razorpay_order_id || order.id}</title>
+                    <style>
+                        body { font-family: 'Inter', system-ui, sans-serif; color: #111; line-height: 1.5; padding: 40px; }
+                        .header { display: flex; justify-between; border-bottom: 2px solid #111; padding-bottom: 20px; margin-bottom: 30px; }
+                        .logo { font-weight: 900; font-size: 24px; text-transform: uppercase; letter-spacing: 2px; }
+                        .invoice-meta { text-align: right; }
+                        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 40px; }
+                        table { width: 100%; border-collapse: collapse; }
+                        th { background: #f9f9f9; text-align: left; padding: 12px; text-transform: uppercase; font-size: 10px; letter-spacing: 1px; }
+                        .total-row { background: #111; color: white; }
+                        .footer { margin-top: 50px; text-align: center; color: #888; font-size: 12px; }
+                    </style>
+                </head>
+                <body>
+                    <div style="display: flex; justify-content: space-between; align-items: start; border-bottom: 2px solid #000; padding-bottom: 20px; margin-bottom: 40px;">
+                        <div>
+                            <img src="${window.location.origin}/assets/web-media/sixn-logo-red.jpg" alt="SIXN" style="height: 32px; margin-bottom: 5px;">
+                            <p style="margin: 5px 0 0; font-size: 12px; color: #666;">Premium Lifestyle Store</p>
+                        </div>
+                        <div style="text-align: right;">
+                            <h1 style="margin: 0; text-transform: uppercase; font-size: 32px; letter-spacing: -1px;">Tax Invoice</h1>
+                            <p style="margin: 0; color: #666; font-size: 14px;">#${order.razorpay_order_id || 'ORD-' + order.id.slice(0, 8)}</p>
+                        </div>
+                    </div>
+
+                    <div class="grid">
+                        <div>
+                            <h4 style="text-transform: uppercase; font-size: 10px; color: #888; margin-bottom: 10px; letter-spacing: 1px;">Ship To:</h4>
+                            <p style="margin: 0; font-weight: bold;">{{ current_user.first_name if current_user.is_authenticated else 'Customer' }}</p>
+                            <p style="margin: 2px 0;">${addr.street || ''}</p>
+                            ${addr.landmark ? `<p style="margin: 2px 0; color: #888; font-style: italic;">${addr.landmark}</p>` : ''}
+                            <p style="margin: 2px 0;">${addr.city || ''}, ${addr.state || ''} - ${addr.zip || ''}</p>
+                            <p style="margin: 2px 0;">${addr.country || 'India'}</p>
+                        </div>
+                        <div style="text-align: right;">
+                            <h4 style="text-transform: uppercase; font-size: 10px; color: #888; margin-bottom: 10px; letter-spacing: 1px;">Order Summary:</h4>
+                            <p style="margin: 2px 0;">Date: <strong>${new Date(order.created_at).toLocaleDateString()}</strong></p>
+                            <p style="margin: 2px 0;">Payment: <strong>${order.payment_method === 'cod' ? 'Cash on Delivery' : 'Razorpay Online'}</strong></p>
+                            <p style="margin: 2px 0;">Status: <strong style="color: ${order.status === 'cancelled' ? '#f00' : (order.status === 'cod_pending' ? '#f59e0b' : '#0a0')}">${order.status === 'cod_pending' ? 'COD PENDING' : order.status.toUpperCase()}</strong></p>
+                        </div>
+                    </div>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Item Description</th>
+                                <th style="text-align: center;">Qty</th>
+                                <th style="text-align: right;">Unit Price</th>
+                                <th style="text-align: right;">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${itemsHtml}
+                        </tbody>
+                        <tfoot>
+                            <tr class="total-row">
+                                <td colspan="3" style="padding: 15px; text-align: right; text-transform: uppercase; font-weight: bold; font-size: 12px;">Grand Total</td>
+                                <td style="padding: 15px; text-align: right; font-weight: 900; font-size: 18px;">${formatPrice(order.amount)}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+
+                    <div class="footer">
+                        <p>Thank you for shopping with SIXN. For any queries, contact support@sixn.com</p>
+                        <p style="margin-top: 8px; font-size: 10px;">This is a computer generated invoice and does not require a physical signature.</p>
+                    </div>
+
+                    <script>
+                        window.onload = function() {
+                            window.print();
+                            // Optional: Close window after print
+                            // window.onafterprint = function() { window.close(); }
+                        }
+                    <\/script>
+                </body>
+            </html>
+        `);
+        printWindow.document.close();
+    }
+
+    // --- REFACTORED MODAL HANDLERS FOR RETURN ---
+
+    function openCancelModal(id) {
+        orderToCancel = id;
+        isReturnMode = false;
+
+        // Reset Title
+        document.querySelector('#cancel-modal h3').textContent = "Cancel Order";
+        document.querySelector('#cancel-modal p').textContent = "Please let us know why you'd like to cancel this order.";
+
+        // Check if order is paid
+        const order = ordersData.find(o => o.id === id);
+        if (order && order.status === 'paid') {
+            // Show Refund Warning First
+            document.getElementById('refund-warning-modal').classList.remove('hidden');
+            document.getElementById('refund-warning-modal').classList.add('flex');
+        } else {
+            // Show Reason Modal directly
+            showReasonModal();
+        }
+
+        document.body.style.overflow = 'hidden';
+        if (typeof lenis !== 'undefined') lenis.stop();
+    }
+
+    function openReturnModal(id) {
+        orderToCancel = id;
+        isReturnMode = true;
+
+        // Update Modal UI for Return
+        document.querySelector('#cancel-modal h3').textContent = "Return Order";
+        document.querySelector('#cancel-modal p').textContent = "Please let us know why you are returning this order.";
+
+        const reasonSelect = document.getElementById('cancel-reason-select');
+        // Could add different reasons for return here if desired
+        // For now, reuse existing options (Damaged, Not as described, etc - existing are generic)
+
+        showReasonModal();
+
+        document.body.style.overflow = 'hidden';
+        if (typeof lenis !== 'undefined') lenis.stop();
+    }
+
+    function closeRefundWarning() {
+        const modal = document.getElementById('refund-warning-modal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        document.body.style.overflow = '';
+        if (typeof lenis !== 'undefined') lenis.start();
+        orderToCancel = null;
+    }
+
+    function proceedToCancel() {
+        const warningModal = document.getElementById('refund-warning-modal');
+        warningModal.classList.add('hidden');
+        warningModal.classList.remove('flex');
+        showReasonModal();
+    }
+
+    function showReasonModal() {
+        const modal = document.getElementById('cancel-modal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+
+    function closeCancelModal() {
+        const modal = document.getElementById('cancel-modal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        document.body.style.overflow = '';
+        if (typeof lenis !== 'undefined') lenis.start();
+        orderToCancel = null;
+        document.getElementById('cancel-reason-select').value = "";
+        document.getElementById('cancel-custom-reason').value = "";
+        document.getElementById('cancel-custom-reason').classList.add('hidden');
+    }
+
+    function toggleCustomReason() {
+        const select = document.getElementById('cancel-reason-select');
+        const custom = document.getElementById('cancel-custom-reason');
+        if (select.value === 'Other') {
+            custom.classList.remove('hidden');
+        } else {
+            custom.classList.add('hidden');
+        }
+    }
+
+    async function submitOrderCancellation() {
+        if (!orderToCancel) return;
+
+        const select = document.getElementById('cancel-reason-select');
+        const custom = document.getElementById('cancel-custom-reason');
+
+        let reason = select.value;
+        if (!reason) {
+            showError("Please select a reason.");
+            return;
+        }
+
+        if (reason === 'Other') {
+            reason = custom.value.trim();
+            if (!reason) {
+                showError("Please specify your reason.");
+                return;
+            }
+        }
+
+        // Add context for return
+        if (isReturnMode) {
+            reason = "RETURN_REQUEST: " + reason;
+        }
+
+        const btn = document.getElementById('confirm-cancel-btn');
+        btn.disabled = true;
+        btn.textContent = "Processing...";
+
+        try {
+            const res = await fetch('/api/orders/cancel', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    order_id: orderToCancel,
+                    reason: reason
+                })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                showSuccess(data.message || (isReturnMode ? "Return initiated successfully." : "Order cancelled successfully."));
+                closeCancelModal();
+                setTimeout(() => window.location.reload(), 1500);
+            } else {
+                showError(data.error);
+                btn.disabled = false;
+                btn.textContent = "Confirm";
+            }
+        } catch (e) {
+            showError("Connection error.");
+            btn.disabled = false;
+            btn.textContent = "Confirm";
+        }
+    }
+
+    function addToCartAndOpen(p) {
+        addToCart(p);
+        toggleCart();
+    }
+</script>
+
+{% endblock %}

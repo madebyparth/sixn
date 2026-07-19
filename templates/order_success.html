@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block title %}Order Placed Successfully - SIXN{% endblock %}
+
+{% block content %}
+<div class="pt-32 pb-20 px-6 min-h-[80vh] bg-[#050505] flex items-center justify-center">
+    <div class="max-w-2xl w-full text-center">
+        <!-- Success Animation/Icon -->
+        <div class="mb-8 relative inline-block">
+            <div
+                class="w-24 h-24 bg-green-500/20 rounded-full flex items-center justify-center mx-auto scale-110 animate-pulse">
+                <div class="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center">
+                    <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                </div>
+            </div>
+            <!-- Floating particles effect simulation with CSS would be here -->
+        </div>
+
+        <h1 class="text-4xl md:text-5xl font-display font-bold text-white uppercase mb-4 tracking-wider">Order Placed
+            Successfully!</h1>
+
+        {% if order and order.payment_method == 'cod' %}
+        <p class="text-gray-400 text-lg mb-12 max-w-md mx-auto leading-relaxed">
+            Thank you for your order! Please keep the exact amount ready for payment when your order arrives.
+        </p>
+        {% else %}
+        <p class="text-gray-400 text-lg mb-12 max-w-md mx-auto leading-relaxed">Thank you for your purchase. Your order
+            has been confirmed and is being processed.</p>
+        {% endif %}
+
+        <!-- Order Summary Card -->
+        <div
+            class="bg-[#111] border border-gray-800 rounded-sm p-8 text-left mb-12 shadow-2xl relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-green-500 to-[#AB0A17]"></div>
+
+            <div
+                class="flex flex-col md:flex-row justify-between items-center gap-6 mb-8 border-b border-gray-800 pb-6">
+                <div>
+                    <span class="text-gray-500 text-[10px] uppercase font-bold tracking-widest block mb-1">Order
+                        Status</span>
+                    {% if order and order.payment_method == 'cod' %}
+                    <span
+                        class="bg-amber-500/10 text-amber-500 text-xs font-bold px-3 py-1 rounded-full border border-amber-500/20 uppercase">Awaiting
+                        Delivery</span>
+                    {% else %}
+                    <span
+                        class="bg-green-500/10 text-green-500 text-xs font-bold px-3 py-1 rounded-full border border-green-500/20 uppercase">Processing</span>
+                    {% endif %}
+                </div>
+                <div class="text-center md:text-right">
+                    <span class="text-gray-500 text-[10px] uppercase font-bold tracking-widest block mb-1">Estimated
+                        Delivery</span>
+                    <span class="text-white font-bold uppercase text-sm">5 - 7 Business Days</span>
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-500 text-sm">Order Reference</span>
+                    <span class="text-white font-mono font-bold tracking-tighter" id="order-id">
+                        {% if order %}#{{ order.razorpay_order_id }}{% else %}#SIXN-{{ range(1000, 9999)|random }}{%
+                        endif %}
+                    </span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-500 text-sm">Payment Method</span>
+                    {% if order and order.payment_method == 'cod' %}
+                    <span class="flex items-center gap-2">
+                        <svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z">
+                            </path>
+                        </svg>
+                        <span class="text-amber-500 font-bold text-sm uppercase">Cash on Delivery</span>
+                    </span>
+                    {% else %}
+                    <span class="flex items-center gap-2">
+                        <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <span class="text-green-500 font-bold text-sm uppercase">Paid Online</span>
+                    </span>
+                    {% endif %}
+                </div>
+                {% if order and order.address %}
+                <div class="flex justify-between items-start pt-4 border-t border-gray-800/50">
+                    <span class="text-gray-500 text-sm">Delivering To</span>
+                    <div class="text-right">
+                        <span class="text-white font-bold block">{{ order.address.street }}</span>
+                        {% if order.address.landmark %}
+                        <span class="text-gray-500 text-xs block">{{ order.address.landmark }}</span>
+                        {% endif %}
+                        <span class="text-gray-400 text-sm">{{ order.address.city }}, {{ order.address.state }} {{
+                            order.address.zip }}</span>
+                        <span class="text-gray-500 text-xs block">{{ order.address.country }}</span>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if order and order.payment_method == 'cod' %}
+                <div class="mt-6 p-4 bg-amber-500/5 border border-amber-500/20 rounded-sm">
+                    <div class="flex items-start gap-3">
+                        <svg class="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <p class="text-sm text-amber-400">
+                            <strong>Payment on Delivery:</strong> Please have the exact amount ready when your order
+                            arrives. Our delivery partner will collect the payment.
+                        </p>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Call to Actions -->
+        <div class="flex flex-col md:flex-row gap-4 justify-center">
+            <a href="/orders"
+                class="bg-white text-black font-extrabold uppercase py-4 px-10 tracking-[0.2em] hover:bg-[#AB0A17] hover:text-white transition-all duration-300 shadow-xl group flex items-center justify-center gap-2">
+                <span>View My Orders</span>
+                <svg class="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none"
+                    stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3">
+                    </path>
+                </svg>
+            </a>
+            <a href="/"
+                class="border-2 border-white/10 text-white font-extrabold uppercase py-4 px-10 tracking-[0.2em] hover:bg-white/5 transition-all duration-300 flex items-center justify-center">
+                Continue Shopping
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

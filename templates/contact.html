@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Contact Us - SIXN{% endblock %}
+
+{% block content %}
+<div class="pt-32 pb-20 px-6 min-h-screen relative overflow-hidden">
+    <!-- Background Elements -->
+    <div
+        class="absolute top-0 left-0 w-full h-[500px] bg-gradient-to-b from-[#111] to-transparent z-0 pointer-events-none">
+    </div>
+
+    <div class="max-w-6xl mx-auto relative z-10">
+        <div class="text-center mb-16">
+            <h1 class="text-4xl md:text-7xl font-display font-bold text-white uppercase mb-4 tracking-wider">Get In
+                Touch</h1>
+            <p class="text-gray-400 text-lg max-w-2xl mx-auto">Have questions about our products or your order? We are
+                here to help 24/7.</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24">
+            <!-- Form -->
+            <div class="bg-[#111] p-8 md:p-12 rounded border border-gray-800">
+                <form onsubmit="event.preventDefault(); alert('Message sent! We will contact you soon.'); this.reset();"
+                    class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label
+                                class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Name</label>
+                            <input type="text" required
+                                class="w-full bg-[#0a0a0a] border border-gray-700 text-white p-4 focus:border-[#AB0A17] outline-none transition-colors">
+                        </div>
+                        <div>
+                            <label
+                                class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Email</label>
+                            <input type="email" required
+                                class="w-full bg-[#0a0a0a] border border-gray-700 text-white p-4 focus:border-[#AB0A17] outline-none transition-colors">
+                        </div>
+                    </div>
+                    <div>
+                        <label
+                            class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Subject</label>
+                        <select
+                            class="w-full bg-[#0a0a0a] border border-gray-700 text-white p-4 focus:border-[#AB0A17] outline-none transition-colors appearance-none">
+                            <option>Order Inquiry</option>
+                            <option>Product Support</option>
+                            <option>Returns & Refunds</option>
+                            <option>Business Partnership</option>
+                            <option>Other</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label
+                            class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Message</label>
+                        <textarea rows="5" required
+                            class="w-full bg-[#0a0a0a] border border-gray-700 text-white p-4 focus:border-[#AB0A17] outline-none transition-colors"></textarea>
+                    </div>
+                    <button type="submit"
+                        class="w-full bg-white text-black font-extrabold uppercase py-4 hover:bg-[#AB0A17] hover:text-white transition-all shadow-xl tracking-widest">
+                        Send Message
+                    </button>
+                </form>
+            </div>
+
+            <!-- Info -->
+            <div class="space-y-12 py-12">
+                <div>
+                    <h3 class="text-[#AB0A17] font-bold uppercase tracking-widest mb-4">Email</h3>
+                    <p class="text-white text-2xl font-display">support@sixn.com</p>
+                    <p class="text-gray-500 mt-2">Expect a reply within 2 hours.</p>
+                </div>
+                <div>
+                    <h3 class="text-[#AB0A17] font-bold uppercase tracking-widest mb-4">Phone</h3>
+                    <p class="text-white text-2xl font-display">+1 (555) 123-4567</p>
+                    <p class="text-gray-500 mt-2">Mon-Fri, 9am - 6pm EST</p>
+                </div>
+                <div>
+                    <h3 class="text-[#AB0A17] font-bold uppercase tracking-widest mb-4">Headquarters</h3>
+                    <p class="text-white text-xl leading-relaxed">
+                        123 Enterprise Blvd,<br>
+                        Tech District, New York,<br>
+                        NY 10001
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

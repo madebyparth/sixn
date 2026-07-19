@@ -1,0 +1,375 @@
+[
+    {
+        "accentColor": "#228b22",
+        "availableColors": [],
+        "availableSizes": [
+            "M",
+            "L",
+            "XL",
+            "XXL"
+        ],
+        "bgTextLeft": "",
+        "bgTextRight": "",
+        "brand": "Nike",
+        "category": "men",
+        "description": "Fabric: Lycra \nColor: Multicolor \nPattern: Side Tape\nFit: Regular Bottom\nType: Track Pants \nClosure: Draw-String \nOccasion: Casual \nCombo: Pack of 2 \nIdeal For: Men \nWeight: 800gm",
+        "id": 12,
+        "image": "/static/uploads/products/a62f8902c76747beaaf8fea5c909df02.jpeg",
+        "images": [
+            "/static/uploads/products/a62f8902c76747beaaf8fea5c909df02.jpeg",
+            "/static/uploads/products/b2ec38e64477439990c5a58a1328c3e0.jpeg",
+            "/static/uploads/products/9449b957fde04354b014303d6899b30f.jpeg",
+            "/static/uploads/products/c6b344bc61ee44568bacdcb91fdd6f48.jpeg",
+            "/static/uploads/products/880bf1ce62f846b69963fd832c1020be.jpeg"
+        ],
+        "inStock": true,
+        "isNew": true,
+        "name": "Oversized Trackpants",
+        "price": 799,
+        "showSizes": true,
+        "showcase": true,
+        "subtitleLeft": "",
+        "subtitleRight": "",
+        "type": ""
+    },
+    {
+        "accentColor": "#2f4f4f",
+        "availableColors": [],
+        "availableSizes": [
+            "S",
+            "M",
+            "L"
+        ],
+        "bgTextLeft": "",
+        "bgTextRight": "",
+        "brand": "",
+        "category": "women",
+        "description": "Package Contains: It has 1 Piece of Top \nColor: Green \nFabric: Cotton \nBlend Pattern: Solid \nStyle: Regular\n Occasion: Casual \nShoulder Neck Type: Shoulder Strap \nWeight: 250gm",
+        "id": 4,
+        "image": "/static/uploads/products/d08825fa307a4d20ad2345ba688aee97.jpeg",
+        "images": [
+            "/static/uploads/products/d08825fa307a4d20ad2345ba688aee97.jpeg",
+            "/static/uploads/products/aed52dd8511a45b083f737108cecbdef.jpeg",
+            "/static/uploads/products/ef8437c11d294f2cb8ec7307fa34eeb5.jpeg"
+        ],
+        "inStock": true,
+        "isNew": true,
+        "name": "Cold Shoulder Ruffled Top",
+        "price": 699,
+        "showSizes": true,
+        "showcase": true,
+        "subtitleLeft": "",
+        "subtitleRight": "",
+        "type": ""
+    },
+    {
+        "accentColor": "#8b008b",
+        "availableColors": [
+            {
+                "available": true,
+                "hex": "#66d0ea",
+                "images": [
+                    "/static/uploads/products/4cb9c882717b46d68a7d15168debd432.jpeg",
+                    "/static/uploads/products/57a6e13ca5224279bddd80ce68457aed.jpeg",
+                    "/static/uploads/products/e963fa625b864cf7aba7f71ff0380ce7.jpeg"
+                ],
+                "name": "Blue"
+            },
+            {
+                "available": true,
+                "hex": "#fd3f49",
+                "images": [
+                    "/static/uploads/products/e7bea81316814cb58eb362eb134cbcbe.jpeg",
+                    "/static/uploads/products/6c68f913c16a4cba95486b026ae561da.jpeg",
+                    "/static/uploads/products/4090e20202f1474895882b6cd1a57f24.jpeg"
+                ],
+                "name": "Red"
+            }
+        ],
+        "availableSizes": [
+            "S",
+            "M",
+            "L",
+            "XL"
+        ],
+        "bgTextLeft": "",
+        "bgTextRight": "",
+        "brand": "",
+        "category": "women",
+        "description": "Fabric: Lycra Blend\n Pattern: Tie-Dye Bottom \nStyle: Night Top \nStyle: T-Shirt \nNeck Type: Round Neck \nSleeve Length: Half Sleeves \nLength: Ankle \n Weight: 221gm",
+        "id": 5,
+        "image": "/static/uploads/products/26de6ad944a54e3cb0d3de11064f8f3f.jpeg",
+        "images": [
+            "/static/uploads/products/26de6ad944a54e3cb0d3de11064f8f3f.jpeg"
+        ],
+        "inStock": true,
+        "isNew": true,
+        "name": "Tie Die Night Suit",
+        "price": 899,
+        "showSizes": true,
+        "showcase": true,
+        "subtitleLeft": "",
+        "subtitleRight": "",
+        "type": ""
+    },
+    {
+        "accentColor": "#000000",
+        "availableColors": [],
+        "availableSizes": [
+            "XS",
+            "S"
+        ],
+        "bgTextLeft": "Urban",
+        "bgTextRight": "Edge",
+        "brand": "",
+        "category": "women",
+        "description": "\nFabric: Polyester\nNeckline: Box Neck\nSleeves: Cape Sleeves\nPattern: Solid\nColor: Olive\nLength: 48 In\nSize (Inches): XS-34, S-36, M-38, L-40, XL-42",
+        "id": 6,
+        "image": "/static/uploads/products/db6f303c6a4c428892f88d17c7799ec7.jpeg",
+        "images": [
+            "/static/uploads/products/db6f303c6a4c428892f88d17c7799ec7.jpeg",
+            "/static/uploads/products/fa4892c9b750421ab970f5b998d5d022.jpeg"
+        ],
+        "isNew": true,
+        "name": "Verve Studio Jumpsuit",
+        "price": 899,
+        "showSizes": true,
+        "showcase": false,
+        "subcategory": "",
+        "subtitleLeft": "Winter",
+        "subtitleRight": "Essential",
+        "type": ""
+    },
+    {
+        "accentColor": "#ffd700",
+        "availableColors": [],
+        "availableSizes": [
+            "S",
+            "M",
+            "L",
+            "XL",
+            "XXL"
+        ],
+        "bgTextLeft": "Silk",
+        "bgTextRight": "Elegance",
+        "brand": "",
+        "category": "women",
+        "description": "Color: Blue\nFabric: Cotton Blend\nPattern: Solid\nStyle: Flared\nFit: Regular Fit\nLength: Ankle Length\nStretch: Stretchable\nWaist Rise: Mid\nWeight: 400gm",
+        "id": 7,
+        "image": "/static/uploads/products/7af74e20befe4fb898ec73ca28ce8277.jpeg",
+        "images": [
+            "/static/uploads/products/7af74e20befe4fb898ec73ca28ce8277.jpeg",
+            "/static/uploads/products/6562bf3aaff1468db90da09484489fac.jpeg",
+            "/static/uploads/products/763ab0247316444ab69064d953a7e46f.jpeg",
+            "/static/uploads/products/fe56b7ec6f58427586c3f71af3873215.jpeg"
+        ],
+        "isNew": true,
+        "name": "Solid Flared Jeans",
+        "price": 899,
+        "showSizes": true,
+        "showcase": false,
+        "subcategory": "bottom",
+        "subtitleLeft": "Handloom",
+        "subtitleRight": "Premium",
+        "type": ""
+    },
+    {
+        "accentColor": "#dc143c",
+        "availableColors": [
+            {
+                "available": true,
+                "hex": "#000000",
+                "images": [
+                    "/static/uploads/products/77206b9007244833809144c34e7498e2.jpeg",
+                    "/static/uploads/products/62fadb5fc5e642e98c031065239b6940.jpeg",
+                    "/static/uploads/products/c353a4a73f904479af9751466ea50f79.jpeg"
+                ],
+                "name": "Black"
+            },
+            {
+                "available": true,
+                "hex": "#f1c855",
+                "images": [
+                    "/static/uploads/products/0e1320bd67f244bc8db332a3a7397a37.jpeg",
+                    "/static/uploads/products/f31cb235f0e34a328e135bde1c260f5a.jpeg",
+                    "/static/uploads/products/4667afdf826b4537a172fc7b57525715.jpeg",
+                    "/static/uploads/products/a1925b3f86784a5082577d4dc6752e08.jpeg"
+                ],
+                "name": "Yellow"
+            },
+            {
+                "available": true,
+                "hex": "#5795e5",
+                "images": [
+                    "/static/uploads/products/7b58028fb84c4c05b1fc2ba6f933982b.jpeg",
+                    "/static/uploads/products/ef28ca8c1add412985ba5a8a6006b241.jpeg",
+                    "/static/uploads/products/ea3c7cb1e63e4165ac4387d148e42eb6.jpeg",
+                    "/static/uploads/products/f2af0a524604479e9dbc0b7507c72b67.jpeg"
+                ],
+                "name": "Blue"
+            },
+            {
+                "available": true,
+                "hex": "#8a8a8a",
+                "images": [
+                    "/static/uploads/products/c589cbff73d34a3490b19ebe7157bd68.jpeg",
+                    "/static/uploads/products/37b0f08f00f24e759e8c6b5f2bffa8a5.jpeg",
+                    "/static/uploads/products/ad6fdfe956a34e91ad5050df64c6e037.jpeg",
+                    "/static/uploads/products/5099fc77efa24b75a527c7f634716d59.jpeg"
+                ],
+                "name": "Grey"
+            }
+        ],
+        "availableSizes": [
+            "M",
+            "L",
+            "XL",
+            "XXL"
+        ],
+        "bgTextLeft": "Chic",
+        "bgTextRight": "Style",
+        "brand": "",
+        "category": "women",
+        "description": "Fabric: Cotton Blend\nPattern: Solid\nOccasion: Casual\nCombo/Set of: Pack of 1\nSleeve Length: Half Sleeve\nNeck Type: Polo Neck\nWeight: 210gm",
+        "id": 11,
+        "image": "/static/uploads/products/eb87583d793843f78cc23d8dc3fa4abb.jpeg",
+        "images": [
+            "/static/uploads/products/eb87583d793843f78cc23d8dc3fa4abb.jpeg"
+        ],
+        "inStock": true,
+        "isNew": true,
+        "name": "Polo Neck T shirt",
+        "price": 599,
+        "showSizes": true,
+        "showcase": false,
+        "subtitleLeft": "Party",
+        "subtitleRight": "Ready",
+        "type": ""
+    },
+    {
+        "accentColor": "#9b2335",
+        "bgTextLeft": "Royal",
+        "bgTextRight": "Elegance",
+        "brand": "Portable",
+        "category": "home-decor",
+        "description": "Product Name: 4 in 1 Portable Electric Vegetable Cutter Set, Wireless Food Processor Electric Food Chopper for Garlic Chili Pepper Onion Ginger Celery Meat with Brush Contains: 1 Cutter , Material: Stainless Steel, Acrylonitrile Butadiene Styrene, Color: Color as per availability",
+        "id": 1,
+        "image": "/static/uploads/products/8f0252ebfb254f4eaf707a569b751e07.jpeg",
+        "images": [
+            "/static/uploads/products/8f0252ebfb254f4eaf707a569b751e07.jpeg",
+            "/static/uploads/products/bb654989246c43fb979286c63d6abab4.mp4",
+            "/static/uploads/products/c82fd2f4668948bfa572cf59d449df6a.jpeg",
+            "/static/uploads/products/81f6eb2c1fa44bf8bb4060cd00bf39b1.jpeg",
+            "/static/uploads/products/233ed39a0e3943e88bd8f1c3295a8e6c.jpeg",
+            "/static/uploads/products/6a2e085032fc42a5a769b41610a0f7eb.jpeg"
+        ],
+        "isNew": true,
+        "name": "4 in 1 Vegetable Cutter",
+        "price": 799,
+        "showSizes": false,
+        "showcase": false,
+        "subtitleLeft": "Wedding",
+        "subtitleRight": "Collection",
+        "type": "Gadgets "
+    },
+    {
+        "accentColor": "#1e90ff",
+        "bgTextLeft": "Street",
+        "bgTextRight": "Style",
+        "brand": "Kitchen",
+        "category": "home-decor",
+        "description": "Product Name: Lemon Blast Yellow Bubble Tablets (24pc)\n\n&nbsp;Package Contains: It has 24pc of Lemon Blast Yellow Bubble Tablets\n\nType: Tablets\n\nColor: Assorted\n\nCombo: Pack of 1(24pc)\n\nWeight: 302gm\n\nAdditional Information:\n\nDeep Cleaning Bubble Action: Effervescent formula lifts and dissolves grease, grime &amp; leftover food particles",
+        "id": 2,
+        "image": "/static/uploads/products/f305be1f5f0448f5a87560ae991b3534.jpeg",
+        "images": [
+            "/static/uploads/products/f305be1f5f0448f5a87560ae991b3534.jpeg",
+            "/static/uploads/products/941025ca5e5d43e3b86784b7798ddcc0.mp4",
+            "/static/uploads/products/6b7575b5896c43ae93942e74b5a51013.jpeg",
+            "/static/uploads/products/290e994e5a8043e3951576c6102b05cb.jpeg",
+            "/static/uploads/products/b1986a4a24ac453aad22262f9e193b07.jpeg"
+        ],
+        "isNew": true,
+        "name": "Lemon Blast Tablet",
+        "price": 499,
+        "showSizes": false,
+        "showcase": false,
+        "subtitleLeft": "Oversized",
+        "subtitleRight": "Comfort",
+        "type": "Tablet"
+    },
+    {
+        "accentColor": "#ff1493",
+        "bgTextLeft": "Bridal",
+        "bgTextRight": "Dreams",
+        "brand": "Portable",
+        "category": "home-decor",
+        "description": "Product Name: Portable Handheld Air Duster Wireless Vacuum Cleaner\n\nPackage Contains:&nbsp;1 piece of&nbsp;Wireless Vacuum Cleaner\n\nCombo: Pack of 1\n\nWeight: 400 gm",
+        "id": 3,
+        "image": "/static/uploads/products/59258750bd8e419a9975bac76b8b0307.jpeg",
+        "images": [
+            "/static/uploads/products/59258750bd8e419a9975bac76b8b0307.jpeg",
+            "/static/uploads/products/9aeb64aeb38e4483843bcaae755c8b5b.mp4",
+            "/static/uploads/products/62ff1a9e21c14083b7506e70d5fba806.jpeg",
+            "/static/uploads/products/fa6e4b74a3b84001b6b1a615957a053d.jpeg",
+            "/static/uploads/products/4149592bb9164ae297790affad09e4a8.jpeg"
+        ],
+        "isNew": true,
+        "name": "Wireless Vacuum Cleaner",
+        "price": 599,
+        "showSizes": false,
+        "showcase": false,
+        "subtitleLeft": "Designer",
+        "subtitleRight": "Exclusive",
+        "type": "Electronic"
+    },
+    {
+        "accentColor": "#4F46E5",
+        "bgTextLeft": "Crystal",
+        "bgTextRight": "Clear",
+        "brand": "HubSync",
+        "category": "electronics",
+        "id": 8,
+        "image": "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?q=80&w=1000&auto=format&fit=crop",
+        "isNew": false,
+        "name": "Wireless Noise Cancelling Earbuds",
+        "price": 4999,
+        "showcase": false,
+        "subtitleLeft": "Premium",
+        "subtitleRight": "Audio",
+        "type": "audio"
+    },
+    {
+        "id": 13,
+        "name": "Men's Caudray Fabric Stylish Pants",
+        "brand": "",
+        "price": 599,
+        "category": "men",
+        "type": "",
+        "availableSizes": [
+            "S",
+            "M",
+            "L",
+            "XL",
+            "XXL"
+        ],
+        "availableColors": [],
+        "images": [
+            "/static/uploads/products/673afdf716a94392a0cb1b042e3204cb.jpeg",
+            "/static/uploads/products/10b1185c105146be938d56805d5c7bb5.jpeg",
+            "/static/uploads/products/998de540fed647e7832c474b950cb41d.jpeg",
+            "/static/uploads/products/3ca00396562440d8b16c10e05d2bf5ed.jpeg",
+            "/static/uploads/products/40e8a30a517942faae6f8fe80ad2c2db.jpeg"
+        ],
+        "image": "/static/uploads/products/673afdf716a94392a0cb1b042e3204cb.jpeg",
+        "bgTextLeft": "",
+        "bgTextRight": "",
+        "subtitleLeft": "",
+        "subtitleRight": "",
+        "accentColor": "#d25b2b",
+        "isNew": true,
+        "showcase": false,
+        "description": "Product Name: Men's Caudray Fabric Stylish Pants  Package Contains: It has 1 Pant Fabric: Cotton Blend Color: Grey Pattern: Solid Occasion: Casual Combo: Pack of 1 Ideal For: Men Weight: 400",
+        "showSizes": true,
+        "inStock": true
+    }
+]

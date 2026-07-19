@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block title %}My Wallet - SIXN{% endblock %}
+
+{% block content %}
+<div class="pt-32 pb-24 px-6 relative bg-[#050505]">
+
+    <!-- Hero/Balance Section -->
+    <div class="max-w-4xl mx-auto mb-16 text-center">
+        <h1 class="text-4xl md:text-6xl font-display font-bold text-white uppercase tracking-tighter mb-4">My Wallet
+        </h1>
+        <p class="text-gray-400 text-sm max-w-lg mx-auto mb-12">Use your wallet balance for seamless checkout on future
+            orders.</p>
+
+        <div
+            class="bg-[#111] border border-gray-800 rounded-lg p-12 inline-block min-w-[300px] shadow-2xl relative overflow-hidden group">
+            <div
+                class="absolute inset-0 bg-gradient-to-br from-[#AB0A17]/20 to-transparent opacity-50 group-hover:opacity-100 transition-opacity duration-500">
+            </div>
+
+            <p class="text-gray-500 font-bold uppercase tracking-widest text-xs mb-2 relative z-10">Available Balance
+            </p>
+            <h2 class="text-5xl font-mono text-white font-bold relative z-10">
+                <span class="currency-symbol">₹</span><span id="wallet-balance-display">{{ balance }}</span>
+            </h2>
+
+            <div class="mt-6 flex justify-center gap-4 relative z-10">
+                <a href="/"
+                    class="bg-[#AB0A17] text-white px-6 py-2 text-xs font-bold uppercase tracking-widest hover:bg-white hover:text-black transition-colors rounded-sm">Shop
+                    Now</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transaction History -->
+    <div class="max-w-4xl mx-auto">
+        <h3
+            class="text-xl font-display font-bold text-white uppercase tracking-widest mb-8 border-b border-gray-800 pb-4">
+            Transaction History</h3>
+
+        {% if transactions %}
+        <div class="space-y-4">
+            {% for txn in transactions %}
+            <div
+                class="bg-[#111] border border-gray-800 p-6 rounded-sm flex flex-col md:flex-row justify-between items-start md:items-center hover:bg-white/5 transition-colors group">
+                <div class="flex items-center gap-4 mb-4 md:mb-0">
+                    <div
+                        class="w-12 h-12 rounded-full flex items-center justify-center 
+                        {{ 'bg-green-500/10 text-green-500' if txn.type == 'credit' else 'bg-red-500/10 text-red-500' }}">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            {% if txn.type == 'credit' %}
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4">
+                            </path>
+                            {% else %}
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path>
+                            {% endif %}
+                        </svg>
+                    </div>
+                    <div>
+                        <h4 class="text-white font-bold text-sm uppercase tracking-wide">{{ txn.reason }}</h4>
+                        <p class="text-gray-500 text-xs mt-1 font-mono">{{ txn.created_at[:10] }} &bull; {{
+                            txn.created_at[11:16] }}</p>
+                        {% if txn.order_id %}
+                        <p class="text-[#AB0A17] text-[10px] mt-1 font-bold">Order ID: {{ txn.order_id }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="flex flex-col items-end">
+                    <span
+                        class="text-xl font-mono font-bold txn-amount {{ 'text-green-500' if txn.type == 'credit' else 'text-red-500' }}"
+                        data-base-amount="{{ txn.amount }}">
+                        {{ '+' if txn.type == 'credit' else '-' }}{{ txn.amount }}
+                    </span>
+                    <span class="text-gray-600 text-[10px] uppercase font-bold tracking-wider">Balance: <span
+                            class="txn-balance" data-base-balance="{{ txn.balance_after }}">{{
+                            txn.balance_after }}</span></span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-20 bg-[#111] border border-gray-800 rounded-sm">
+            <svg class="w-16 h-16 text-gray-700 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
+                </path>
+            </svg>
+            <p class="text-gray-500 font-bold uppercase tracking-widest text-sm">No transactions yet</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // defined in base.html usually, but let's be safe or rely on base.html logic if exposed
+        const currency = localStorage.getItem('sixn_currency') || 'INR';
+        const symbols = { 'INR': '₹', 'USD': '$', 'EUR': '€', 'GBP': '£' };
+
+        let rate = 1;
+        let symbol = '₹';
+
+        if (typeof CURRENCY !== 'undefined' && CURRENCY[currency]) {
+            rate = CURRENCY[currency].rate;
+            symbol = CURRENCY[currency].symbol;
+        } else {
+            const rates = { 'INR': 1, 'USD': 0.012, 'EUR': 0.011, 'GBP': 0.0095 };
+            rate = rates[currency] || 1;
+            symbol = symbols[currency] || '₹';
+        }
+
+        // Update Symbols
+        document.querySelectorAll('.currency-symbol').forEach(el => el.textContent = symbol);
+
+        // Update Balance Value
+        const balanceDisplay = document.getElementById('wallet-balance-display');
+        if (balanceDisplay) {
+            const baseBalance = parseFloat(balanceDisplay.textContent);
+            if (!isNaN(baseBalance)) {
+                balanceDisplay.textContent = (baseBalance * rate).toFixed(2);
+            }
+        }
+
+        // Update Transaction History Amounts
+        document.querySelectorAll('.txn-amount').forEach(el => {
+            const baseAmt = parseFloat(el.dataset.baseAmount);
+            if (!isNaN(baseAmt)) {
+                const sign = el.textContent.trim().charAt(0);
+                el.textContent = sign + (baseAmt * rate).toFixed(2);
+            }
+        });
+
+        document.querySelectorAll('.txn-balance').forEach(el => {
+            const baseBal = parseFloat(el.dataset.baseBalance);
+            if (!isNaN(baseBal)) {
+                el.textContent = (baseBal * rate).toFixed(2);
+            }
+        });
+    });
+</script>
+{% endblock %}

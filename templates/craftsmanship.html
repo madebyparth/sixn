@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block title %}Quality & Craftsmanship - SIXN{% endblock %}
+
+{% block content %}
+<main class="pt-32 pb-20 overflow-hidden">
+    <!-- Hero Section -->
+    <section class="relative h-[80vh] flex items-center justify-center">
+        <div class="absolute inset-0 z-0">
+            <img src="https://images.unsplash.com/photo-1544441892-794166f42a8b?q=80&w=2070&auto=format&fit=crop"
+                alt="Fabric Texture" class="w-full h-full object-cover opacity-40 grayscale">
+            <div class="absolute inset-0 bg-gradient-to-b from-black via-transparent to-black"></div>
+        </div>
+        <div class="relative z-10 text-center px-6">
+            <h4 class="text-[#AB0A17] font-bold uppercase tracking-[0.5em] text-xs mb-6 animate-fade-in-up">The Standard
+                of Total Excellence</h4>
+            <h1
+                class="text-5xl md:text-8xl font-display font-bold text-white uppercase tracking-wider leading-none mb-8">
+                Uncompromising <br /> <span
+                    class="italic text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-500">Details.</span>
+            </h1>
+        </div>
+    </section>
+
+    <!-- Section 01: The Fabric -->
+    <section class="py-32 px-6">
+        <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-20 items-center">
+            <div class="order-2 md:order-1">
+                <span class="text-[#AB0A17] font-display font-bold text-6xl opacity-20">01</span>
+                <h2
+                    class="text-3xl md:text-5xl font-display font-bold text-white uppercase tracking-tight mb-8 mt-[-2rem]">
+                    The Purest <br /> Foundations</h2>
+                <p class="text-gray-400 text-lg leading-relaxed mb-8">
+                    Our journey begins at the source. We exclusively select long-staple Egyptian and Giza cotton
+                    strings, known for their exceptional strength and silk-like softness. Every SIXN shirt is woven
+                    with a high thread count that ensures breathability while maintaining a crisp, luxury structure.
+                </p>
+                <div class="grid grid-cols-2 gap-8 border-t border-gray-900 pt-8">
+                    <div>
+                        <h4 class="text-white font-bold uppercase tracking-widest text-xs mb-2">Breathability</h4>
+                        <p class="text-gray-500 text-sm italic">All-day comfort in any climate</p>
+                    </div>
+                    <div>
+                        <h4 class="text-white font-bold uppercase tracking-widest text-xs mb-2">Durability</h4>
+                        <p class="text-gray-500 text-sm italic">Resistant to pilling and fading</p>
+                    </div>
+                </div>
+            </div>
+            <div class="order-1 md:order-2">
+                <div class="relative aspect-square md:aspect-[4/5] bg-[#0a0a0a] border border-gray-900 overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1598257006458-087169a1f08d?q=80&w=2070&auto=format&fit=crop"
+                        alt="Weaving Process" class="w-full h-full object-cover opacity-70">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 02: Precision Tailoring -->
+    <section class="py-32 px-6 bg-[#080808]">
+        <div class="max-max-w-7xl mx-auto flex flex-col items-center">
+            <div class="text-center mb-20">
+                <span class="text-[#AB0A17] font-display font-bold text-6xl opacity-20">02</span>
+                <h2
+                    class="text-3xl md:text-5xl font-display font-bold text-white uppercase tracking-tight mb-8 mt-[-2rem]">
+                    Precision Engineering</h2>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="p-10 border border-gray-900 bg-[#0a0a0a] hover:border-[#AB0A17]/30 transition-colors group">
+                    <div class="w-12 h-1 bg-[#AB0A17] mb-8 group-hover:w-full transition-all duration-500"></div>
+                    <h3 class="text-white font-bold uppercase tracking-widest mb-4">The Stitch</h3>
+                    <p class="text-gray-500 text-sm leading-relaxed">
+                        We use 22 stitches per inch – a mark of true bespoke quality. This ultra-fine density creates
+                        seams that are almost invisible and incredibly strong.
+                    </p>
+                </div>
+                <div class="p-10 border border-gray-900 bg-[#0a0a0a] hover:border-[#AB0A17]/30 transition-colors group">
+                    <div class="w-12 h-1 bg-[#AB0A17] mb-8 group-hover:w-full transition-all duration-500"></div>
+                    <h3 class="text-white font-bold uppercase tracking-widest mb-4">The Collar</h3>
+                    <p class="text-gray-500 text-sm leading-relaxed">
+                        Our semi-fused collars are engineered to retain their sharp edge for years, through countless
+                        washes and wear, without ever bubbling or losing shape.
+                    </p>
+                </div>
+                <div class="p-10 border border-gray-900 bg-[#0a0a0a] hover:border-[#AB0A17]/30 transition-colors group">
+                    <div class="w-12 h-1 bg-[#AB0A17] mb-8 group-hover:w-full transition-all duration-500"></div>
+                    <h3 class="text-white font-bold uppercase tracking-widest mb-4">Mother-Of-Pearl</h3>
+                    <p class="text-gray-500 text-sm leading-relaxed">
+                        We use genuine Australian mother-of-pearl buttons. Each one is cross-stitched for maximum
+                        security, adding a subtle, natural luster to the garment.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Final Statement -->
+    <section class="py-40 px-6 text-center">
+        <div class="max-w-3xl mx-auto">
+            <h2 class="text-3xl md:text-6xl font-display font-bold text-white uppercase mb-12 italic">
+                A legacy in every <span class="text-[#AB0A17]">fiber.</span>
+            </h2>
+            <p class="text-gray-400 text-lg md:text-xl mb-12">
+                SIXN is not about fast fashion. It's about slow, deliberate creation. It's about honoring the
+                artisans who have spent decades perfecting their craft.
+            </p>
+            <a href="/collection"
+                class="inline-block bg-white text-black font-extrabold uppercase px-12 py-5 tracking-[0.2em] hover:bg-[#AB0A17] hover:text-white transition-all duration-500">
+                Witness the Mastery
+            </a>
+        </div>
+    </section>
+</main>
+
+<style>
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .animate-fade-in-up {
+        animation: fadeInUp 1s ease-out forwards;
+    }
+</style>
+{% endblock %}

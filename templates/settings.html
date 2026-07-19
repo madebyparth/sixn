@@ -1,0 +1,453 @@
+{% extends "base.html" %}
+{% block title %}Settings - SIXN{% endblock %}
+
+{% block styles %}
+<!-- Cropper.js CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
+<style>
+    .cropper-view-box,
+    .cropper-face {
+        border-radius: 50%;
+    }
+
+    /* Custom Scrollbar for this page */
+    .settings-container::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .settings-container::-webkit-scrollbar-track {
+        background: #111;
+    }
+
+    .settings-container::-webkit-scrollbar-thumb {
+        background: #333;
+        border-radius: 3px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="pt-32 pb-20 min-h-screen bg-[#050505]">
+    <div class="max-w-4xl mx-auto px-6">
+
+        <!-- Header -->
+        <h1 class="text-3xl md:text-4xl font-display font-bold text-white mb-2 uppercase tracking-tighter">Account
+            Settings</h1>
+        <p class="text-gray-400 mb-12 text-sm md:text-base">Update your profile and manage your account.</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+
+            <!-- Left: Profile Picture -->
+            <div class="col-span-1">
+                <div class="bg-[#111] border border-gray-800 p-6 rounded-sm text-center">
+                    <div class="relative w-32 h-32 mx-auto mb-6 group">
+                        <div class="w-full h-full rounded-full overflow-hidden border-2 border-[#AB0A17] relative">
+                            <img id="current-pfp"
+                                src="{{ user.profile_image if user.profile_image else 'https://ui-avatars.com/api/?name=' + user.first_name + '+' + user.last_name + '&background=333&color=fff' }}"
+                                alt="Profile" class="w-full h-full object-cover">
+                        </div>
+                        <button onclick="document.getElementById('pfp-input').click()"
+                            class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-full cursor-pointer">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                stroke="currentColor" class="w-8 h-8 text-white">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h13.5A2.25 2.25 0 0 0 20.25 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0ZM18.75 10.5h.008v.008h-.008V10.5Z" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <input type="file" id="pfp-input" class="hidden"
+                        accept="image/png, image/jpeg, image/jpg, image/webp" onchange="handleFileSelect(event)">
+
+                    <h2 class="text-white font-bold uppercase tracking-widest text-sm mb-1">{{ user.first_name }} {{
+                        user.last_name }}</h2>
+                    <p class="text-gray-500 text-xs truncate">{{ user.email if user.email else 'No email linked' }}</p>
+                    <p class="text-gray-600 text-[10px] mt-4 uppercase tracking-wider">Max Size: 5MB</p>
+                </div>
+            </div>
+
+            <!-- Right: Details Form -->
+            <div class="col-span-1 md:col-span-2">
+                <div class="bg-[#111] border border-gray-800 p-8 rounded-sm">
+                    <h3 class="text-white font-display font-bold text-xl mb-6 uppercase">Personal Details</h3>
+
+                    <form id="settings-form" onsubmit="handleDetailsUpdate(event)" class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label
+                                    class="block text-gray-400 text-xs font-bold uppercase tracking-widest mb-2">First
+                                    Name</label>
+                                <input type="text" name="first_name" value="{{ user.first_name }}" required
+                                    class="w-full bg-black/50 border border-gray-800 text-white px-4 py-3 rounded-sm focus:outline-none focus:border-[#AB0A17] transition-colors font-bold">
+                            </div>
+                            <div>
+                                <label class="block text-gray-400 text-xs font-bold uppercase tracking-widest mb-2">Last
+                                    Name</label>
+                                <input type="text" name="last_name" value="{{ user.last_name }}" required
+                                    class="w-full bg-black/50 border border-gray-800 text-white px-4 py-3 rounded-sm focus:outline-none focus:border-[#AB0A17] transition-colors font-bold">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-gray-400 text-xs font-bold uppercase tracking-widest mb-2">Email
+                                Address</label>
+                            <input type="email" name="email" value="{{ user.email if user.email else '' }}"
+                                placeholder="links@example.com"
+                                class="w-full bg-black/50 border border-gray-800 text-white px-4 py-3 rounded-sm focus:outline-none focus:border-[#AB0A17] transition-colors">
+                        </div>
+
+                        <div>
+                            <label class="block text-gray-400 text-xs font-bold uppercase tracking-widest mb-2">Phone
+                                Number</label>
+                            <div class="relative">
+                                <input type="tel" name="phone" id="phone-input" value="{{ user.phone }}"
+                                    class="w-full bg-black/50 border border-gray-800 text-white px-4 py-3 pr-12 rounded-sm focus:outline-none focus:border-[#AB0A17] transition-colors font-mono"
+                                    data-full-phone="{{ user.phone }}" data-masked="true" onfocus="revealPhone()"
+                                    onblur="maskPhoneOnBlur()">
+                                <button type="button" id="phone-eye-btn" onclick="togglePhoneVisibility()"
+                                    class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors"
+                                    title="Show/hide phone number">
+                                    <svg id="phone-eye-icon" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                        viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88" />
+                                    </svg>
+                                </button>
+                            </div>
+                            <p class="text-gray-600 text-[10px] mt-1">* Ensure country code is included (e.g., +91)</p>
+                        </div>
+
+                        <div class="pt-4 flex justify-end">
+                            <button type="submit" id="save-btn"
+                                class="bg-[#AB0A17] text-white px-8 py-3 font-bold uppercase tracking-widest text-sm hover:bg-[#b04820] transition-all transform active:scale-95">
+                                Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CROPPER MODAL -->
+<div id="cropper-modal"
+    class="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="bg-[#111] border border-gray-800 p-4 max-w-xl w-full rounded-sm flex flex-col max-h-[90vh]">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-white font-bold uppercase tracking-widest">Crop Image</h3>
+            <button onclick="closeCropper()" class="text-gray-400 hover:text-white">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+
+        <div class="relative flex-1 bg-black min-h-[300px] overflow-hidden rounded-sm border border-gray-800">
+            <img id="cropper-image" src="" class="max-w-full block"> <!-- Image will be injected here -->
+        </div>
+
+        <div class="mt-6 flex justify-end gap-4">
+            <button onclick="closeCropper()"
+                class="text-gray-400 hover:text-white font-bold uppercase text-xs tracking-widest px-4 py-2">
+                Cancel
+            </button>
+            <button onclick="cropAndUpload()"
+                class="bg-white text-black px-6 py-2 font-bold uppercase text-xs tracking-widest hover:bg-gray-200 transition-colors">
+                Apply & Upload
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- OTP MODAL -->
+<div id="otp-modal"
+    class="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="bg-[#111] border border-gray-800 p-8 max-w-sm w-full rounded-sm flex flex-col">
+        <h3 class="text-white font-bold uppercase tracking-widest mb-2 text-xl">Verify Phone</h3>
+        <p class="text-gray-400 text-sm mb-6">Enter the 6-digit code sent to your new number.</p>
+
+        <input type="text" id="settings-otp-input" placeholder="123456" maxlength="6"
+            class="w-full bg-black/50 border border-gray-800 text-white px-4 py-3 rounded-sm focus:outline-none focus:border-[#AB0A17] text-center font-mono text-xl tracking-widest mb-6 transition-colors">
+
+        <button onclick="submitPhoneOTP()" id="verify-otp-btn"
+            class="w-full bg-[#AB0A17] text-white px-6 py-3 font-bold uppercase tracking-widest text-sm hover:bg-[#b04820] transition-colors mb-4">
+            Verify Code
+        </button>
+
+        <button onclick="closeOtpModal()"
+            class="text-gray-500 hover:text-white uppercase tracking-widest text-xs font-bold text-center w-full">
+            Cancel
+        </button>
+    </div>
+</div>
+
+<!-- SCRIPTS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+<script>
+    let cropper;
+    const modal = document.getElementById('cropper-modal');
+    const image = document.getElementById('cropper-image');
+    const saveBtn = document.getElementById('save-btn');
+    let selectedFile = null;
+    let phoneRevealed = false;
+
+    // Phone masking logic
+    function maskPhone(phone) {
+        if (!phone) return '';
+        // Handle prefixed numbers like +91XXXXXXXXXX or +91 XXXXXXXXXX
+        if (phone.startsWith('+')) {
+            // Try known prefix lengths: +X (1-digit like +1), +XX (2-digit like +91, +44), +XXX (3-digit like +880)
+            // Pick the one that leaves a 10-digit local number, else default to 2-digit code
+            const raw = phone.replace(/[\s-]/g, ''); // strip spaces/dashes
+            let prefixLen = 3; // default: +XX
+            if (raw.length - 2 === 10) prefixLen = 2;  // +1 XXXXXXXXXX
+            else if (raw.length - 3 === 10) prefixLen = 3; // +91 XXXXXXXXXX
+            else if (raw.length - 4 === 10) prefixLen = 4; // +880 XXXXXXXXXX
+
+            const prefix = raw.slice(0, prefixLen);
+            const digits = raw.slice(prefixLen);
+            if (digits.length <= 4) return phone;
+            const last4 = digits.slice(-4);
+            const starCount = digits.length - 4;
+            return prefix + ' ' + '●'.repeat(starCount) + last4;
+        }
+        // No prefix found — mask all but last 4
+        const digits = phone.replace(/\s/g, '');
+        if (digits.length <= 4) return phone;
+        const last4 = digits.slice(-4);
+        const starCount = digits.length - 4;
+        return '●'.repeat(starCount) + last4;
+    }
+
+    function setPhoneDisplay(revealed) {
+        const input = document.getElementById('phone-input');
+        const eyeIcon = document.getElementById('phone-eye-icon');
+        const fullPhone = input.dataset.fullPhone;
+        phoneRevealed = revealed;
+
+        if (revealed) {
+            input.value = fullPhone;
+            // Open eye icon
+            eyeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />';
+        } else {
+            input.value = maskPhone(fullPhone);
+            // Closed eye icon (eye-slash)
+            eyeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88" />';
+        }
+    }
+
+    function togglePhoneVisibility() {
+        setPhoneDisplay(!phoneRevealed);
+        if (phoneRevealed) {
+            document.getElementById('phone-input').focus();
+        }
+    }
+
+    function revealPhone() {
+        setPhoneDisplay(true);
+    }
+
+    function maskPhoneOnBlur() {
+        // Small delay to allow click on eye button to register
+        setTimeout(() => {
+            if (document.activeElement !== document.getElementById('phone-input')) {
+                // Update stored full phone in case user edited it
+                const input = document.getElementById('phone-input');
+                input.dataset.fullPhone = input.value;
+                setPhoneDisplay(false);
+            }
+        }, 150);
+    }
+
+    // Mask on page load
+    document.addEventListener('DOMContentLoaded', () => {
+        setPhoneDisplay(false);
+    });
+
+    // 1. Handle File Selection
+    function handleFileSelect(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Validation
+        if (file.size > 5 * 1024 * 1024) {
+            settingsToast('Error', 'File size exceeds 5MB limit.');
+            e.target.value = ''; // Reset
+            return;
+        }
+
+        const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
+        if (!validTypes.includes(file.type)) {
+            settingsToast('Error', 'Only JPG, PNG, and WebP images allowed.');
+            e.target.value = '';
+            return;
+        }
+
+        selectedFile = file;
+
+        // Show Modal & Init Cropper
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            image.src = e.target.result;
+            modal.classList.remove('hidden');
+
+            // Wait for image load in DOM logic
+            if (cropper) cropper.destroy();
+            cropper = new Cropper(image, {
+                aspectRatio: 1,
+                viewMode: 1,
+                dragMode: 'move',
+                autoCropArea: 1, // Full area
+                background: false,
+            });
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function closeCropper() {
+        modal.classList.add('hidden');
+        if (cropper) cropper.destroy();
+        document.getElementById('pfp-input').value = ''; // Reset input
+    }
+
+    // 2. Crop & Upload
+    function cropAndUpload() {
+        if (!cropper) return;
+
+        // Get canvas
+        cropper.getCroppedCanvas({
+            width: 500, // Reasonable max width for PFP
+            height: 500
+        }).toBlob((blob) => {
+            if (!blob) return;
+
+            // Prepare FormData
+            const formData = new FormData();
+            formData.append('profile_image', blob, selectedFile.name); // Send blob as file
+
+            // Show loading or disable btn?
+            settingsToast('Uploading', 'Updating your profile picture...');
+
+            fetch('/api/user/pfp', {
+                method: 'POST',
+                body: formData
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        settingsToast('Success', 'Profile picture updated!');
+                        // Update UI immediately
+                        document.getElementById('current-pfp').src = data.image_url;
+                        closeCropper();
+                    } else {
+                        settingsToast('Error', data.error || 'Upload failed');
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    settingsToast('Error', 'Server connection failed');
+                });
+        }, selectedFile.type);
+    }
+
+    // 3. Handle Text Details
+    async function handleDetailsUpdate(e) {
+        e.preventDefault();
+
+        const form = e.target;
+        const formData = new FormData(form);
+        const jsonData = Object.fromEntries(formData.entries());
+
+        // Always send the real phone number, not the masked one
+        const phoneInput = document.getElementById('phone-input');
+        jsonData.phone = phoneInput.dataset.fullPhone || jsonData.phone;
+
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Saving...';
+
+        try {
+            const res = await fetch('/api/user/update', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(jsonData)
+            });
+
+            const data = await res.json();
+
+            if (res.ok && data.status === 'success') {
+                settingsToast('Success', 'Profile details updated successfully');
+            } else if (data.status === 'otp_required') {
+                settingsToast('Verify', 'OTP sent to new phone number');
+                openOtpModal();
+            } else {
+                settingsToast('Error', data.error || 'Update failed');
+            }
+        } catch (err) {
+            settingsToast('Error', 'Connection failed');
+        } finally {
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'Save Changes';
+        }
+    }
+
+    // 4. OTP Logic
+    function openOtpModal() {
+        document.getElementById('otp-modal').classList.remove('hidden');
+        document.getElementById('settings-otp-input').focus();
+    }
+
+    function closeOtpModal() {
+        document.getElementById('otp-modal').classList.add('hidden');
+        document.getElementById('settings-otp-input').value = '';
+    }
+
+    async function submitPhoneOTP() {
+        const otp = document.getElementById('settings-otp-input').value;
+        if (!otp || otp.length < 6) {
+            settingsToast('Error', 'Please enter a valid OTP');
+            return;
+        }
+
+        const btn = document.getElementById('verify-otp-btn');
+        btn.textContent = 'Verifying...';
+        btn.disabled = true;
+
+        try {
+            const res = await fetch('/api/user/verify-phone-update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ otp: otp })
+            });
+
+            const data = await res.json();
+
+            if (res.ok && data.status === 'success') {
+                settingsToast('Success', 'Phone number updated successfully!');
+                closeOtpModal();
+            } else {
+                settingsToast('Error', data.error || 'Verification failed');
+            }
+        } catch (e) {
+            settingsToast('Error', 'Verification error');
+        } finally {
+            btn.textContent = 'Verify Code';
+            btn.disabled = false;
+        }
+    }
+
+    // Use the global showToast from base.html (4 args: title, msg, colorClass, iconHtml)
+    // Helper wrappers for convenience
+    function settingsToast(title, msg) {
+        const isError = title === 'Error';
+        const colorClass = isError ? 'bg-red-500/20 text-red-500' : 'bg-green-500/20 text-green-500';
+        const icon = isError ? '⚠️' : '✅';
+        showToast(title, msg, colorClass, icon);
+    }
+</script>
+{% endblock %}

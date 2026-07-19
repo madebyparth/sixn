@@ -1,0 +1,1499 @@
+{% extends "base.html" %}
+
+{% block title %}Secure Checkout - SIXN{% endblock %}
+
+{% block content %}
+<div class="pt-32 pb-20 px-6 min-h-screen bg-[#050505]">
+    <div class="max-w-7xl mx-auto">
+        <h1
+            class="text-3xl md:text-4xl font-display font-bold text-white uppercase mb-12 border-b border-gray-800 pb-6 flex justify-between items-center">
+            <span>Secure Checkout</span>
+            <span class="text-sm font-sans text-gray-500 font-normal normal-case flex items-center gap-2">
+                <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
+                    </path>
+                </svg>
+                Encrypted & Safe
+            </span>
+        </h1>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-12">
+
+            <!-- LEFT COLUMN: SHIPPING INFO -->
+            <div class="lg:col-span-7 space-y-8">
+
+                <!-- Contact Info (Read Only) -->
+                <div class="bg-[#111] p-8 rounded-sm border border-gray-800">
+                    <h2 class="text-xl font-bold text-white uppercase tracking-widest mb-6">Contact Information</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label
+                                class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Name</label>
+                            <input type="text" value="{{ user.first_name }} {{ user.last_name }}" disabled
+                                class="w-full bg-[#0a0a0a] border border-gray-700 text-gray-400 p-4 cursor-not-allowed">
+                        </div>
+                        <div>
+                            <label
+                                class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Phone</label>
+                            <input type="text" value="{{ user.phone }}" disabled
+                                class="w-full bg-[#0a0a0a] border border-gray-700 text-gray-400 p-4 cursor-not-allowed">
+                        </div>
+                        <!-- Email (Editable) -->
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                                Email Address <span class="text-[#AB0A17]">(Optional)</span>
+                            </label>
+                            <input type="email" id="addr-email" placeholder="you@example.com"
+                                value="{{ user.email or '' }}"
+                                class="w-full bg-[#1a1a1a] border border-gray-700 text-white p-4 focus:border-[#AB0A17] outline-none transition-colors">
+                            <p class="text-[10px] text-gray-500 mt-1">We'll send order tracking updates here.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Shipping Address Section -->
+                <div class="bg-[#111] p-8 rounded-sm border border-gray-800 relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-1 h-full bg-[#AB0A17]"></div>
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-white uppercase tracking-widest">Shipping Address</h2>
+                        {% if addresses and addresses|length > 0 %}
+                        <a href="/addresses"
+                            class="text-[#AB0A17] text-xs font-bold uppercase tracking-wider hover:text-white transition-colors">
+                            Manage Addresses
+                        </a>
+                        {% endif %}
+                    </div>
+
+                    <!-- Saved Addresses Selection -->
+                    {% if addresses and addresses|length > 0 %}
+                    <div id="saved-addresses-section" class="mb-6">
+                        <p class="text-gray-500 text-xs uppercase tracking-widest mb-4">Select a delivery address</p>
+                        <div class="space-y-3" id="saved-addresses-list">
+                            {% for addr in addresses %}
+                            <label
+                                class="saved-address-card group cursor-pointer flex items-start gap-4 p-4 border border-gray-700 rounded-sm bg-[#1a1a1a] hover:border-[#AB0A17] transition-all duration-300 {{ 'border-[#AB0A17] bg-[#AB0A17]/5' if addr.id == default_address_id else '' }}"
+                                data-address-id="{{ addr.id }}">
+                                <div class="relative mt-1">
+                                    <input type="radio" name="selected_address" value="{{ addr.id }}" {{ 'checked' if
+                                        addr.id==default_address_id else '' }} class="sr-only peer">
+                                    <div
+                                        class="w-5 h-5 border-2 border-gray-600 rounded-full peer-checked:border-[#AB0A17] transition-colors">
+                                    </div>
+                                    <div
+                                        class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-[#AB0A17] rounded-full scale-0 peer-checked:scale-100 transition-transform">
+                                    </div>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <span class="text-white font-bold text-sm uppercase">{{ addr.label or 'Address'
+                                            }}</span>
+                                        {% if addr.id == default_address_id %}
+                                        <span
+                                            class="bg-[#AB0A17] text-white text-[8px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-sm">Default</span>
+                                        {% endif %}
+                                    </div>
+                                    <p class="text-gray-400 text-sm">{{ addr.street }}</p>
+                                    {% if addr.landmark %}
+                                    <p class="text-gray-500 text-xs italic">{{ addr.landmark }}</p>
+                                    {% endif %}
+                                    <p class="text-gray-500 text-xs">{{ addr.city }}, {{ addr.state }} - {{ addr.zip }}
+                                    </p>
+                                </div>
+                            </label>
+                            {% endfor %}
+
+                            <!-- New Address Option -->
+                            <label
+                                class="saved-address-card group cursor-pointer flex items-center gap-4 p-4 border border-gray-700 rounded-sm bg-[#1a1a1a] hover:border-[#AB0A17] transition-all duration-300"
+                                data-address-id="new">
+                                <div class="relative">
+                                    <input type="radio" name="selected_address" value="new" class="sr-only peer">
+                                    <div
+                                        class="w-5 h-5 border-2 border-gray-600 rounded-full peer-checked:border-[#AB0A17] transition-colors">
+                                    </div>
+                                    <div
+                                        class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-[#AB0A17] rounded-full scale-0 peer-checked:scale-100 transition-transform">
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <svg class="w-5 h-5 text-gray-500 group-hover:text-[#AB0A17] transition-colors"
+                                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 4v16m8-8H4"></path>
+                                    </svg>
+                                    <span
+                                        class="text-gray-400 font-bold text-sm uppercase group-hover:text-white transition-colors">Enter
+                                        a new address</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- New Address Form (shown by default if no saved addresses, or when "new" is selected) -->
+                    <div id="new-address-form" class="{{ 'hidden' if addresses and addresses|length > 0 else '' }}">
+                        <form id="shipping-form" class="space-y-6">
+                            <div class="grid grid-cols-1 gap-6">
+                                <div>
+                                    <label
+                                        class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Street
+                                        Address <span class="text-[#AB0A17]">*</span></label>
+                                    <input type="text" id="addr-street" placeholder="123 Fashion Ave"
+                                        class="w-full bg-[#1a1a1a] border border-gray-700 text-white p-4 focus:border-[#AB0A17] outline-none transition-colors">
+                                </div>
+                            </div>
+
+                            <!-- Landmark Field -->
+                            <div class="grid grid-cols-1 gap-6">
+                                <div>
+                                    <label
+                                        class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Landmark
+                                        <span class="text-gray-600 font-normal normal-case">(Optional)</span></label>
+                                    <input type="text" id="addr-landmark" placeholder="Near Park, Behind Mall, etc."
+                                        class="w-full bg-[#1a1a1a] border border-gray-700 text-white p-4 focus:border-[#AB0A17] outline-none transition-colors">
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label
+                                        class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">City
+                                        <span class="text-[#AB0A17]">*</span></label>
+                                    <input type="text" id="addr-city"
+                                        class="w-full bg-[#1a1a1a] border border-gray-700 text-white p-4 focus:border-[#AB0A17] outline-none transition-colors">
+                                </div>
+                                <div>
+                                    <label
+                                        class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">State
+                                        / Province <span class="text-[#AB0A17]">*</span></label>
+                                    <input type="text" id="addr-state"
+                                        class="w-full bg-[#1a1a1a] border border-gray-700 text-white p-4 focus:border-[#AB0A17] outline-none transition-colors">
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label
+                                        class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Zip
+                                        /
+                                        Postal Code <span class="text-[#AB0A17]">*</span></label>
+                                    <input type="text" id="addr-zip"
+                                        class="w-full bg-[#1a1a1a] border border-gray-700 text-white p-4 focus:border-[#AB0A17] outline-none transition-colors">
+                                </div>
+                                <div>
+                                    <label
+                                        class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Country
+                                        <span class="text-[#AB0A17]">*</span></label>
+                                    <select id="addr-country"
+                                        class="w-full bg-[#1a1a1a] border border-gray-700 text-white p-4 focus:border-[#AB0A17] outline-none transition-colors appearance-none">
+                                        <option value="India">India</option>
+                                        <option value="USA">United States</option>
+                                        <option value="UK">United Kingdom</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Save Address Option (only for new addresses) -->
+                            <div class="pt-4 border-t border-gray-800">
+                                <label class="flex items-center gap-3 cursor-pointer group">
+                                    <div class="relative flex items-center justify-center">
+                                        <input type="checkbox" id="save-new-address" class="sr-only peer">
+                                        <div
+                                            class="w-5 h-5 border-2 border-gray-600 rounded bg-[#1a1a1a] peer-checked:bg-[#AB0A17] peer-checked:border-[#AB0A17] transition-all duration-200">
+                                        </div>
+                                        <svg class="w-3 h-3 text-white absolute opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none"
+                                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3"
+                                                d="M5 13l4 4L19 7"></path>
+                                        </svg>
+                                    </div>
+                                    <span class="text-sm text-gray-400 group-hover:text-white transition-colors">Save
+                                        this address for future orders</span>
+                                </label>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- RIGHT COLUMN: ORDER SUMMARY -->
+            <div class="lg:col-span-5">
+                <div class="bg-[#111] p-8 rounded-sm border border-gray-800 top-32">
+                    <h2
+                        class="text-xl font-bold text-white uppercase tracking-widest mb-6 border-b border-gray-800 pb-4">
+                        Order Summary</h2>
+
+                    <div id="checkout-items"
+                        class="space-y-6 max-h-[400px] overflow-y-auto pr-2 mb-8 scrollbar-thin scrollbar-thumb-gray-800">
+                        <!-- Populated by JS -->
+                        <div class="animate-pulse flex space-x-4">
+                            <div class="rounded-full bg-gray-800 h-12 w-12"></div>
+                            <div class="flex-1 space-y-4 py-1">
+                                <div class="h-4 bg-gray-800 rounded w-3/4"></div>
+                                <div class="space-y-2">
+                                    <div class="h-4 bg-gray-800 rounded"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Coupon Code Input -->
+                <div class="mb-6 border-t border-gray-800 pt-6">
+                    <div class="flex gap-2">
+                        <input type="text" id="coupon-input" placeholder="Coupon Code"
+                            class="flex-1 bg-[#0a0a0a] border border-gray-700 p-2 text-white text-sm focus:border-[#AB0A17] outline-none uppercase font-mono">
+                        <button onclick="applyCoupon()"
+                            class="bg-[#333] hover:bg-[#AB0A17] text-white px-4 py-2 text-xs font-bold uppercase tracking-widest transition-colors rounded">
+                            Apply
+                        </button>
+                        <button onclick="removeCoupon()" id="coupon-remove-btn"
+                            class="bg-red-900/50 hover:bg-red-700 text-red-200 px-4 py-2 text-xs font-bold uppercase tracking-widest transition-colors rounded hidden">
+                            Remove
+                        </button>
+                    </div>
+                    <div id="coupon-message" class="text-[10px] mt-2 font-bold uppercase tracking-wider hidden"></div>
+                </div>
+
+                <div class="mb-6 pt-4 border-t border-gray-800">
+                    <!-- HIDDEN DATA FIELD FOR JS -->
+                    <input type="hidden" id="user-wallet-balance-data" value="{{ current_user.wallet_balance }}">
+
+                    {% if current_user.wallet_balance > 0 %}
+                    <div class="flex items-center justify-between p-4 bg-[#1a1a1a] border border-gray-700 rounded-sm hover:border-[#AB0A17] transition-colors cursor-pointer"
+                        onclick="toggleWalletUsage()">
+                        <div class="flex items-center gap-3">
+                            <div class="relative flex items-center justify-center">
+                                <input type="checkbox" id="use-wallet-checkbox" class="sr-only peer"
+                                    onchange="renderSummary()">
+                                <div
+                                    class="w-5 h-5 border-2 border-gray-600 rounded bg-[#0a0a0a] peer-checked:bg-[#AB0A17] peer-checked:border-[#AB0A17] transition-all duration-200">
+                                </div>
+                                <svg class="w-3 h-3 text-white absolute opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none"
+                                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3"
+                                        d="M5 13l4 4L19 7"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-white text-sm font-bold uppercase tracking-wider">Use Wallet Balance</p>
+                                <p class="text-xs text-gray-500">Available: <span class="text-white font-mono">₹{{
+                                        current_user.wallet_balance }}</span></p>
+                            </div>
+                        </div>
+                        <span id="wallet-deduction-preview"
+                            class="text-[#AB0A17] font-bold text-sm hidden">-₹0.00</span>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="space-y-4 border-t border-gray-800 pt-6 mb-8 text-sm text-gray-400">
+                    <div class="flex justify-between">
+                        <span>Subtotal</span>
+                        <span class="text-white font-bold" id="summary-subtotal">$0.00</span>
+                    </div>
+                    <div class="flex justify-between" id="discount-row" class="hidden">
+                        <span>Discount <span id="discount-code"
+                                class="text-xs bg-[#AB0A17]/20 text-[#AB0A17] px-1 rounded ml-1"></span></span>
+                        <span class="text-[#AB0A17] font-bold" id="summary-discount">-$0.00</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Shipping</span>
+                        <span class="text-white font-bold" id="summary-shipping">Free</span>
+                    </div>
+                    <div class="flex justify-between hidden" id="wallet-deduction-row">
+                        <span class="text-green-500">Wallet Used</span>
+                        <span class="text-green-500 font-bold" id="wallet-deduction-amount">-₹0.00</span>
+                    </div>
+                    <div class="flex justify-between text-base pt-4 border-t border-gray-800 mt-4">
+                        <span class="text-white font-bold uppercase tracking-wider">Total</span>
+                        <span class="text-[#AB0A17] font-display font-bold text-2xl" id="summary-total">$0.00</span>
+                    </div>
+                </div>
+
+                <!-- Continue Button -->
+                <button onclick="openPaymentModal()"
+                    class="w-full bg-[#AB0A17] text-white font-extrabold uppercase py-5 tracking-[0.2em] hover:bg-orange-700 transition-all duration-300 shadow-lg flex items-center justify-center gap-3 rounded-sm">
+                    <span>Continue</span>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Payment Method Modal -->
+<div id="payment-modal"
+    class="fixed inset-0 z-[60] hidden items-center justify-center p-4 bg-black/80 backdrop-blur-sm flex">
+    <div class="bg-[#111] border border-gray-800 w-full max-w-md rounded-sm relative overflow-hidden shadow-2xl animate-fade-in scale-95 opacity-0 transition-all duration-300"
+        id="payment-modal-content">
+        <div class="absolute top-0 left-0 w-full h-1 bg-[#AB0A17]"></div>
+        <div class="p-8">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-white uppercase tracking-widest">Payment Method</h3>
+                <button onclick="closePaymentModal()" class="text-gray-500 hover:text-white transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Delivery Estimate Section -->
+            <div id="delivery-estimate-section" class="mb-8 hidden">
+                <div class="bg-[#1a1a1a] p-4 rounded-sm border border-gray-700 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase tracking-widest mb-1">Estimated Delivery</p>
+                        <p class="text-white font-bold" id="delivery-date-display">--</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-xs text-gray-500 uppercase tracking-widest mb-1">Shipping</p>
+                        <p class="text-[#AB0A17] font-bold" id="modal-shipping-cost">Free</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-3 mb-8">
+                <!-- Online Payment Option -->
+                <label
+                    class="payment-method-option group cursor-pointer flex items-center gap-4 p-4 border border-gray-700 rounded-sm bg-[#1a1a1a] hover:border-[#AB0A17] transition-all duration-300"
+                    data-method="online">
+                    <div class="relative">
+                        <input type="radio" name="payment_method" value="online" checked class="sr-only peer">
+                        <div
+                            class="w-5 h-5 border-2 border-gray-600 rounded-full peer-checked:border-[#AB0A17] transition-colors">
+                        </div>
+                        <div
+                            class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-[#AB0A17] rounded-full scale-0 peer-checked:scale-100 transition-transform">
+                        </div>
+                    </div>
+                    <div class="flex-1">
+                        <span class="text-white font-bold block">Pay Online</span>
+                        <span class="text-gray-500 text-xs">Credit/Debit Card, UPI, Net Banking</span>
+                    </div>
+                </label>
+
+                <!-- Cash on Delivery Option -->
+                <label
+                    class="payment-method-option group cursor-pointer flex items-center gap-4 p-4 border border-gray-700 rounded-sm bg-[#1a1a1a] hover:border-[#AB0A17] transition-all duration-300"
+                    data-method="cod">
+                    <div class="relative">
+                        <input type="radio" name="payment_method" value="cod" class="sr-only peer">
+                        <div
+                            class="w-5 h-5 border-2 border-gray-600 rounded-full peer-checked:border-[#AB0A17] transition-colors">
+                        </div>
+                        <div
+                            class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-[#AB0A17] rounded-full scale-0 peer-checked:scale-100 transition-transform">
+                        </div>
+                    </div>
+                    <div class="flex-1">
+                        <span class="text-white font-bold block">Cash on Delivery</span>
+                        <span class="text-gray-500 text-xs">Pay when you receive your order</span>
+                    </div>
+                </label>
+            </div>
+
+            <button id="pay-btn" onclick="initiatePayment()"
+                class="w-full bg-white text-black font-extrabold uppercase py-4 tracking-[0.2em] hover:bg-[#AB0A17] hover:text-white transition-all duration-300 shadow-lg flex items-center justify-center gap-3 rounded-sm">
+                <svg id="pay-btn-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
+                    </path>
+                </svg>
+                <span id="pay-btn-text">Pay Securely</span>
+            </button>
+
+            <div
+                class="mt-4 flex justify-center gap-4 opacity-50 grayscale hover:grayscale-0 transition-all duration-500">
+                <img src="https://cdn.razorpay.com/static/assets/logo/payment.svg" class="h-5">
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+    // --- CHECKOUT PAGE SCRIPT ---
+    // Wait for DOM and base.html scripts to load before executing
+    document.addEventListener('DOMContentLoaded', function () {
+        // Note: CURRENCY, currentCurrency, and formatPrice are defined in base.html
+
+        // --- COUPON STATE ---
+        // Initialize globally within this closure so renderSummary can access it
+        window.appliedCoupon = null;
+
+        // --- WALLET TOGGLE FUNCTION ---
+        window.toggleWalletUsage = function () {
+            const checkbox = document.getElementById('use-wallet-checkbox');
+            if (checkbox) {
+                checkbox.checked = !checkbox.checked;
+                // If renderSummary exists, call it to update totals
+                if (typeof renderSummary === 'function') {
+                    renderSummary();
+                }
+            }
+        };
+
+        // --- SAVED ADDRESSES DATA ---
+        const savedAddresses = {{ addresses | tojson | safe
+    }};
+    const defaultAddressId = {{ (default_address_id | tojson) if default_address_id else 'null' | safe }};
+
+    // --- ADDRESS SELECTION HANDLING ---
+    // --- UI ELEMENTS ---
+    const deliverySection = document.getElementById('delivery-estimate-section');
+    const deliveryDateDisplay = document.getElementById('delivery-date-display');
+    const payBtn = document.getElementById('pay-btn');
+    const payBtnText = document.getElementById('pay-btn-text');
+
+    // --- ADDRESS SELECTION HANDLING ---
+    const addressRadios = document.querySelectorAll('input[name="selected_address"]:checked'); // Fixed selector in init logic below
+    // Re-select proper radio list
+    const allAddressRadios = document.querySelectorAll('input[name="selected_address"]');
+    const newAddressForm = document.getElementById('new-address-form');
+
+    // Forward declare - actual implementation is in checkServiceability section
+    function handleAddressChangeForServiceability() {
+        console.log('[DEBUG] handleAddressChangeForServiceability called');
+        const selectedRadio = document.querySelector('input[name="selected_address"]:checked');
+        console.log('[DEBUG] Selected radio:', selectedRadio?.value);
+
+        if (selectedRadio && selectedRadio.value !== 'new') {
+            const addr = savedAddresses.find(a => a.id === selectedRadio.value);
+            console.log('[DEBUG] Found address:', addr);
+            if (addr && addr.zip) {
+                console.log('[DEBUG] Calling checkServiceability with pincode:', addr.zip, 'Country:', addr.country);
+                checkServiceability(addr.zip, addr.country || 'India');
+            }
+        } else {
+            // If new address, wait for zip input
+            const zipInput = document.getElementById('addr-zip');
+            const countryInput = document.getElementById('addr-country');
+
+            if (zipInput && zipInput.value) {
+                const country = countryInput ? countryInput.value : 'India';
+                console.log('[DEBUG] New address, calling with zip:', zipInput.value, 'Country:', country);
+                checkServiceability(zipInput.value, country);
+            }
+        }
+    }
+
+    function updateAddressCards() {
+        document.querySelectorAll('.saved-address-card').forEach(card => {
+            const radio = card.querySelector('input[type="radio"]');
+            if (radio && radio.checked) {
+                card.classList.add('border-[#AB0A17]', 'bg-[#AB0A17]/5');
+                card.classList.remove('border-gray-700');
+            } else {
+                card.classList.remove('border-[#AB0A17]', 'bg-[#AB0A17]/5');
+                card.classList.add('border-gray-700');
+            }
+        });
+    }
+
+    function handleAddressSelection() {
+        const selectedValue = document.querySelector('input[name="selected_address"]:checked')?.value;
+
+        if (selectedValue === 'new') {
+            newAddressForm.classList.remove('hidden');
+        } else if (newAddressForm) {
+            newAddressForm.classList.add('hidden');
+        }
+
+        updateAddressCards();
+
+        // Trigger Serviceability Check
+        handleAddressChangeForServiceability();
+    }
+
+    allAddressRadios.forEach(radio => {
+        radio.addEventListener('change', handleAddressSelection);
+    });
+
+    // ALSO add click handlers to the card elements themselves for reliability
+    document.querySelectorAll('.saved-address-card').forEach(card => {
+        card.addEventListener('click', function (e) {
+            // Find and check the radio inside this card
+            const radio = this.querySelector('input[type="radio"]');
+            if (radio && !radio.checked) {
+                radio.checked = true;
+                // Manually trigger the handler since programmatic checks don't fire 'change'
+                handleAddressSelection();
+            }
+        });
+    });
+
+    // --- LOAD CHECKOUT ITEMS (moved before address init to ensure container is defined) ---
+    let checkoutItems = [];
+    try {
+        checkoutItems = JSON.parse(localStorage.getItem('sixn_checkout_items') || '[]');
+        if (checkoutItems.length === 0) {
+            alert("No items to checkout. Redirecting to store.");
+            window.location.href = '/';
+            return;
+        }
+    } catch (e) {
+        console.error(e);
+        window.location.href = '/';
+        return;
+    }
+
+    // Render Summary Function
+    const container = document.getElementById('checkout-items');
+
+    // Initialize address selection state (after container is defined)
+    if (addressRadios.length > 0) {
+        handleAddressSelection();
+    }
+
+    function renderSummary() {
+        let totalUSD = 0;
+
+        container.innerHTML = checkoutItems.map((item, index) => {
+            const itemTotalUSD = item.price * (item.quantity || 1);
+            totalUSD += itemTotalUSD;
+            return `
+<div class="flex gap-4 items-center group">
+    <a href="/product/${item.id}" class="w-16 h-16 bg-[#0a0a0a] rounded overflow-hidden flex-shrink-0 border border-gray-800 hover:border-[#AB0A17] transition-colors">
+        <img src="${item.image}" class="w-full h-full object-cover">
+    </a>
+    <div class="flex-1 min-w-0">
+        <a href="/product/${item.id}" class="text-white font-bold text-sm line-clamp-1 hover:text-[#AB0A17] transition-colors block">${item.name}</a>
+        <div class="flex flex-wrap gap-2 my-1">
+             ${item.selectedSize ? `<span class="text-[10px] font-bold text-gray-400 border border-gray-700 px-1 rounded uppercase">Size: ${item.selectedSize}</span>` : ''}
+             ${item.selectedColor && item.selectedColor.name ? `<span class="text-[10px] font-bold text-gray-400 border border-gray-700 px-1 rounded uppercase flex items-center gap-1"><span class="w-2 h-2 rounded-full inline-block" style="background-color: ${item.selectedColor.hex}"></span> ${item.selectedColor.name}</span>` : ''}
+        </div>
+        <p class="text-xs text-gray-500 uppercase">${item.brand || 'SIXN'}</p>
+        <div class="flex items-center gap-2 mt-2">
+            <button onclick="updateQuantity(${index}, -1)" class="w-6 h-6 flex items-center justify-center bg-gray-800 hover:bg-[#AB0A17] text-white rounded transition-colors text-xs font-bold">−</button>
+            <span class="text-white text-sm font-bold w-6 text-center">${item.quantity || 1}</span>
+            <button onclick="updateQuantity(${index}, 1)" class="w-6 h-6 flex items-center justify-center bg-gray-800 hover:bg-[#AB0A17] text-white rounded transition-colors text-xs font-bold">+</button>
+        </div>
+    </div>
+    <div class="text-right">
+        <span class="text-white font-bold text-sm block">${formatPrice(itemTotalUSD)}</span>
+        <button onclick="removeItem(${index})" class="text-gray-600 hover:text-red-500 text-[10px] uppercase tracking-wider mt-1 transition-colors">Remove</button>
+    </div>
+</div>
+`;
+        }).join('');
+
+        document.getElementById('summary-subtotal').textContent = formatPrice(totalUSD);
+
+        // Recalculate discount if coupon exists
+        let finalTotal = totalUSD;
+        let discount = 0;
+        if (typeof window.appliedCoupon !== 'undefined' && window.appliedCoupon) {
+            if (window.appliedCoupon.discount_type === 'percentage') {
+                discount = (totalUSD * window.appliedCoupon.discount_value) / 100;
+            } else {
+                discount = window.appliedCoupon.discount_value;
+            }
+
+            // Cap discount
+            if (discount > totalUSD) discount = totalUSD;
+
+            // Update appliedCoupon object with new amounts so verifyPayment works correctly
+            window.appliedCoupon.discount_amount = discount;
+            window.appliedCoupon.new_total = totalUSD - discount;
+
+            // Update UI
+            document.getElementById('discount-row').classList.remove('hidden');
+            document.getElementById('discount-code').textContent = window.appliedCoupon.code;
+            document.getElementById('summary-discount').textContent = `-${formatPrice(discount)}`;
+            finalTotal = totalUSD - discount;
+        } else {
+            document.getElementById('discount-row')?.classList.add('hidden');
+        }
+
+        // --- WALLET USAGE LOGIC ---
+        // Wallet deduction is calculated AFTER shipping (see below lines 700+)
+        // to ensure wallet can cover shipping costs too
+
+        // --- SHIPPING COST CALCULATION ---
+        let shippingCost = 0;
+
+        // --- LOADING STATE ---
+        // If calculation is in progress, block Total and Show Loading
+        if (typeof window.isCalculatingShipping !== 'undefined' && window.isCalculatingShipping) {
+            document.getElementById('summary-shipping').innerHTML = '<span class="animate-pulse">Calculated at next step...</span>';
+            document.getElementById('summary-shipping').className = 'text-gray-400 text-xs italic';
+
+            document.getElementById('summary-total').innerHTML = '<span class="animate-pulse">Loading...</span>';
+
+            // Also update modal if present
+            const modalShippingEl = document.getElementById('modal-shipping-cost');
+            if (modalShippingEl) {
+                modalShippingEl.textContent = 'Calculating...';
+                modalShippingEl.className = 'text-gray-400 italic';
+            }
+            return; // Stop rendering total until calculation is done
+        }
+
+        // Logic: Free shipping if Subtotal (totalUSD) > 1000
+        if (totalUSD >= 1000) {
+            shippingCost = 0;
+        } else {
+            // Use fetched rate if available, else 0 (to be calculated)
+            if (typeof window.fetchedShippingRate !== 'undefined' && window.fetchedShippingRate !== null) {
+                shippingCost = window.fetchedShippingRate;
+            } else {
+                shippingCost = 0; // Default to 0 until calculated
+            }
+        }
+
+        const shippingEl = document.getElementById('summary-shipping');
+        if (shippingCost === 0) {
+            // If total > 1000 it is Free, else if rate is not set, it might be "To be calculated"?
+            // But valid rate can be 0.
+            // Distinguish:
+            if (totalUSD >= 1000) {
+                shippingEl.textContent = 'Free';
+                shippingEl.className = 'text-green-500 font-bold uppercase';
+            } else if (typeof window.fetchedShippingRate === 'undefined' || window.fetchedShippingRate === null) {
+                // Not yet calculated
+                shippingEl.textContent = 'Calculated at next step';
+                shippingEl.className = 'text-gray-500 text-xs uppercase';
+            } else {
+                // Actually 0 cost (unlikely but possible)
+                shippingEl.textContent = 'Free';
+                shippingEl.className = 'text-green-500 font-bold uppercase';
+            }
+        } else {
+            shippingEl.innerHTML = formatPrice(shippingCost);
+            shippingEl.className = 'text-white font-bold';
+        }
+
+        // Sync with Modal
+        const modalShippingEl = document.getElementById('modal-shipping-cost');
+        if (modalShippingEl) {
+            if (shippingCost === 0 && totalUSD >= 1000) {
+                modalShippingEl.textContent = 'Free';
+                modalShippingEl.className = 'text-green-500 font-bold';
+            } else if (shippingCost > 0) {
+                modalShippingEl.textContent = formatPrice(shippingCost);
+                modalShippingEl.className = 'text-[#AB0A17] font-bold';
+            } else {
+                modalShippingEl.textContent = '-';
+            }
+        }
+
+        window.appliedShippingCost = shippingCost;
+        finalTotal += shippingCost;
+        // ---------------------------------
+
+        // --- WALLET DEDUCTION (after shipping) ---
+        let walletDeducted = 0;
+        const useWalletCheckbox = document.getElementById('use-wallet-checkbox');
+        const userWalletBalance = parseFloat(document.getElementById('user-wallet-balance-data')?.value || 0);
+        const walletDeductionRow = document.getElementById('wallet-deduction-row');
+        const walletDeductionPreview = document.getElementById('wallet-deduction-preview');
+
+        if (useWalletCheckbox && useWalletCheckbox.checked && userWalletBalance > 0) {
+            // Deduct up to wallet balance or total amount, whichever is less
+            walletDeducted = Math.min(userWalletBalance, finalTotal);
+            finalTotal -= walletDeducted;
+
+            // Show deduction row
+            if (walletDeductionRow) {
+                walletDeductionRow.classList.remove('hidden');
+                const walletAmountEl = document.getElementById('wallet-deduction-amount');
+                if (walletAmountEl) walletAmountEl.textContent = `-₹${walletDeducted.toFixed(2)}`;
+            }
+
+            // Update preview on wallet checkbox area
+            if (walletDeductionPreview) {
+                walletDeductionPreview.textContent = `-₹${walletDeducted.toFixed(2)}`;
+                walletDeductionPreview.classList.remove('hidden');
+            }
+        } else {
+            if (walletDeductionRow) walletDeductionRow.classList.add('hidden');
+            if (walletDeductionPreview) walletDeductionPreview.classList.add('hidden');
+        }
+
+        // Store wallet deduction for payment
+        window.appliedWalletDeduction = walletDeducted;
+        // ---------------------------------
+
+        document.getElementById('summary-total').textContent = formatPrice(finalTotal);
+
+        // Store updated totalUSD for payment (Base Amount)
+        window.checkoutTotalUSD = finalTotal;
+
+        if (window.appliedCoupon) {
+            window.appliedCoupon.new_total = finalTotal;
+        }
+    }
+
+    // Update Quantity Function
+    window.updateQuantity = function (index, change) {
+        const item = checkoutItems[index];
+        const newQty = (item.quantity || 1) + change;
+
+        if (newQty < 1) {
+            removeItem(index);
+            return;
+        }
+
+        item.quantity = newQty;
+        localStorage.setItem('sixn_checkout_items', JSON.stringify(checkoutItems));
+        renderSummary();
+    };
+
+    // Remove Item Function
+    window.removeItem = function (index) {
+        checkoutItems.splice(index, 1);
+
+        if (checkoutItems.length === 0) {
+            alert("No items in checkout. Redirecting to store.");
+            localStorage.removeItem('sixn_checkout_items');
+            window.location.href = '/';
+            return;
+        }
+
+        localStorage.setItem('sixn_checkout_items', JSON.stringify(checkoutItems));
+        renderSummary();
+    };
+
+    // Initial render
+    renderSummary();
+
+    // Payment Method Selection Handler
+    // Payment Method Selection Handler
+    const paymentMethodInputs = document.querySelectorAll('input[name="payment_method"]');
+    // payBtn and payBtnText declared at top
+    const payBtnIcon = document.getElementById('pay-btn-icon');
+
+    function updatePaymentMethodUI() {
+        const selectedMethod = document.querySelector('input[name="payment_method"]:checked').value;
+
+        // Update button text and icon based on selection
+        if (selectedMethod === 'cod') {
+            payBtnText.textContent = 'Place Order (COD)';
+            payBtnIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>';
+        } else {
+            payBtnText.textContent = 'Pay Securely';
+            payBtnIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>';
+        }
+
+        // Update visual selection state
+        document.querySelectorAll('.payment-method-option').forEach(opt => {
+            const radio = opt.querySelector('input[type="radio"]');
+            if (radio.checked) {
+                opt.classList.add('border-[#AB0A17]', 'bg-[#AB0A17]/5');
+                opt.classList.remove('border-gray-700');
+            } else {
+                opt.classList.remove('border-[#AB0A17]', 'bg-[#AB0A17]/5');
+                opt.classList.add('border-gray-700');
+            }
+        });
+    }
+
+    paymentMethodInputs.forEach(input => {
+        input.addEventListener('change', updatePaymentMethodUI);
+    });
+
+    // Initialize payment method UI
+    updatePaymentMethodUI();
+
+    // Helper function to get selected address
+    function getSelectedAddress() {
+        const selectedRadio = document.querySelector('input[name="selected_address"]:checked');
+
+        // No saved addresses - get from form
+        if (!selectedRadio) {
+            return {
+                isNew: true,
+                address: {
+                    street: document.getElementById('addr-street').value,
+                    landmark: document.getElementById('addr-landmark').value || '',
+                    city: document.getElementById('addr-city').value,
+                    state: document.getElementById('addr-state').value,
+                    zip: document.getElementById('addr-zip').value,
+                    country: document.getElementById('addr-country').value
+                },
+                saveAddress: document.getElementById('save-new-address')?.checked
+            };
+        }
+
+        const selectedValue = selectedRadio.value;
+
+        if (selectedValue === 'new') {
+            return {
+                isNew: true,
+                address: {
+                    street: document.getElementById('addr-street').value,
+                    landmark: document.getElementById('addr-landmark').value || '',
+                    city: document.getElementById('addr-city').value,
+                    state: document.getElementById('addr-state').value,
+                    zip: document.getElementById('addr-zip').value,
+                    country: document.getElementById('addr-country').value
+                },
+                saveAddress: document.getElementById('save-new-address')?.checked
+            };
+        }
+
+        // Find saved address
+        const savedAddr = savedAddresses.find(a => a.id === selectedValue);
+        return {
+            isNew: false,
+            address: savedAddr || null,
+            saveAddress: false
+        };
+    }
+
+    // Make initiatePayment globally accessible for onclick
+    // SERVICEABILITY CHECK
+    let isServiceable = false;
+    // UI Elements are defined at the top of the script
+
+    async function checkServiceability(pincode, country = 'India') {
+        if (!pincode) return;
+        pincode = pincode.toString().trim();
+
+        console.log('[DEBUG] checkServiceability called with:', pincode, country);
+        if (pincode.length < 5) {
+            console.log('[DEBUG] Pincode too short, skipping');
+            return;
+        }
+
+        // Show loading state implies checking...
+        window.isCalculatingShipping = true;
+        renderSummary(); // Update UI to show loading
+
+        deliverySection.classList.add('hidden');
+        payBtn.disabled = true;
+        payBtnText.textContent = "Checking Delivery...";
+
+        console.log('[DEBUG] Making API call to serviceability...');
+
+        try {
+            const res = await fetch(`/api/shiprocket/serviceability?pincode=${pincode}&country=${encodeURIComponent(country)}`);
+            const data = await res.json();
+
+            console.log('[DEBUG] Serviceability Response:', data);
+
+            if (data.error) {
+                console.error('[DEBUG] Serviceability API Error:', data.error);
+                throw new Error(data.details || "Delivery not available to this pincode");
+            }
+
+            // Extract ETD
+            // Shiprocket returns data['data']['available_courier_companies'] list
+            // We usually pick the first one or recommendation
+            if (data.data && data.data.available_courier_companies && data.data.available_courier_companies.length > 0) {
+                // Use recommended courier if set by backend, else first
+                let courier = data.data.available_courier_companies[0];
+                const recommendedId = data.data.recommended_courier_id;
+
+                if (recommendedId) {
+                    const recommended = data.data.available_courier_companies.find(c => c.courier_company_id == recommendedId);
+                    if (recommended) {
+                        courier = recommended;
+                        console.log('[DEBUG] Using backend recommended courier:', courier.courier_name);
+                    }
+                }
+
+                const etd = courier.etd; // usually string date
+                // Store fetched rate (rate is usually in courier object)
+                window.fetchedShippingRate = parseFloat(courier.rate || 0); // Default to 0 if missing, not 99
+                console.log('[DEBUG] Fetched Shipping Rate:', window.fetchedShippingRate);
+
+                isServiceable = true;
+
+                // Show Delivery Info in Modal
+                deliverySection.classList.remove('hidden');
+                document.getElementById('delivery-date-display').textContent = etd;
+
+                // Stop Loading
+                window.isCalculatingShipping = false;
+                renderSummary(); // Update UI with real cost
+
+                payBtn.disabled = false;
+                updatePaymentMethodUI(); // Restore button text
+
+                deliveryDateDisplay.textContent = etd;
+                deliverySection.classList.remove('hidden');
+            } else {
+                console.error('[DEBUG] No couriers found in response data');
+                throw new Error("No couriers available for this pincode");
+            }
+
+        } catch (e) {
+            console.error('[DEBUG] Check Serviceability Exception:', e);
+            alert("This pincode is not serviceable: " + e.message);
+            isServiceable = false;
+            window.isCalculatingShipping = false;
+            window.fetchedShippingRate = null; // Reset
+            renderSummary(); // Update UI
+            payBtn.disabled = true;
+            payBtnText.textContent = "Address Not Serviceable";
+        }
+    }
+
+    // handleAddressChangeForServiceability is defined above near ADDRESS SELECTION HANDLING
+
+    // Trigger on Zip Input (New Address)
+    const zipInput = document.getElementById('addr-zip');
+    if (zipInput) {
+        const triggerServiceabilityCheck = function () {
+            const val = zipInput.value.trim();
+            const selected = document.querySelector('input[name="selected_address"]:checked');
+
+            // If user is interacting with new address form, ensure 'new' is treated as selected if nothing else is
+            if ((selected && selected.value === 'new') || !selected || savedAddresses.length === 0) {
+                // India Pincode is 6 digits
+                if (val.length === 6 && !isNaN(val)) {
+                    checkServiceability(val);
+                }
+            }
+        };
+
+        zipInput.addEventListener('input', triggerServiceabilityCheck);
+
+        // Ensure "New Address" is selected if user focuses on these fields
+        const newAddrFields = document.querySelectorAll('#new-address-form input, #new-address-form select');
+        newAddrFields.forEach(field => {
+            field.addEventListener('focus', function () {
+                const newRadio = document.querySelector('input[value="new"]');
+                if (newRadio && !newRadio.checked) {
+                    newRadio.checked = true;
+                    handleAddressSelection(); // UI update
+                }
+            });
+        });
+
+        zipInput.addEventListener('blur', function () {
+            const selected = document.querySelector('input[name="selected_address"]:checked');
+            if ((selected && selected.value === 'new') || !selected) {
+                if (this.value.trim().length >= 5) {
+                    checkServiceability(this.value.trim());
+                }
+            }
+        });
+    }
+
+    // Listeners are now handled in handleAddressSelection above
+
+    // Initial check
+    setTimeout(handleAddressChangeForServiceability, 500); // Small delay to let other init scripts run
+
+    // --- PAYMENT INITIATION ---
+    window.initiatePayment = async function () {
+        console.log("Initiating Payment...");
+        // Check if Pay button is disabled (e.g. checking shipping)
+        if (document.getElementById('pay-btn').disabled) return;
+
+        const btn = document.getElementById('pay-btn');
+        const selectedMethod = document.querySelector('input[name="payment_method"]:checked').value;
+
+        // Get address
+        const addressData = getSelectedAddress();
+
+        // Validate address
+        if (!addressData.address) {
+            alert('Please select or enter a shipping address.');
+            return;
+        }
+
+        if (typeof isServiceable !== 'undefined' && !isServiceable) {
+            alert("We cannot deliver to this address. Please check your pincode.");
+            return;
+        }
+
+        // Email Validation (Optional)
+        const emailInput = document.getElementById('addr-email');
+        const email = emailInput ? emailInput.value.trim() : '';
+
+        if (email && !email.includes('@')) {
+            alert("Please enter a valid email address.");
+            emailInput.focus();
+            return;
+        }
+
+        if (addressData.isNew) {
+            // Validate new address fields
+            const required = ['street', 'city', 'state', 'zip', 'country'];
+            const missing = required.filter(f => !addressData.address[f]);
+            if (missing.length > 0) {
+                alert('Please fill in all required address fields: ' + missing.join(', '));
+                return;
+            }
+        }
+
+        // --- NEW WALLET LOGIC ---
+        const useWallet = document.getElementById('use-wallet-checkbox')?.checked || false;
+
+        btn.disabled = true;
+        const originalBtnHTML = btn.innerHTML;
+        btn.innerHTML = `<svg class="animate-spin h-5 w-5 mr-3" viewBox="0 0 24 24">
+    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+    <path class="opacity-75" fill="currentColor"
+        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+    </path>
+</svg> PROCESSING...`;
+
+        try {
+            // SHARED PAYLOAD
+            const totalAmount = (window.appliedCoupon && window.appliedCoupon.new_total) ? window.appliedCoupon.new_total : window.checkoutTotalUSD;
+            console.log("Payment Payload - Total Amount:", totalAmount, "Use Wallet:", useWallet);
+
+            const payload = {
+                items: checkoutItems,
+                amount: totalAmount,
+                currency: currentCurrency,
+                address: addressData.address,
+                save_as_default: addressData.saveAddress,
+                email: email,
+                shipping_cost: (typeof window.appliedShippingCost !== 'undefined') ? window.appliedShippingCost : 0,
+                // Wallet specific
+                use_wallet: useWallet,
+                coupon_code: window.appliedCoupon ? window.appliedCoupon.code : null
+            };
+
+            // CHECK IF FULLY PAID BY WALLET (Total Payable <= 0)
+            // But verify it's not simply a 0 cost order (unless valid). 
+            const totalToPay = window.checkoutTotalUSD;
+            // Float safe check
+            if (useWallet && totalToPay <= 0.05) {
+                console.log("Full Wallet Payment Detected");
+                const res = await fetch('/api/payment/create_order', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+
+                if (data.status === 'success' || data.order_status === 'paid' || data.message === 'Order placed successfully') {
+                    localStorage.removeItem('sixn_checkout_items');
+
+                    // Clear from main cart too
+                    let mainCart = JSON.parse(localStorage.getItem('sixn_cart') || '[]');
+                    const checkoutIds = checkoutItems.map(i => i.id);
+                    mainCart = mainCart.filter(i => !checkoutIds.includes(i.id));
+                    localStorage.setItem('sixn_cart', JSON.stringify(mainCart));
+
+                    window.location.href = `/order-confirmation/${data.internal_order_id || data.order_id}`;
+                } else {
+                    throw new Error(data.error || "Order creation failed");
+                }
+                return;
+            }
+
+            // Route to appropriate payment handler
+            if (selectedMethod === 'cod') {
+                console.log("Processing COD with Wallet...");
+                await placeCODOrderWithWallet(payload);
+            } else {
+                console.log("Processing Online with Wallet...");
+                await processOnlinePaymentWithWallet(payload);
+            }
+
+        } catch (e) {
+            console.error("Payment Initiation Error:", e);
+            alert("Error: " + e.message);
+            btn.disabled = false;
+            btn.innerHTML = originalBtnHTML;
+        }
+    };
+
+    // Updated Handlers to accept Payload directly
+    async function placeCODOrderWithWallet(payload) {
+        const res = await fetch('/api/payment/cod_order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.status === 'success') {
+            localStorage.removeItem('sixn_checkout_items');
+            // Clear cart logic
+            let mainCart = JSON.parse(localStorage.getItem('sixn_cart') || '[]');
+            const checkoutIds = checkoutItems.map(i => i.id);
+            mainCart = mainCart.filter(i => !checkoutIds.includes(i.id));
+            localStorage.setItem('sixn_cart', JSON.stringify(mainCart));
+
+            window.location.href = `/order-confirmation/${data.order_id}`;
+        } else {
+            throw new Error(data.error || "Order creation failed");
+        }
+    }
+
+    async function processOnlinePaymentWithWallet(payload) {
+        console.log("Calling Create Order API...");
+        const res = await fetch('/api/payment/create_order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        console.log("Create Order Response:", data);
+
+        if (data.error) throw new Error(data.error);
+
+        // Verify we have necessary Razorpay keys
+        if (!data.razorpay_key_id) throw new Error("Payment configuration missing (Key ID)");
+
+        const options = {
+            "key": data.razorpay_key_id,
+            "amount": data.amount, // Amount in paise from backend
+            "currency": data.currency,
+            "name": "SIXN",
+            "description": "Order Payment",
+            "order_id": data.razorpay_order_id,
+            "handler": async function (response) {
+                console.log("Razorpay Success:", response);
+                try {
+                    const verifyRes = await fetch('/api/payment/verify', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            razorpay_order_id: response.razorpay_order_id,
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_signature: response.razorpay_signature,
+                            save_as_default: payload.save_as_default,
+                        })
+                    });
+                    const verifyData = await verifyRes.json();
+                    if (verifyData.status === 'success' || verifyRes.ok) {
+                        localStorage.removeItem('sixn_checkout_items');
+                        let mainCart = JSON.parse(localStorage.getItem('sixn_cart') || '[]');
+                        const checkoutIds = checkoutItems.map(i => i.id);
+                        mainCart = mainCart.filter(i => !checkoutIds.includes(i.id));
+                        localStorage.setItem('sixn_cart', JSON.stringify(mainCart));
+
+                        window.location.href = `/order-confirmation/${data.internal_order_id}`;
+                    } else {
+                        alert("Payment verification failed please contact support.");
+                    }
+                } catch (e) {
+                    console.error("Verify Error:", e);
+                    alert("Payment verification error.");
+                }
+            },
+            "prefill": {
+                "name": "{{ user.first_name }} {{ user.last_name }}",
+                "email": "{{ user.email }}",
+                "contact": "{{ user.phone }}"
+            },
+            "theme": {
+                "color": "#AB0A17"
+            }
+        };
+
+        console.log("Opening Razorpay with options:", options);
+        if (typeof Razorpay === 'undefined') {
+            throw new Error("Razorpay SDK not loaded");
+        }
+        const rzp1 = new Razorpay(options);
+        rzp1.on('payment.failed', function (response) {
+            console.error("Razorpay Failed:", response);
+            alert("Payment Failed: " + response.error.description);
+            const btn = document.getElementById('pay-btn');
+            btn.disabled = false;
+            btn.innerHTML = `<svg id="pay-btn-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg> <span id="pay-btn-text">Pay Securely</span>`;
+        });
+        rzp1.open();
+    }
+
+    // Online Payment Handler (Razorpay)
+    async function processOnlinePayment(address, saveAsDefault, email) {
+        const btn = document.getElementById('pay-btn');
+        // Store saveAsDefault for use in verifyPayment callback
+        window.pendingSaveAsDefault = saveAsDefault;
+
+        try {
+            // Calculate Amount in Selected Currency Smallest Unit
+            // Check if coupon is applied and has a new total
+            let amountToPay = window.checkoutTotalUSD;
+            if (window.appliedCoupon && window.appliedCoupon.new_total) {
+                amountToPay = window.appliedCoupon.new_total;
+            }
+
+            const currencyObj = CURRENCY[currentCurrency] || CURRENCY['USD'];
+            const totalConverted = amountToPay * currencyObj.rate;
+            // Razorpay expects smallest unit (cents/paise)
+            const amountSmallestUnit = Math.round(totalConverted * 100);
+
+            const res = await fetch('/api/payment/create_order', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    items: checkoutItems,
+                    amount: amountSmallestUnit, // Kept for reference, backend ignores it
+                    currency: currentCurrency,
+                    coupon: window.appliedCoupon ? window.appliedCoupon.code : null,
+                    address: address,
+                    email: email,
+                    shipping_cost: (typeof window.appliedShippingCost !== 'undefined') ? window.appliedShippingCost : 0
+                })
+            });
+
+            const order = await res.json();
+            if (order.error) throw new Error(order.error);
+
+            const options = {
+                "key": "{{ razorpay_key }}",
+                "amount": order.amount,
+                "currency": order.currency,
+                "name": "SIXN",
+                "description": "Secure Checkout Payment",
+                "image": window.location.hostname === 'localhost' ? '' : (window.location.origin + '/assets/web-media/sixn-logo-transparent.png'),
+                "order_id": order.id,
+                "handler": async function (response) {
+                    verifyPayment(response, address, window.pendingSaveAsDefault);
+                },
+                "prefill": {
+                    "name": "{{ user.first_name }} {{ user.last_name }}",
+                    "contact": "{{ user.phone }}",
+                    "email": email
+                },
+                "theme": {
+                    "color": "#AB0A17"
+                }
+            };
+
+            const rzp1 = new Razorpay(options);
+            rzp1.on('payment.failed', function (response) {
+                alert("Payment Failed: " + response.error.description);
+                btn.disabled = false;
+                btn.innerHTML = '<svg id="pay-btn-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg> <span id="pay-btn-text">Pay Securely</span>';
+            });
+            rzp1.open();
+
+        } catch (e) {
+            console.error(e);
+            alert(e.message || "Error initiating payment. Please try again.");
+            btn.disabled = false;
+            btn.innerHTML = '<svg id="pay-btn-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg> <span id="pay-btn-text">Pay Securely</span>';
+        }
+    }
+
+
+    // --- COUPON LOGIC ---
+    // window.appliedCoupon is initialized at top of script
+
+    window.applyCoupon = async function () {
+        const codeInput = document.getElementById('coupon-input');
+        const code = codeInput.value.trim();
+        const msg = document.getElementById('coupon-message');
+
+        if (!code) {
+            msg.textContent = "Please enter a code";
+            msg.className = "text-[10px] mt-2 font-bold uppercase tracking-wider text-red-500 block";
+            return;
+        }
+
+        // Calculate current subtotal from checkoutItems (global scope from saved logic)
+        // checkoutItems is defined in the parent scope of this script
+        let subtotal = 0;
+        if (typeof checkoutItems !== 'undefined') {
+            subtotal = checkoutItems.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0);
+        }
+
+        try {
+            // Disable button
+            codeInput.disabled = true;
+
+            const res = await fetch('/api/coupons/validate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    code: code,
+                    amount: subtotal
+                })
+            });
+
+            const data = await res.json();
+
+            if (data.valid) {
+                window.appliedCoupon = data;
+                msg.textContent = `Coupon Applied: ${data.discount_amount.toFixed(2)} OFF`;
+                msg.className = "text-[10px] mt-2 font-bold uppercase tracking-wider text-green-500 block";
+
+                // Update UI state
+                codeInput.disabled = true;
+                codeInput.classList.add('opacity-50', 'cursor-not-allowed');
+                document.getElementById('coupon-remove-btn').classList.remove('hidden');
+
+                // Trigger re-render to update totals
+                renderSummary();
+
+            } else {
+                window.appliedCoupon = null;
+                msg.textContent = data.error;
+                msg.className = "text-[10px] mt-2 font-bold uppercase tracking-wider text-red-500 block";
+
+                // Reset UI
+                renderSummary();
+                codeInput.disabled = false;
+            }
+
+        } catch (e) {
+            console.error(e);
+            msg.textContent = "Error applying coupon";
+            msg.className = "text-[10px] mt-2 font-bold uppercase tracking-wider text-red-500 block";
+            codeInput.disabled = false;
+        }
+    }
+
+    window.removeCoupon = function () {
+        window.appliedCoupon = null;
+
+        // Reset UI
+        const input = document.getElementById('coupon-input');
+        input.value = '';
+        input.disabled = false;
+        input.classList.remove('opacity-50', 'cursor-not-allowed');
+
+        const msg = document.getElementById('coupon-message');
+        msg.classList.add('hidden');
+        msg.textContent = '';
+
+        document.getElementById('coupon-remove-btn').classList.add('hidden');
+
+        renderSummary();
+    };
+
+    async function verifyPayment(rzpResponse, address, saveAsDefault) {
+        const btn = document.getElementById('pay-btn');
+        btn.innerHTML = "VERIFYING...";
+
+        try {
+            // Recalculate final amount to send to backend for verification
+            // In a real app, backend should recalculate this independently
+            let finalAmount = window.checkoutTotalUSD;
+            if (window.appliedCoupon) {
+                finalAmount = window.appliedCoupon.new_total;
+            }
+
+            const res = await fetch('/api/payment/verify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    ...rzpResponse,
+                    items: checkoutItems,
+                    amount: finalAmount,
+                    currency: currentCurrency, // Check if backend saves this
+                    address: address,
+                    save_as_default: saveAsDefault,
+                    coupon: window.appliedCoupon ? window.appliedCoupon.code : null,
+                    discount_amount: window.appliedCoupon ? window.appliedCoupon.discount_amount : 0
+                })
+            });
+
+            const data = await res.json();
+
+            if (data.status === 'success') {
+                let mainCart = JSON.parse(localStorage.getItem('sixn_cart') || '[]');
+                const checkoutIds = checkoutItems.map(i => i.id);
+                // Keep items that are NOT in checkout
+                // NOTE: This logic might need improvement if duplicates exist but for now it clears checkout items
+                const newCart = [];
+                mainCart.forEach(cartItem => {
+                    // If cartItem is NOT in checkoutItems list by some unique prop (checking ID here might remove duplicates)
+                    // A safer way is to remove by index if we tracked it, but for now assuming removing all matching IDs
+                    // For exact logic, we should filter out the SPECIFIC instances. 
+                    // Simple approach: clear checked out items
+                });
+
+                // Simplest approach for "Buy Now" or "Cart Checkout":
+                // If checking out entire cart -> Clear Cart
+                // If checking out specific items -> Remove those
+                // Current implementation of 'checkoutItems' implies these are what we are buying.
+
+                // Remove bought items from cart
+                const remainingCart = mainCart.filter(cItem =>
+                    !checkoutItems.some(oItem =>
+                        oItem.id === cItem.id &&
+                        oItem.selectedSize === cItem.selectedSize &&
+                        oItem.selectedColor?.name === cItem.selectedColor?.name
+                    )
+                );
+
+                localStorage.setItem('sixn_cart', JSON.stringify(remainingCart));
+                localStorage.removeItem('sixn_checkout_items');
+
+                showSuccess("Order placed successfully! Redirecting...");
+                setTimeout(() => {
+                    if (data.order_id) {
+                        window.location.href = `/order-confirmation/${data.order_id}`;
+                    } else if (data.internal_order_id) {
+                        window.location.href = `/order-confirmation/${data.internal_order_id}`;
+                    } else {
+                        window.location.href = '/order-success';
+                    }
+                }, 1500);
+            } else {
+                throw new Error("Verification failed");
+            }
+        } catch (e) {
+            alert(e.message || "Payment verification failed on server. Please contact support.");
+            btn.disabled = false;
+            btn.innerHTML = 'Pay Securely';
+        }
+    }
+    // --- PAYMENT MODAL LOGIC ---
+    window.openPaymentModal = function () {
+        // Validate Address First
+        const addressData = getSelectedAddress();
+
+        if (!addressData.address) {
+            alert('Please select or enter a shipping address.');
+            return;
+        }
+
+        if (addressData.isNew) {
+            const required = ['street', 'city', 'state', 'zip', 'country'];
+            const missing = required.filter(f => !addressData.address[f]);
+            if (missing.length > 0) {
+                alert('Please fill in all required address fields: ' + missing.join(', '));
+                return;
+            }
+        }
+
+        // CHECK IF ORDER IS FULLY COVERED BY WALLET (Total = 0)
+        const useWallet = document.getElementById('use-wallet-checkbox')?.checked || false;
+        const totalToPay = window.checkoutTotalUSD || 0;
+
+        if (useWallet && totalToPay <= 0) {
+            // Order is fully paid by wallet - skip modal and place order directly
+            initiatePayment();
+            return;
+        }
+
+        // Open Modal
+        const modal = document.getElementById('payment-modal');
+        const content = document.getElementById('payment-modal-content');
+        modal.classList.remove('hidden');
+
+        // Animation
+        setTimeout(() => {
+            content.classList.remove('scale-95', 'opacity-0');
+            content.classList.add('scale-100', 'opacity-100');
+        }, 10);
+    };
+
+    window.closePaymentModal = function () {
+        const modal = document.getElementById('payment-modal');
+        const content = document.getElementById('payment-modal-content');
+
+        content.classList.remove('scale-100', 'opacity-100');
+        content.classList.add('scale-95', 'opacity-0');
+
+        setTimeout(() => {
+            modal.classList.add('hidden');
+        }, 300);
+    };
+
+    });
+</script>
+{% endblock %}
+
+{% block footer %}{% endblock %}

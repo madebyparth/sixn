@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block title %}Size Guide - SIXN{% endblock %}
+
+{% block content %}
+<main class="pt-32 pb-20 px-6">
+    <div class="max-w-5xl mx-auto">
+        <!-- Header Section -->
+        <div class="mb-16 text-center">
+            <h1 class="text-4xl md:text-6xl font-display font-bold text-white mb-6 uppercase tracking-tight">Size <span
+                    class="text-[#AB0A17]">Guide</span></h1>
+            <p class="text-gray-400 font-bold uppercase tracking-widest text-sm">Find your perfect fit for every
+                occasion</p>
+            <div class="w-20 h-1 bg-[#AB0A17] mx-auto mt-8"></div>
+        </div>
+
+        <!-- Size Chart Section -->
+        <div class="space-y-20">
+            <!-- Men's Shirts -->
+            <section>
+                <div class="flex items-center gap-6 mb-10">
+                    <h2 class="text-2xl font-display font-bold text-white uppercase tracking-widest">Premium Shirts</h2>
+                    <div class="flex-1 h-px bg-gray-900"></div>
+                </div>
+
+                <div class="overflow-x-auto bg-[#0a0a0a] border border-gray-900 rounded-sm">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-gray-800">
+                                <th class="p-6 text-[#AB0A17] font-display font-bold uppercase tracking-widest text-xs">
+                                    Size</th>
+                                <th class="p-6 text-white font-display font-bold uppercase tracking-widest text-xs">
+                                    Chest (Inches)</th>
+                                <th class="p-6 text-white font-display font-bold uppercase tracking-widest text-xs">
+                                    Waist (Inches)</th>
+                                <th class="p-6 text-white font-display font-bold uppercase tracking-widest text-xs">
+                                    Shoulder (Inches)</th>
+                                <th class="p-6 text-white font-display font-bold uppercase tracking-widest text-xs">
+                                    Length (Inches)</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-gray-400">
+                            <tr class="border-b border-gray-900 hover:bg-white/[0.02] transition-colors">
+                                <td class="p-6 font-bold text-white uppercase tracking-widest">S</td>
+                                <td class="p-6">38 - 40</td>
+                                <td class="p-6">34 - 36</td>
+                                <td class="p-6">17.5</td>
+                                <td class="p-6">28.5</td>
+                            </tr>
+                            <tr class="border-b border-gray-900 hover:bg-white/[0.02] transition-colors">
+                                <td class="p-6 font-bold text-white uppercase tracking-widest">M</td>
+                                <td class="p-6">40 - 42</td>
+                                <td class="p-6">36 - 38</td>
+                                <td class="p-6">18.0</td>
+                                <td class="p-6">29.0</td>
+                            </tr>
+                            <tr class="border-b border-gray-900 hover:bg-white/[0.02] transition-colors">
+                                <td class="p-6 font-bold text-white uppercase tracking-widest">L</td>
+                                <td class="p-6">42 - 44</td>
+                                <td class="p-6">38 - 40</td>
+                                <td class="p-6">18.5</td>
+                                <td class="p-6">29.5</td>
+                            </tr>
+                            <tr class="border-b border-gray-900 hover:bg-white/[0.02] transition-colors">
+                                <td class="p-6 font-bold text-white uppercase tracking-widest">XL</td>
+                                <td class="p-6">44 - 46</td>
+                                <td class="p-6">40 - 42</td>
+                                <td class="p-6">19.0</td>
+                                <td class="p-6">30.0</td>
+                            </tr>
+                            <tr class="hover:bg-white/[0.02] transition-colors">
+                                <td class="p-6 font-bold text-white uppercase tracking-widest">XXL</td>
+                                <td class="p-6">46 - 48</td>
+                                <td class="p-6">42 - 44</td>
+                                <td class="p-6">19.5</td>
+                                <td class="p-6">30.5</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- How to Measure -->
+            <section class="grid grid-cols-1 md:grid-cols-2 gap-16 items-center border-t border-gray-900 pt-20">
+                <div class="relative bg-[#0a0a0a] border border-gray-900 p-12 flex justify-center aspect-square">
+                    <img src="https://images.unsplash.com/photo-1596755094514-f87e34085b2c?q=80&w=1888&auto=format&fit=crop"
+                        alt="Our Tailored Fit" class="w-full h-full object-cover opacity-60">
+                    <div class="absolute inset-x-0 bottom-0 p-8 bg-gradient-to-t from-black to-transparent">
+                        <p class="text-white font-display font-bold uppercase tracking-widest text-center">Tailored Fit
+                        </p>
+                    </div>
+                </div>
+                <div>
+                    <h2 class="text-3xl font-display font-bold text-white mb-8 uppercase tracking-tight">How to Measure
+                    </h2>
+                    <div class="space-y-8">
+                        <div>
+                            <h4 class="text-[#AB0A17] font-bold uppercase text-xs tracking-[0.2em] mb-3">01. Chest</h4>
+                            <p class="text-gray-400">Measure around the fullest part of your chest, keeping the tape
+                                horizontal.</p>
+                        </div>
+                        <div>
+                            <h4 class="text-[#AB0A17] font-bold uppercase text-xs tracking-[0.2em] mb-3">02. Shoulder
+                            </h4>
+                            <p class="text-gray-400">Measure from one shoulder tip to the other across the natural curve
+                                of your back.</p>
+                        </div>
+                        <div>
+                            <h4 class="text-[#AB0A17] font-bold uppercase text-xs tracking-[0.2em] mb-3">03. Length</h4>
+                            <p class="text-gray-400">Measure from the top of your shoulder (at the base of your neck)
+                                down to your waist.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Final Support Note -->
+            <div class="text-center bg-[#0a0a0a] border border-gray-900 p-12 rounded-sm">
+                <p class="text-white font-bold uppercase tracking-widest mb-4">Between Sizes?</p>
+                <p class="text-gray-400 max-w-xl mx-auto mb-8">If your measurements are between two sizes, we recommend
+                    selecting the <strong class="text-white">larger size</strong> for a more comfortable fit, or the
+                    smaller size for a slimmer look.</p>
+                <a href="/contact"
+                    class="text-[#AB0A17] font-bold uppercase text-xs tracking-widest border-b-2 border-[#AB0A17] pb-1 hover:text-white hover:border-white transition-all">Ask
+                    a Fit Expert</a>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}

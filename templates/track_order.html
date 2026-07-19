@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="px-4 py-8 md:px-12 lg:px-24">
+    <div class="max-w-2xl mx-auto">
+        <h1 class="text-3xl font-light mb-8 font-heading text-center">Track Your Order</h1>
+
+        <div class="bg-primary/5 p-8 rounded-xl border border-primary/10 mb-8">
+            <p class="text-muted-foreground text-center mb-6">Enter your AWB Number or Order ID given in your order
+                confirmation.</p>
+
+            <div class="flex flex-col md:flex-row gap-4">
+                <input type="text" id="orderIdInput" placeholder="Enter AWB or Order ID"
+                    class="flex-1 bg-transparent border border-primary/20 rounded-lg px-4 py-3 focus:outline-none focus:border-primary transition-colors">
+                <button onclick="trackOrder()"
+                    class="bg-primary text-primary-foreground px-8 py-3 rounded-lg hover:bg-primary/90 transition-colors font-medium">
+                    Track
+                </button>
+            </div>
+            <p id="trackError" class="text-red-400 text-sm mt-2 hidden"></p>
+        </div>
+
+        <!-- Tracking Result Container -->
+        <div id="trackingResult" class="hidden animate-fade-in">
+            <div class="bg-card p-6 rounded-xl border border-border">
+                <div class="flex justify-between items-start mb-6">
+                    <div>
+                        <h3 class="font-medium text-lg" id="resStatus">Status: <span class="text-primary">In
+                                Transit</span></h3>
+                        <p class="text-sm text-muted-foreground" id="resCourier">Courier: BlueDart</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-xs text-muted-foreground uppercase tracking-wider">Estimated Delivery</p>
+                        <p class="font-medium" id="resEdd">--</p>
+                    </div>
+                </div>
+
+                <!-- Simple Timeline -->
+                <div class="relative pl-8 border-l border-primary/20 space-y-8" id="timelineContainer">
+                    <!-- Steps will be injected here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const orderId = urlParams.get('order_id');
+        if (orderId) {
+            document.getElementById('orderIdInput').value = orderId;
+            trackOrder();
+        }
+    });
+
+    async function trackOrder() {
+        const orderId = document.getElementById('orderIdInput').value.trim();
+        const errorEl = document.getElementById('trackError');
+        const resultEl = document.getElementById('trackingResult');
+        const timelineEl = document.getElementById('timelineContainer');
+
+        if (!orderId) {
+            errorEl.textContent = "Please enter a valid ID";
+            errorEl.classList.remove('hidden');
+            return;
+        }
+
+        errorEl.classList.add('hidden');
+        resultEl.classList.add('hidden');
+
+        try {
+            const response = await fetch(`/api/track-order?order_id=${orderId}`);
+            const data = await response.json();
+
+            if (data.error) {
+                errorEl.textContent = data.error;
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            // Render Data
+            // Note: Shiprocket response structure varies. Usually data['tracking_data']['track_status'] has 0/1, 
+            // and 'shipment_track' array contains scans.
+            console.log(data); // Debug
+
+            // Check for common response patterns
+            let trackingData = data;
+            if (data.tracking_data) trackingData = data.tracking_data;
+
+            // Basic mapping (adjust based on actual API response structure)
+            const status = trackingData.current_status || "Unknown";
+            const courier = trackingData.courier_name || "--";
+            const edd = trackingData.etd || "--";
+
+            document.getElementById('resStatus').innerHTML = `Status: <span class="text-primary">${status}</span>`;
+            document.getElementById('resCourier').textContent = `Courier: ${courier}`;
+            document.getElementById('resEdd').textContent = edd;
+
+            // Render Scans Activity
+            let scans = trackingData.shipment_track_activities || [];
+            // If not found, maybe direct array
+            if (!scans.length && Array.isArray(trackingData)) scans = trackingData;
+
+            let timelineHtml = '';
+            if (scans.length > 0) {
+                scans.forEach(scan => {
+                    timelineHtml += `
+                    <div class="relative">
+                        <div class="absolute -left-[37px] w-4 h-4 rounded-full bg-primary border-4 border-background"></div>
+                        <p class="text-sm font-medium">${scan['activity'] || scan['status']}</p>
+                        <p class="text-xs text-muted-foreground">${scan['date'] || ''} ${scan['time'] || ''} - ${scan['location'] || ''}</p>
+                    </div>
+                `;
+                });
+            } else {
+                timelineHtml = '<p class="text-sm text-muted-foreground">No detailed tracking info available yet.</p>';
+            }
+
+            timelineEl.innerHTML = timelineHtml;
+            resultEl.classList.remove('hidden');
+
+        } catch (e) {
+            errorEl.textContent = "Failed to fetch tracking details. Please try again.";
+            errorEl.classList.remove('hidden');
+        }
+    }
+</script>
+{% endblock %}
+
+{% block title %}Track Order - SIXN{% endblock %}
+```

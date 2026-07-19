@@ -1,0 +1,1724 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}"> <!-- CSRF Token for AJAX -->
+    <title>{% block title %}SIXN - Premium E-commerce{% endblock %}</title>
+    <link rel="icon" type="image/png" href="/assets/web-media/IX.png">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Lenis Smooth Scroll -->
+    <script src="https://cdn.jsdelivr.net/gh/studio-freight/lenis@1.0.29/bundled/lenis.min.js"></script>
+
+    <!-- Monument Extended Font & Base Styles -->
+    <style>
+        @font-face {
+            font-family: 'Monument Extended';
+            src: url('/assets/web-media/MonumentExtended-Regular.otf') format('opentype');
+            font-weight: 400;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'Monument Extended';
+            src: url('/assets/web-media/MonumentExtended-Ultrabold.otf') format('opentype');
+            font-weight: 800;
+            font-style: normal;
+        }
+
+        :root {
+            --navbar-height: 64px;
+        }
+
+        @media (max-width: 1023px) {
+            :root {
+                --navbar-height: 56px;
+            }
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background-color: #0c0c0c;
+            /* Slightly softer than #050505 */
+            color: #d4d4d4;
+            /* Off-white for less harsh contrast */
+            font-family: 'Outfit', sans-serif;
+            margin: 0;
+            padding: 0;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .font-display {
+            font-family: 'Monument Extended', sans-serif;
+            letter-spacing: -0.02em;
+            /* Tighter for modern look */
+        }
+
+        ::selection {
+            background: #AB0A17;
+            color: white;
+        }
+
+        /* LENIS CSS RECOMMENDATIONS */
+        html.lenis,
+        html.lenis body {
+            height: auto;
+        }
+
+        .lenis.lenis-smooth {
+            scroll-behavior: auto !important;
+        }
+
+        .lenis.lenis-smooth [data-lenis-prevent] {
+            overscroll-behavior: contain;
+        }
+
+        .lenis.lenis-stopped {
+            overflow: hidden;
+        }
+
+        .lenis.lenis-scrolling iframe {
+            pointer-events: none;
+        }
+
+        /* Checkbox for removing items animation */
+        @keyframes slideOut {
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+
+        .animate-remove {
+            animation: slideOut 0.3s forwards;
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* Custom Scrollbar Styles */
+        ::-webkit-scrollbar {
+            width: 4px;
+            /* Thinner */
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #0c0c0c;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #AB0A17;
+        }
+
+        /* Firefox */
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: #333 #0c0c0c;
+        }
+
+        #toast-notification {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+    </style>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                        display: ['Monument Extended', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: '#AB0A17',
+                        brand: {
+                            red: '#AB0A17',
+                            dark: '#0c0c0c',
+                            gray: '#1f1f1f'
+                        }
+                    },
+                    letterSpacing: {
+                        tighter: '-0.05em',
+                        tight: '-0.025em',
+                        normal: '0em',
+                        wide: '0.025em',
+                        wider: '0.05em',
+                        widest: '0.1em',
+                    }
+                }
+            }
+        }
+    </script>
+
+    {% block lenis_script %}
+    <script>
+        // Global Lenis smooth scroll
+        const lenis = new Lenis({
+            duration: 1.2,
+            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+            direction: 'vertical',
+            gestureDirection: 'vertical',
+            smooth: true,
+            mouseMultiplier: 1,
+            smoothTouch: false,
+            touchMultiplier: 2,
+        });
+
+        function raf(time) {
+            lenis.raf(time);
+            requestAnimationFrame(raf);
+        }
+
+        requestAnimationFrame(raf);
+    </script>
+    {% endblock %}
+
+    {% block styles %}{% endblock %}
+</head>
+
+<body
+    class="w-full min-h-screen relative selection:bg-[#AB0A17] selection:text-white {% block body_classes %}{% endblock %}">
+
+    <!-- ANNOUNCEMENT BAR - Hidden by default, pages can show via block -->
+    <div id="announcement-bar"
+        class="fixed top-0 left-0 right-0 z-[60] bg-[#0a0a0a] border-b border-gray-800/50 transition-all duration-300 {% block show_announcement %}hidden{% endblock %}">
+        <div class="relative py-1.5 px-12 overflow-hidden">
+            <div id="announcement-content" class="flex items-center justify-center gap-2 h-5 relative">
+                <span id="announcement-text" class="text-[10px] uppercase tracking-[0.2em] text-[#C4A35A] font-medium">
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        /* Announcement bar animations */
+        #announcement-bar.hidden-bar {
+            transform: translateY(-100%);
+            opacity: 0;
+        }
+
+        #announcement-content {
+            overflow: hidden;
+        }
+
+        #announcement-text {
+            display: inline-block;
+            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        #announcement-text.slide-up-out {
+            transform: translateY(-150%);
+            opacity: 0;
+        }
+
+        #announcement-text.slide-up-in {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        #announcement-text.start-from-bottom {
+            transform: translateY(150%);
+            opacity: 0;
+            transition: none;
+        }
+
+        /* Adjust navbar position when announcement bar is visible */
+        #main-navbar {
+            top: 0;
+            transition: top 0.3s ease;
+        }
+
+        /* If announcement-bar is present, not hidden, and not dismissed, push navbar down */
+        #announcement-bar:not(.hidden):not(.hidden-bar)~#main-navbar {
+            top: 32px;
+        }
+
+        /* Mobile menu adjustment */
+        #mobile-menu {
+            top: 0 !important;
+        }
+    </style>
+
+    <script>
+        // Announcement Bar Configuration
+        const announcementMessages = [
+            "FREE SHIPPING ON ORDERS OVER ₹1000",
+            "NEW ARRIVALS — SHOP NOW",
+            "USE CODE WELCOME20 FOR 20% OFF YOUR FIRST ORDER"
+        ];
+
+        let currentAnnouncementIndex = 0;
+        let announcementInterval;
+
+        function initAnnouncementBar() {
+            const bar = document.getElementById('announcement-bar');
+            const navbar = document.getElementById('main-navbar');
+            const textEl = document.getElementById('announcement-text');
+
+            if (!bar || bar.classList.contains('hidden')) {
+                if (navbar) navbar.classList.add('no-announcement');
+                return;
+            }
+
+            // Check if user dismissed the bar in this session
+            if (sessionStorage.getItem('announcementDismissed') === 'true') {
+                bar.classList.add('hidden-bar');
+                navbar.classList.add('no-announcement');
+                return;
+            }
+
+            // Show first message (start from bottom, slide up)
+            textEl.textContent = announcementMessages[0];
+            textEl.classList.add('start-from-bottom');
+
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    textEl.classList.remove('start-from-bottom');
+                    textEl.classList.add('slide-up-in');
+                });
+            });
+
+            // Start rotation
+            announcementInterval = setInterval(rotateAnnouncement, 4000);
+        }
+
+        function rotateAnnouncement() {
+            const textEl = document.getElementById('announcement-text');
+
+            // Slide current text up and out
+            textEl.classList.remove('slide-up-in');
+            textEl.classList.add('slide-up-out');
+
+            setTimeout(() => {
+                // Update to next message
+                currentAnnouncementIndex = (currentAnnouncementIndex + 1) % announcementMessages.length;
+                textEl.textContent = announcementMessages[currentAnnouncementIndex];
+
+                // Reset position to bottom instantly (no transition)
+                textEl.classList.remove('slide-up-out');
+                textEl.classList.add('start-from-bottom');
+
+                // Force browser to apply the position
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        // Now slide up into view with transition
+                        textEl.classList.remove('start-from-bottom');
+                        textEl.classList.add('slide-up-in');
+                    });
+                });
+            }, 500);
+        }
+
+        function dismissAnnouncementBar() {
+            const bar = document.getElementById('announcement-bar');
+            const navbar = document.getElementById('main-navbar');
+
+            bar.classList.add('hidden-bar');
+            navbar.classList.add('no-announcement');
+            sessionStorage.setItem('announcementDismissed', 'true');
+
+            if (announcementInterval) {
+                clearInterval(announcementInterval);
+            }
+        }
+
+        // Initialize on DOMContentLoaded
+        document.addEventListener('DOMContentLoaded', initAnnouncementBar);
+    </script>
+
+    <!-- NAVBAR -->
+    <nav id="main-navbar"
+        class="fixed left-0 w-full z-50 px-6 lg:px-10 py-3 flex items-center justify-between transition-all duration-500 border-b border-gray-800/50 {% block navbar_class %}bg-[#0a0a0a]/95 backdrop-blur-md{% endblock %}">
+        <!-- Logo (Left on md, Left on mobile) -->
+        <div class="flex-1 lg:flex-none flex items-center self-center">
+            <a href="/" class="flex items-center cursor-pointer pointer-events-auto lg:mx-0 group">
+                <img src="/assets/web-media/sixn-logo-transparent.png" alt="SIXN"
+                    class="h-8 lg:h-10 object-contain opacity-100 group-hover:opacity-80 transition-opacity">
+            </a>
+        </div>
+
+        <!-- Links (Hidden on mobile) -->
+        {% if not hide_layout %}
+        <div class="hidden lg:flex items-center self-center gap-8 pointer-events-auto">
+            <a href="/collection/new"
+                class="text-gray-300 font-medium text-xs hover:text-white transition-colors duration-300 uppercase tracking-wider">New
+                In</a>
+
+            <a href="/collection/apparel"
+                class="text-gray-300 font-medium text-xs hover:text-white transition-colors duration-300 uppercase tracking-wider">Apparel</a>
+
+            <a href="/collection/best-sellers"
+                class="text-gray-300 font-medium text-xs hover:text-white transition-colors duration-300 uppercase tracking-wider">Best
+                Sellers</a>
+        </div>
+        {% endif %}
+
+
+        <!-- Icons -->
+        <div class="flex items-center self-center gap-3 lg:gap-6 pointer-events-auto flex-1 lg:flex-none justify-end">
+
+            <!-- Desktop Icons (Hidden on Mobile) -->
+            <div class="hidden lg:flex items-center gap-6">
+                {% if not hide_layout %}
+                <!-- Search Icon -->
+                <button onclick="toggleSearch()" class="text-white hover:text-[#AB0A17] transition-colors p-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </button>
+                {% endif %}
+
+                <!-- Cart Button -->
+                <button onclick="toggleCart()" class="text-white hover:text-[#AB0A17] transition-colors relative">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                        stroke="currentColor" class="w-6 h-6">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 5.68c.496 2.228-1.045 4.313-3.323 4.313H6.453c-2.278 0-3.819-2.085-3.323-4.313l1.263-5.68c.245-1.104 1.218-1.897 2.348-1.897H17.25c1.13 0 2.103.793 2.348 1.897Z" />
+                    </svg>
+                    <span id="cart-count-badge-desktop"
+                        class="absolute -top-2 -right-2 bg-[#AB0A17] text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center hidden">0</span>
+                </button>
+
+                <!-- Profile Button & Dropdown -->
+                <div class="relative">
+                    <button id="nav-user-btn" onclick="handleProfileClick()"
+                        class="text-white hover:text-[#AB0A17] transition-colors flex items-center gap-2 relative z-50">
+                        <div
+                            class="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center overflow-hidden border border-gray-600">
+                            {% if current_user.is_authenticated and current_user.profile_image %}
+                            <img src="{{ current_user.profile_image }}" alt="Profile"
+                                class="w-full h-full object-cover">
+                            {% else %}
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                                class="w-5 h-5 text-gray-400">
+                                <path fill-rule="evenodd"
+                                    d="M7.5 6a4.5 4.5 0 1 1 9 0 4.5 4.5 0 0 1-9 0ZM3.751 20.105a8.25 8.25 0 0 1 16.498 0 .75.75 0 0 1-.437.695A18.683 18.683 0 0 1 12 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 0 1-.437-.695Z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                            {% endif %}
+                        </div>
+                    </button>
+
+                    <!-- Profile Dropdown -->
+                    <div id="profile-dropdown"
+                        class="absolute right-0 top-full mt-4 w-56 bg-[#111] border border-gray-800 rounded shadow-xl py-2 hidden z-40 origin-top-right transition-all duration-200 opacity-0 scale-95 transform">
+                        <div class="px-4 py-3 border-b border-gray-800">
+                            <p class="text-sm text-white font-bold truncate" id="dropdown-user-name">Guest</p>
+                        </div>
+                        <a href="/orders"
+                            class="block px-4 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 transition-colors">My
+                            Orders</a>
+                        <a href="/my-wallet"
+                            class="block px-4 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 transition-colors">My
+                            Wallet</a>
+                        <a href="/orders?tab=buy-again"
+                            class="block px-4 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 transition-colors">Buy
+                            Again</a>
+                        <a href="/contact"
+                            class="block px-4 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 transition-colors">Need
+                            Help?</a>
+                        <a href="/settings"
+                            class="block px-4 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 transition-colors">Settings</a>
+                        <div class="border-t border-gray-800 mt-2 pt-2">
+                            <button onclick="handleLogout()"
+                                class="block w-full text-left px-4 py-2 text-sm text-[#AB0A17] hover:bg-white/5 transition-colors font-bold">Log
+                                Out</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mobile Menu Toggle -->
+            <button id="mobile-menu-btn" onclick="toggleMobileMenu()"
+                class="lg:hidden text-white flex flex-col gap-1.5 p-2 transition-transform active:scale-95">
+                <span class="w-6 h-0.5 bg-white transition-all duration-300"></span>
+                <span class="w-6 h-0.5 bg-white transition-all duration-300"></span>
+                <span class="w-6 h-0.5 bg-white transition-all duration-300"></span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- GLOBAL TOAST NOTIFICATION -->
+    <div id="toast-notification" class="fixed top-24 right-6 z-[200] translate-x-[150%] opacity-0 pointer-events-none">
+        <div
+            class="bg-black/90 backdrop-blur-xl border border-white/10 p-4 rounded-lg shadow-2xl flex items-center gap-4 min-w-[300px]">
+            <div id="toast-icon" class="w-10 h-10 rounded-full flex items-center justify-center text-xl shrink-0"></div>
+            <div>
+                <p id="toast-title" class="text-white font-bold uppercase text-[10px] tracking-widest mb-0.5"></p>
+                <p id="toast-message" class="text-gray-400 text-sm"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- MOBILE MENU OVERLAY -->
+    <div id="mobile-menu"
+        class="fixed inset-0 z-[100] bg-black/95 backdrop-blur-xl translate-x-full transition-transform duration-500 lg:hidden">
+        <div class="flex flex-col h-full p-8 overflow-y-auto">
+            <div class="flex justify-between items-center mb-12">
+                <img src="/assets/web-media/sixn-logo-transparent.png" alt="Logo" class="h-8">
+                <button onclick="toggleMobileMenu()" class="text-white p-2">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+
+            <nav class="flex flex-col gap-6 mb-12">
+                {% if not hide_layout %}
+                <a href="/" class="text-3xl font-display font-bold text-white uppercase tracking-tighter"
+                    onclick="toggleMobileMenu()">Home</a>
+                <a href="/collection/men" class="text-3xl font-display font-bold text-white uppercase tracking-tighter"
+                    onclick="toggleMobileMenu()">Men</a>
+                <a href="/collection/women"
+                    class="text-3xl font-display font-bold text-white uppercase tracking-tighter"
+                    onclick="toggleMobileMenu()">Women</a>
+                <a href="/collection/kids" class="text-3xl font-display font-bold text-white uppercase tracking-tighter"
+                    onclick="toggleMobileMenu()">Kids</a>
+                <a href="/collection/sale"
+                    class="text-3xl font-display font-bold text-[#AB0A17] uppercase tracking-tighter"
+                    onclick="toggleMobileMenu()">Sale</a>
+                {% endif %}
+            </nav>
+
+            <div class="mt-auto grid grid-cols-2 gap-4">
+                {% if not hide_layout %}
+                <button onclick="toggleMobileMenu(); toggleSearch()"
+                    class="flex flex-col items-center justify-center p-4 bg-white/5 border border-white/10 rounded-sm group hover:bg-[#AB0A17] transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                        stroke="currentColor" class="w-6 h-6 text-white mb-2">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                    </svg>
+                    <span
+                        class="text-[10px] font-bold uppercase tracking-widest text-gray-400 group-hover:text-white">Search</span>
+                </button>
+                {% else %}
+                <div></div>
+                {% endif %}
+                <button onclick="toggleMobileMenu(); toggleCart()"
+                    class="flex flex-col items-center justify-center p-4 bg-white/5 border border-white/10 rounded-sm group hover:bg-[#AB0A17] transition-colors relative">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                        stroke="currentColor" class="w-6 h-6 text-white mb-2">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 5.68c.496 2.228-1.045 4.313-3.323 4.313H6.453c-2.278 0-3.819-2.085-3.323-4.313l1.263-5.68c.245-1.104 1.218-1.897 2.348-1.897H17.25c1.13 0 2.103.793 2.348 1.897Z" />
+                    </svg>
+                    <span id="cart-count-badge-mobile"
+                        class="absolute top-4 right-10 bg-[#AB0A17] text-white text-[8px] w-4 h-4 rounded-full flex items-center justify-center hidden">0</span>
+                    <span
+                        class="text-[10px] font-bold uppercase tracking-widest text-gray-400 group-hover:text-white">Cart</span>
+                </button>
+                {% if current_user.is_authenticated %}
+                <div class="col-span-2">
+                    <button
+                        onclick="document.getElementById('mobile-user-options').classList.toggle('hidden'); this.querySelector('svg.chevron').classList.toggle('rotate-90')"
+                        class="w-full flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-sm hover:bg-[#AB0A17] transition-colors group">
+                        <div class="flex items-center gap-3">
+                            <div
+                                class="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center overflow-hidden border border-gray-600">
+                                {% if current_user.profile_image %}
+                                <img src="{{ current_user.profile_image }}" alt="Profile"
+                                    class="w-full h-full object-cover">
+                                {% else %}
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                                    class="w-5 h-5 text-gray-400">
+                                    <path fill-rule="evenodd"
+                                        d="M7.5 6a4.5 4.5 0 1 1 9 0 4.5 4.5 0 0 1-9 0ZM3.751 20.105a8.25 8.25 0 0 1 16.498 0 .75.75 0 0 1-.437.695A18.683 18.683 0 0 1 12 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 0 1-.437-.695Z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                                {% endif %}
+                            </div>
+                            <span class="text-sm font-bold text-white uppercase tracking-widest">Account</span>
+                        </div>
+                        <svg class="chevron w-5 h-5 text-gray-500 transition-transform duration-300" fill="none"
+                            stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7">
+                            </path>
+                        </svg>
+                    </button>
+                    <!-- Expandable Options -->
+                    <div id="mobile-user-options"
+                        class="hidden flex flex-col bg-white/5 border-x border-b border-white/10 mx-2 animate-fade-in">
+                        <a href="/orders" onclick="toggleMobileMenu()"
+                            class="p-4 text-gray-400 hover:text-white hover:bg-white/5 text-sm uppercase tracking-wider border-b border-white/5 transition-colors">My
+                            Orders</a>
+                        <a href="/orders?tab=buy-again" onclick="toggleMobileMenu()"
+                            class="p-4 text-gray-400 hover:text-white hover:bg-white/5 text-sm uppercase tracking-wider border-b border-white/5 transition-colors">Buy
+                            Again</a>
+                        <a href="/settings" onclick="toggleMobileMenu()"
+                            class="p-4 text-gray-400 hover:text-white hover:bg-white/5 text-sm uppercase tracking-wider border-b border-white/5 transition-colors">Settings</a>
+                        <button onclick="toggleMobileMenu(); handleLogout()"
+                            class="p-4 text-left text-[#AB0A17] hover:bg-white/5 text-sm font-bold uppercase tracking-wider transition-colors">Log
+                            Out</button>
+                    </div>
+                </div>
+                {% else %}
+                <button id="mobile-user-btn" onclick="toggleMobileMenu(); toggleAuth()"
+                    class="col-span-2 flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-sm hover:bg-[#AB0A17] transition-colors">
+                    <div class="flex items-center gap-3">
+                        <div
+                            class="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center overflow-hidden border border-gray-600">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                                class="w-5 h-5 text-gray-400">
+                                <path fill-rule="evenodd"
+                                    d="M7.5 6a4.5 4.5 0 1 1 9 0 4.5 4.5 0 0 1-9 0ZM3.751 20.105a8.25 8.25 0 0 1 16.498 0 .75.75 0 0 1-.437.695A18.683 18.683 0 0 1 12 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 0 1-.437-.695Z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <span class="text-sm font-bold text-white uppercase tracking-widest">Log In</span>
+                    </div>
+                    <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </button>
+                {% endif %}
+            </div>
+
+
+        </div>
+    </div>
+
+
+    <!-- CONTENT -->
+    {% block content %}{% endblock %}
+
+    <!-- FOOTER -->
+    {% block footer %}
+    <footer class="bg-[#050505] text-white pt-24 pb-12 border-t border-gray-900 px-6">
+        <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
+            <div class="col-span-1 md:col-span-1">
+                <img src="/assets/web-media/sixn-logo-transparent.png" alt="Logo"
+                    class="h-8 mb-6 object-contain opacity-80">
+                <p class="text-gray-500 text-sm leading-relaxed">Designing the future of fashion with sustainability and
+                    style in mind.</p>
+            </div>
+            <div class="col-span-1">
+                <h4 class="text-white font-bold uppercase tracking-widest text-sm mb-6">Shop</h4>
+                <ul class="space-y-4">
+                    <li><a href="/collection/new-arrivals" class="text-gray-400 hover:text-[#AB0A17]">New Arrivals</a>
+                    </li>
+                    <li><a href="/collection/men" class="text-gray-400 hover:text-[#AB0A17]">Men</a></li>
+                    <li><a href="/collection/women" class="text-gray-400 hover:text-[#AB0A17]">Women</a></li>
+                    <li><a href="/collection/kids" class="text-gray-400 hover:text-[#AB0A17]">Kids</a></li>
+                </ul>
+            </div>
+            <div class="col-span-1">
+                <h4 class="text-white font-bold uppercase tracking-widest text-sm mb-6">Support</h4>
+                <ul class="space-y-4">
+                    <li><a href="/faq" class="text-gray-400 hover:text-[#AB0A17]">FAQ</a></li>
+                    <li><a href="/returns" class="text-gray-400 hover:text-[#AB0A17]">Returns & Exchanges</a></li>
+                    <li><a href="/size-guide" class="text-gray-400 hover:text-[#AB0A17]">Size Guide</a></li>
+                    <li><a href="/orders" class="text-gray-400 hover:text-[#AB0A17]">Track Order</a></li>
+                </ul>
+            </div>
+            <div class="col-span-1">
+                <h4 class="text-white font-bold uppercase tracking-widest text-sm mb-6">Company</h4>
+                <ul class="space-y-4">
+                    <li><a href="/about" class="text-gray-400 hover:text-[#AB0A17]">Our Story</a></li>
+                    <li><a href="/craftsmanship" class="text-gray-400 hover:text-[#AB0A17]">Quality & Craftsmanship</a>
+                    </li>
+                    <li><a href="/privacy" class="text-gray-400 hover:text-[#AB0A17]">Privacy Policy</a></li>
+                    <li><a href="/terms" class="text-gray-400 hover:text-[#AB0A17]">Terms & Conditions</a></li>
+                </ul>
+            </div>
+        </div>
+        <div
+            class="max-w-7xl mx-auto border-t border-gray-900 pt-8 flex flex-col md:flex-row justify-between items-center bg-[#050505]">
+            <p class="text-gray-600 text-sm">© 2026 SIXN Ecommerce. All rights reserved.</p>
+        </div>
+    </footer>
+    {% endblock %}
+
+    <!-- AUTH MODAL -->
+    <div id="auth-overlay"
+        class="fixed inset-0 z-[70] bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4 transition-opacity duration-300 opacity-0"
+        onclick="if(event.target === this) toggleAuth()">
+        <div class="bg-[#111] border border-gray-800 w-full max-w-md p-8 relative shadow-2xl rounded-sm">
+            <button onclick="toggleAuth()" class="absolute top-4 right-4 text-gray-400 hover:text-white"><svg
+                    class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                    </path>
+                </svg></button>
+
+            <!-- TABS -->
+            <div id="auth-tabs" class="flex border-b border-gray-800 mb-8">
+                <button onclick="switchAuthTab('login')" id="tab-login"
+                    class="flex-1 pb-4 text-white font-bold uppercase tracking-widest border-b-2 border-[#AB0A17] transition-colors">Login</button>
+                <button onclick="switchAuthTab('signup')" id="tab-signup"
+                    class="flex-1 pb-4 text-gray-500 font-bold uppercase tracking-widest border-b-2 border-transparent hover:text-white transition-colors">Signup</button>
+            </div>
+
+            <!-- LOGIN FORM -->
+            <form id="form-login" class="block space-y-4" onsubmit="event.preventDefault(); handleLogin();">
+                <div class="space-y-2">
+                    <label class="text-xs text-gray-500 font-bold uppercase tracking-wider">Mobile Number</label>
+                    <div class="flex">
+                        <select
+                            class="bg-[#1a1a1a] text-white border border-gray-700 px-3 py-3 outline-none border-r-0 w-24 text-sm appearance-none country-code-select">
+                            <!-- JS Populated -->
+                        </select>
+                        <input type="tel" id="login-phone" placeholder="9876543210"
+                            class="flex-1 bg-[#1a1a1a] text-white border border-gray-700 px-4 py-3 outline-none focus:border-[#AB0A17] transition-colors">
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <label class="text-xs text-gray-500 font-bold uppercase tracking-wider">Password</label>
+                    <input type="password" id="login-pass" placeholder="••••••"
+                        class="w-full bg-[#1a1a1a] text-white border border-gray-700 px-4 py-3 outline-none focus:border-[#AB0A17] transition-colors">
+                    <div class="flex justify-end">
+                        <button type="button" onclick="handleForgotPasswordDisplay()"
+                            class="text-[10px] text-[#AB0A17] font-bold uppercase tracking-widest hover:underline">Forgot
+                            Password?</button>
+                    </div>
+                </div>
+                <button type="submit"
+                    class="w-full bg-white text-black font-bold uppercase py-4 tracking-widest hover:bg-[#AB0A17] hover:text-white transition-colors mt-4">Send
+                    OTP & Login</button>
+            </form>
+
+            <!-- FORGOT FORM -->
+            <div id="form-forgot" class="hidden space-y-4">
+                <h3 class="text-white font-display font-bold text-xl uppercase text-center mb-4">Reset Password</h3>
+                <p class="text-gray-500 text-xs text-center mb-6">Enter your phone number to receive a verification
+                    code.</p>
+                <div class="space-y-2">
+                    <label class="text-xs text-gray-500 font-bold uppercase tracking-wider">Mobile Number</label>
+                    <div class="flex">
+                        <select id="forgot-cc"
+                            class="bg-[#1a1a1a] text-white border border-gray-700 px-3 py-3 outline-none border-r-0 w-24 text-sm appearance-none country-code-select">
+                            <!-- JS Populated -->
+                        </select>
+                        <input type="tel" id="forgot-phone" placeholder="9876543210"
+                            class="flex-1 bg-[#1a1a1a] text-white border border-gray-700 px-4 py-3 outline-none focus:border-[#AB0A17] transition-colors">
+                    </div>
+                </div>
+                <button onclick="handleForgotPasswordSubmit()"
+                    class="w-full bg-white text-black font-bold uppercase py-4 tracking-widest hover:bg-[#AB0A17] hover:text-white transition-colors mt-4">Send
+                    Reset Code</button>
+                <button onclick="switchAuthTab('login')"
+                    class="w-full text-gray-500 text-[10px] font-bold uppercase tracking-widest hover:text-white transition-colors py-2">Back
+                    to Login</button>
+            </div>
+
+            <!-- RESET PASSWORD FORM -->
+            <form id="form-reset" class="hidden space-y-4" onsubmit="event.preventDefault(); handleResetSubmit();">
+                <h3 class="text-white font-display font-bold text-xl uppercase text-center mb-4">New Password</h3>
+                <p class="text-gray-500 text-xs text-center mb-6">Create a strong password for your account.</p>
+                <div class="space-y-2">
+                    <label class="text-xs text-gray-500 font-bold uppercase tracking-wider">New Password</label>
+                    <input type="password" id="reset-pass" placeholder="••••••"
+                        class="w-full bg-[#1a1a1a] text-white border border-gray-700 px-4 py-3 outline-none focus:border-[#AB0A17] transition-colors">
+                </div>
+                <div class="space-y-2">
+                    <label class="text-xs text-gray-500 font-bold uppercase tracking-wider">Confirm New Password</label>
+                    <input type="password" id="reset-pass-confirm" placeholder="••••••"
+                        class="w-full bg-[#1a1a1a] text-white border border-gray-700 px-4 py-3 outline-none focus:border-[#AB0A17] transition-colors">
+                </div>
+                <button type="submit"
+                    class="w-full bg-[#AB0A17] text-white font-bold uppercase py-4 tracking-widest hover:bg-white hover:text-black transition-colors mt-4">Update
+                    Password</button>
+            </form>
+
+            <!-- SIGNUP FORM -->
+            <form id="form-signup" class="hidden space-y-4" onsubmit="event.preventDefault(); handleSignup();">
+                <div class="flex gap-4">
+                    <div class="space-y-2 flex-1">
+                        <label class="text-xs text-gray-500 font-bold uppercase tracking-wider">First Name*</label>
+                        <input type="text" id="signup-fname"
+                            class="w-full bg-[#1a1a1a] text-white border border-gray-700 px-4 py-3 outline-none focus:border-[#AB0A17] transition-colors">
+                    </div>
+                    <div class="space-y-2 flex-1">
+                        <label class="text-xs text-gray-500 font-bold uppercase tracking-wider">Last Name</label>
+                        <input type="text" id="signup-lname"
+                            class="w-full bg-[#1a1a1a] text-white border border-gray-700 px-4 py-3 outline-none focus:border-[#AB0A17] transition-colors">
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <label class="text-xs text-gray-500 font-bold uppercase tracking-wider">Mobile Number*</label>
+                    <div class="flex">
+                        <select id="signup-cc"
+                            class="bg-[#1a1a1a] text-white border border-gray-700 px-3 py-3 outline-none border-r-0 w-24 text-sm appearance-none country-code-select">
+                            <!-- JS Populated -->
+                        </select>
+                        <input type="tel" id="signup-phone" placeholder="9876543210"
+                            class="flex-1 bg-[#1a1a1a] text-white border border-gray-700 px-4 py-3 outline-none focus:border-[#AB0A17] transition-colors">
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <label class="text-xs text-gray-500 font-bold uppercase tracking-wider">Password*</label>
+                    <input type="password" id="signup-pass"
+                        class="w-full bg-[#1a1a1a] text-white border border-gray-700 px-4 py-3 outline-none focus:border-[#AB0A17] transition-colors">
+                </div>
+                <button type="submit"
+                    class="w-full bg-[#AB0A17] text-white font-bold uppercase py-4 tracking-widest hover:bg-white hover:text-black transition-colors mt-4">Create
+                    Account</button>
+            </form>
+
+            <!-- OTP FORM -->
+            <div id="form-otp" class="hidden space-y-6 text-center">
+                <div
+                    class="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4 text-[#AB0A17]">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
+                        </path>
+                    </svg>
+                </div>
+                <h3 class="text-white font-display font-bold text-xl uppercase">Verify Mobile</h3>
+                <p class="text-gray-500 text-sm">Enter the OTP sent to your number.</p>
+                <input type="text" id="otp-input" placeholder="• • • • • •" maxlength="6"
+                    class="w-full bg-[#1a1a1a] text-white border border-gray-700 px-4 py-4 text-center text-2xl tracking-[1em] outline-none focus:border-[#AB0A17] transition-colors font-mono">
+
+                <button onclick="handleVerify()"
+                    class="w-full bg-white text-black font-bold uppercase py-4 tracking-widest hover:bg-[#AB0A17] hover:text-white transition-colors shadow-lg">Verify
+                    & Proceed</button>
+
+                <div class="flex justify-between items-center px-2 mt-4">
+                    <button onclick="handleResendOTP()" id="resend-btn"
+                        class="text-[#AB0A17] text-xs font-bold uppercase hover:text-white transition-colors tracking-wider">Resend
+                        Code</button>
+                    <button onclick="switchAuthTab('login')"
+                        class="text-gray-500 text-xs hover:text-white uppercase transition-colors tracking-wider">Change
+                        Number</button>
+                </div>
+            </div>
+
+            <p id="auth-error" class="text-red-500 text-xs font-bold text-center mt-4 hidden"></p>
+
+        </div>
+    </div>
+
+    <!-- CART SIDEPANEL -->
+    <div id="cart-backdrop" onclick="toggleCart()"
+        class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[55] hidden transition-opacity duration-300 opacity-0">
+    </div>
+    <div id="cart-sidebar"
+        class="fixed top-0 right-0 h-full w-[400px] max-w-[90vw] bg-[#0a0a0a] border-l border-gray-800 z-[60] transform translate-x-full transition-transform duration-300 flex flex-col shadow-2xl">
+        <div class="p-6 border-b border-gray-800 flex justify-between items-center bg-[#111]">
+            <h2 class="text-xl font-display font-bold text-white uppercase tracking-widest">Your Cart</h2>
+            <button onclick="toggleCart()" class="text-gray-400 hover:text-white transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                    stroke="currentColor" class="w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+        <div id="cart-items" class="flex-1 overflow-y-auto p-6 space-y-6">
+            <div class="text-center text-gray-500 mt-20">Your cart is empty.</div>
+        </div>
+        <div class="p-6 border-t border-gray-800 bg-[#111]">
+            <div class="flex justify-between items-center mb-4">
+                <div class="flex flex-col">
+                    <span class="text-gray-400 font-bold uppercase text-xs tracking-widest">Subtotal (Selected)</span>
+                </div>
+                <span id="cart-total" class="text-white font-bold text-xl">$0.00</span>
+            </div>
+            <button id="checkout-btn" onclick="proceedToCheckout()"
+                class="w-full bg-white text-black font-extrabold uppercase py-4 hover:bg-[#AB0A17] hover:text-white transition-colors tracking-widest shadow-lg disabled:opacity-50 disabled:cursor-not-allowed">Checkout</button>
+        </div>
+    </div>
+
+    <!-- SEARCH OVERLAY -->
+    <div id="search-overlay"
+        class="fixed inset-0 z-[60] bg-black/95 transition-opacity duration-300 opacity-0 pointer-events-none flex flex-col items-center pt-32 px-6">
+        <button onclick="toggleSearch()"
+            class="absolute top-8 right-8 text-gray-400 hover:text-white transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                stroke="currentColor" class="w-10 h-10">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+            </svg>
+        </button>
+
+        <div class="w-full max-w-3xl">
+            <input type="text" id="search-input" oninput="handleSearch(this.value)" placeholder="Search products..."
+                class="w-full bg-transparent border-b-2 border-gray-800 text-white text-3xl md:text-5xl font-display font-bold py-4 outline-none focus:border-[#AB0A17] transition-colors placeholder-gray-700 text-center uppercase tracking-tight">
+
+            <div class="relative w-full mt-12 flex items-center justify-between gap-4">
+                <button id="search-prev-btn" onclick="changeSearchPage(-1)"
+                    class="p-2 text-white hover:text-[#AB0A17] disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                        stroke="currentColor" class="w-8 h-8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                    </svg>
+                </button>
+
+                <div id="search-results" class="flex-1 grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Results Rendered Here -->
+                </div>
+
+                <button id="search-next-btn" onclick="changeSearchPage(1)"
+                    class="p-2 text-white hover:text-[#AB0A17] disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                        stroke="currentColor" class="w-8 h-8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                    </svg>
+                </button>
+            </div>
+
+            <p id="search-status" class="text-gray-600 text-center mt-8 hidden">Start typing to search...</p>
+        </div>
+    </div>
+
+    <!-- CSRF & Fetch Interceptor -->
+    <script>
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        const originalFetch = window.fetch;
+        window.fetch = function (url, options = {}) {
+            if (options.method && ['POST', 'PUT', 'DELETE', 'PATCH'].includes(options.method.toUpperCase())) {
+                options.headers = options.headers || {};
+                if (options.headers instanceof Headers) {
+                    options.headers.append('X-CSRFToken', csrfToken);
+                } else {
+                    options.headers['X-CSRFToken'] = csrfToken;
+                }
+            }
+            return originalFetch(url, options);
+        };
+    </script>
+
+    <!-- SHARED SCRIPTS -->
+    <script>
+        // --- CURRENCY LOGIC ---
+        const CURRENCY = {
+            INR: { rate: 1, symbol: '₹' },
+            USD: { rate: 0.012, symbol: '$' },
+            EUR: { rate: 0.011, symbol: '€' },
+            GBP: { rate: 0.0095, symbol: '£' },
+        };
+
+        let currentCurrency = localStorage.getItem('sixn_currency');
+
+        if (!currentCurrency) {
+            detectCurrency();
+        } else {
+            const sel = document.getElementById('currency-select');
+            if (sel) sel.value = currentCurrency;
+        }
+
+        function updateCurrency(code) {
+            localStorage.setItem('sixn_currency', code);
+            window.location.reload();
+        }
+
+        async function detectCurrency() {
+            try {
+                const res = await fetch('https://ipapi.co/json/');
+                const data = await res.json();
+                const country = data.country_code;
+                let code = 'USD';
+
+                if (country === 'IN') code = 'INR';
+                else if (country === 'GB') code = 'GBP';
+                else if (['AT', 'BE', 'CY', 'EE', 'FI', 'FR', 'DE', 'GR', 'IE', 'IT', 'LV', 'LT', 'LU', 'MT', 'NL', 'PT', 'SK', 'SI', 'ES'].includes(country)) code = 'EUR';
+
+                localStorage.setItem('sixn_currency', code);
+                window.location.reload();
+            } catch (e) {
+                console.log("Auto-currency failed, default USD");
+                localStorage.setItem('sixn_currency', 'USD');
+                currentCurrency = 'USD';
+            }
+        }
+
+        function formatPrice(amountInUSD) {
+            // If amountInUSD is actually in INR (because strict mode simplified), we might need conversion or not.
+            // But version-1 logic assumes amountInUSD. 
+            // However, the checkout might be passing INR.
+            // Let's check formatPrice usages. 
+            // If the site is INR based, maybe we should just fix checkout.html to NOT use currentCurrency?
+            // BUT user wants me to fix "currentCurrency is not defined".
+            // So providing definition is the safest first step.
+
+            const currency = CURRENCY[currentCurrency] || CURRENCY['USD'];
+            // If the input is INR, and we want to convert:
+            // But wait, if the DB prices are INR, then rate 1 is correct for INR. 
+            // And 0.012 for USD means 1 INR = 0.012 USD.
+            // So logic: `converted = amount * rate` works if amount is INR.
+            // Variable name `amountInUSD` in version-1 might be a misnomer if base is INR.
+            // Let's stick to version-1 logic which seemed to work.
+            const converted = amountInUSD * currency.rate;
+
+            return new Intl.NumberFormat('en-IN', {
+                style: 'currency',
+                currency: currentCurrency,
+                minimumFractionDigits: 2
+            }).format(converted);
+        }
+
+        // --- AUTH LOGIC ---
+        let CURRENT_USER = null;
+
+        // Valid Country Codes List
+        const countryCodes = [
+            { code: "+93", country: "Afghanistan" }, { code: "+355", country: "Albania" }, { code: "+213", country: "Algeria" }, { code: "+1-684", country: "American Samoa" }, { code: "+376", country: "Andorra" },
+            { code: "+244", country: "Angola" }, { code: "+1-264", country: "Anguilla" }, { code: "+672", country: "Antarctica" }, { code: "+1-268", country: "Antigua and Barbuda" }, { code: "+54", country: "Argentina" },
+            { code: "+374", country: "Armenia" }, { code: "+297", country: "Aruba" }, { code: "+61", country: "Australia" }, { code: "+43", country: "Austria" }, { code: "+994", country: "Azerbaijan" },
+            { code: "+1-242", country: "Bahamas" }, { code: "+973", country: "Bahrain" }, { code: "+880", country: "Bangladesh" }, { code: "+1-246", country: "Barbados" }, { code: "+375", country: "Belarus" },
+            { code: "+32", country: "Belgium" }, { code: "+501", country: "Belize" }, { code: "+229", country: "Benin" }, { code: "+1-441", country: "Bermuda" }, { code: "+975", country: "Bhutan" },
+            { code: "+591", country: "Bolivia" }, { code: "+387", country: "Bosnia and Herzegovina" }, { code: "+267", country: "Botswana" }, { code: "+55", country: "Brazil" }, { code: "+246", country: "British Indian Ocean Territory" },
+            { code: "+1-284", country: "British Virgin Islands" }, { code: "+673", country: "Brunei" }, { code: "+359", country: "Bulgaria" }, { code: "+226", country: "Burkina Faso" }, { code: "+257", country: "Burundi" },
+            { code: "+855", country: "Cambodia" }, { code: "+237", country: "Cameroon" }, { code: "+1", country: "Canada" }, { code: "+238", country: "Cape Verde" }, { code: "+1-345", country: "Cayman Islands" },
+            { code: "+236", country: "Central African Republic" }, { code: "+235", country: "Chad" }, { code: "+56", country: "Chile" }, { code: "+86", country: "China" }, { code: "+61", country: "Christmas Island" },
+            { code: "+61", country: "Cocos Islands" }, { code: "+57", country: "Colombia" }, { code: "+269", country: "Comoros" }, { code: "+682", country: "Cook Islands" }, { code: "+506", country: "Costa Rica" },
+            { code: "+385", country: "Croatia" }, { code: "+53", country: "Cuba" }, { code: "+599", country: "Curacao" }, { code: "+357", country: "Cyprus" }, { code: "+420", country: "Czech Republic" },
+            { code: "+243", country: "Democratic Republic of the Congo" }, { code: "+45", country: "Denmark" }, { code: "+253", country: "Djibouti" }, { code: "+1-767", country: "Dominica" }, { code: "+1-809", country: "Dominican Republic" },
+            { code: "+670", country: "East Timor" }, { code: "+593", country: "Ecuador" }, { code: "+20", country: "Egypt" }, { code: "+503", country: "El Salvador" }, { code: "+240", country: "Equatorial Guinea" },
+            { code: "+291", country: "Eritrea" }, { code: "+372", country: "Estonia" }, { code: "+251", country: "Ethiopia" }, { code: "+500", country: "Falkland Islands" }, { code: "+298", country: "Faroe Islands" },
+            { code: "+679", country: "Fiji" }, { code: "+358", country: "Finland" }, { code: "+33", country: "France" }, { code: "+689", country: "French Polynesia" }, { code: "+241", country: "Gabon" },
+            { code: "+220", country: "Gambia" }, { code: "+995", country: "Georgia" }, { code: "+49", country: "Germany" }, { code: "+233", country: "Ghana" }, { code: "+350", country: "Gibraltar" },
+            { code: "+30", country: "Greece" }, { code: "+299", country: "Greenland" }, { code: "+1-473", country: "Grenada" }, { code: "+1-671", country: "Guam" }, { code: "+502", country: "Guatemala" },
+            { code: "+44-1481", country: "Guernsey" }, { code: "+224", country: "Guinea" }, { code: "+245", country: "Guinea-Bissau" }, { code: "+592", country: "Guyana" }, { code: "+509", country: "Haiti" },
+            { code: "+504", country: "Honduras" }, { code: "+852", country: "Hong Kong" }, { code: "+36", country: "Hungary" }, { code: "+354", country: "Iceland" }, { code: "+91", country: "India" },
+            { code: "+62", country: "Indonesia" }, { code: "+98", country: "Iran" }, { code: "+964", country: "Iraq" }, { code: "+353", country: "Ireland" }, { code: "+44-1624", country: "Isle of Man" },
+            { code: "+972", country: "Israel" }, { code: "+39", country: "Italy" }, { code: "+225", country: "Ivory Coast" }, { code: "+1-876", country: "Jamaica" }, { code: "+81", country: "Japan" },
+            { code: "+44-1534", country: "Jersey" }, { code: "+962", country: "Jordan" }, { code: "+7", country: "Kazakhstan" }, { code: "+254", country: "Kenya" }, { code: "+686", country: "Kiribati" },
+            { code: "+383", country: "Kosovo" }, { code: "+965", country: "Kuwait" }, { code: "+996", country: "Kyrgyzstan" }, { code: "+856", country: "Laos" }, { code: "+371", country: "Latvia" },
+            { code: "+961", country: "Lebanon" }, { code: "+266", country: "Lesotho" }, { code: "+231", country: "Liberia" }, { code: "+218", country: "Libya" }, { code: "+423", country: "Liechtenstein" },
+            { code: "+370", country: "Lithuania" }, { code: "+352", country: "Luxembourg" }, { code: "+853", country: "Macau" }, { code: "+389", country: "Macedonia" }, { code: "+261", country: "Madagascar" },
+            { code: "+265", country: "Malawi" }, { code: "+60", country: "Malaysia" }, { code: "+960", country: "Maldives" }, { code: "+223", country: "Mali" }, { code: "+356", country: "Malta" },
+            { code: "+692", country: "Marshall Islands" }, { code: "+222", country: "Mauritania" }, { code: "+230", country: "Mauritius" }, { code: "+262", country: "Mayotte" }, { code: "+52", country: "Mexico" },
+            { code: "+691", country: "Micronesia" }, { code: "+373", country: "Moldova" }, { code: "+377", country: "Monaco" }, { code: "+976", country: "Mongolia" }, { code: "+382", country: "Montenegro" },
+            { code: "+1-664", country: "Montserrat" }, { code: "+212", country: "Morocco" }, { code: "+258", country: "Mozambique" }, { code: "+95", country: "Myanmar" }, { code: "+264", country: "Namibia" },
+            { code: "+674", country: "Nauru" }, { code: "+977", country: "Nepal" }, { code: "+31", country: "Netherlands" }, { code: "+599", country: "Netherlands Antilles" }, { code: "+687", country: "New Caledonia" },
+            { code: "+64", country: "New Zealand" }, { code: "+505", country: "Nicaragua" }, { code: "+227", country: "Niger" }, { code: "+234", country: "Nigeria" }, { code: "+683", country: "Niue" },
+            { code: "+850", country: "North Korea" }, { code: "+1-670", country: "Northern Mariana Islands" }, { code: "+47", country: "Norway" }, { code: "+968", country: "Oman" }, { code: "+92", country: "Pakistan" },
+            { code: "+680", country: "Palau" }, { code: "+970", country: "Palestine" }, { code: "+507", country: "Panama" }, { code: "+675", country: "Papua New Guinea" }, { code: "+595", country: "Paraguay" },
+            { code: "+51", country: "Peru" }, { code: "+63", country: "Philippines" }, { code: "+64", country: "Pitcairn" }, { code: "+48", country: "Poland" }, { code: "+351", country: "Portugal" },
+            { code: "+1-787", country: "Puerto Rico" }, { code: "+974", country: "Qatar" }, { code: "+242", country: "Republic of the Congo" }, { code: "+262", country: "Reunion" }, { code: "+40", country: "Romania" },
+            { code: "+7", country: "Russia" }, { code: "+250", country: "Rwanda" }, { code: "+590", country: "Saint Barthelemy" }, { code: "+290", country: "Saint Helena" }, { code: "+1-869", country: "Saint Kitts and Nevis" },
+            { code: "+1-758", country: "Saint Lucia" }, { code: "+590", country: "Saint Martin" }, { code: "+508", country: "Saint Pierre and Miquelon" }, { code: "+1-784", country: "Saint Vincent and the Grenadines" }, { code: "+685", country: "Samoa" },
+            { code: "+378", country: "San Marino" }, { code: "+239", country: "Sao Tome and Principe" }, { code: "+966", country: "Saudi Arabia" }, { code: "+221", country: "Senegal" }, { code: "+381", country: "Serbia" },
+            { code: "+248", country: "Seychelles" }, { code: "+232", country: "Sierra Leone" }, { code: "+65", country: "Singapore" }, { code: "+1-721", country: "Sint Maarten" }, { code: "+421", country: "Slovakia" },
+            { code: "+386", country: "Slovenia" }, { code: "+677", country: "Solomon Islands" }, { code: "+252", country: "Somalia" }, { code: "+27", country: "South Africa" }, { code: "+82", country: "South Korea" },
+            { code: "+211", country: "South Sudan" }, { code: "+34", country: "Spain" }, { code: "+94", country: "Sri Lanka" }, { code: "+249", country: "Sudan" }, { code: "+597", country: "Suriname" },
+            { code: "+47", country: "Svalbard and Jan Mayen" }, { code: "+268", country: "Swaziland" }, { code: "+46", country: "Sweden" }, { code: "+41", country: "Switzerland" }, { code: "+963", country: "Syria" },
+            { code: "+886", country: "Taiwan" }, { code: "+992", country: "Tajikistan" }, { code: "+255", country: "Tanzania" }, { code: "+66", country: "Thailand" }, { code: "+228", country: "Togo" },
+            { code: "+690", country: "Tokelau" }, { code: "+676", country: "Tonga" }, { code: "+1-868", country: "Trinidad and Tobago" }, { code: "+216", country: "Tunisia" }, { code: "+90", country: "Turkey" },
+            { code: "+993", country: "Turkmenistan" }, { code: "+1-649", country: "Turks and Caicos Islands" }, { code: "+688", country: "Tuvalu" }, { code: "+1-340", country: "U.S. Virgin Islands" }, { code: "+256", country: "Uganda" },
+            { code: "+380", country: "Ukraine" }, { code: "+971", country: "United Arab Emirates" }, { code: "+44", country: "United Kingdom" }, { code: "+1", country: "United States" }, { code: "+598", country: "Uruguay" },
+            { code: "+998", country: "Uzbekistan" }, { code: "+678", country: "Vanuatu" }, { code: "+379", country: "Vatican" }, { code: "+58", country: "Venezuela" }, { code: "+84", country: "Vietnam" },
+            { code: "+681", country: "Wallis and Futuna" }, { code: "+212", country: "Western Sahara" }, { code: "+967", country: "Yemen" }, { code: "+260", country: "Zambia" }, { code: "+263", country: "Zimbabwe" }
+        ];
+
+        // Init Country Codes
+        const selects = document.querySelectorAll('.country-code-select');
+        const opts = countryCodes.map(c => `<option value="${c.code}">${c.code} (${c.country})</option>`).join('');
+        selects.forEach(s => {
+            s.innerHTML = opts;
+            s.value = "+91";
+        });
+
+        // Check Session on Load
+        fetch('/api/auth/user').then(r => r.json()).then(data => {
+            if (data.authenticated) {
+                CURRENT_USER = data;
+                updateUserUI();
+                window.dispatchEvent(new CustomEvent('authLoaded'));
+            }
+        }).catch(e => console.log(e));
+
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            if (menu.classList.contains('translate-x-full')) {
+                menu.classList.remove('translate-x-full');
+                document.body.classList.add('overflow-hidden');
+            } else {
+                menu.classList.add('translate-x-full');
+                document.body.classList.remove('overflow-hidden');
+            }
+        }
+
+        function updateUserUI() {
+            const btn = document.getElementById('nav-user-btn');
+            const dropdownName = document.getElementById('dropdown-user-name');
+            const mobileName = document.getElementById('mobile-user-name');
+            const mobileAvatar = document.getElementById('mobile-user-avatar');
+
+            if (CURRENT_USER) {
+                // Update Desktop Button Content
+                let avatarHtml = '';
+                if (CURRENT_USER.profile_image) {
+                    avatarHtml = `<div class="w-8 h-8 rounded-full bg-gray-700 overflow-hidden border border-gray-600"><img src="${CURRENT_USER.profile_image}" class="w-full h-full object-cover"></div>`;
+                } else {
+                    avatarHtml = `<div class="w-8 h-8 rounded-full bg-[#AB0A17] text-white flex items-center justify-center font-bold text-sm border border-orange-700">${CURRENT_USER.firstName[0]}</div>`;
+                }
+
+                btn.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-bold uppercase text-gray-300 hidden md:inline">Hi, ${CURRENT_USER.firstName}</span>
+                        ${avatarHtml}
+                    </div>
+                `;
+
+                // Update Mobile
+                if (mobileName) mobileName.textContent = `Hi, ${CURRENT_USER.firstName}`;
+                if (mobileAvatar) {
+                    if (CURRENT_USER.profile_image) {
+                        mobileAvatar.innerHTML = `<img src="${CURRENT_USER.profile_image}" class="w-full h-full object-cover">`;
+                        mobileAvatar.className = "w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center overflow-hidden border border-gray-600";
+                    } else {
+                        mobileAvatar.innerHTML = `<span class="font-bold text-white">${CURRENT_USER.firstName[0]}</span>`;
+                        mobileAvatar.className = "w-8 h-8 rounded-full bg-[#AB0A17] flex items-center justify-center border border-orange-700 overflow-hidden";
+                    }
+                }
+
+                // Update Dropdown Name
+                if (dropdownName) {
+                    const fullName = `${CURRENT_USER.firstName} ${CURRENT_USER.lastName || ''}`.trim();
+                    dropdownName.textContent = fullName;
+                }
+
+                // Set Click Handler for Menu
+                btn.onclick = handleProfileClick;
+            } else {
+                btn.innerHTML = `<div class="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center overflow-hidden border border-gray-600"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 text-gray-400"><path fill-rule="evenodd" d="M7.5 6a4.5 4.5 0 1 1 9 0 4.5 4.5 0 0 1-9 0ZM3.751 20.105a8.25 8.25 0 0 1 16.498 0 .75.75 0 0 1-.437.695A18.683 18.683 0 0 1 12 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 0 1-.437-.695Z" clip-rule="evenodd" /></svg></div>`;
+                btn.onclick = toggleAuth;
+
+                if (mobileName) mobileName.textContent = "Account";
+                if (mobileAvatar) {
+                    mobileAvatar.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 text-gray-400"><path fill-rule="evenodd" d="M7.5 6a4.5 4.5 0 1 1 9 0 4.5 4.5 0 0 1-9 0ZM3.751 20.105a8.25 8.25 0 0 1 16.498 0 .75.75 0 0 1-.437.695A18.683 18.683 0 0 1 12 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 0 1-.437-.695Z" clip-rule="evenodd" /></svg>`;
+                    mobileAvatar.className = "w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center overflow-hidden border border-gray-600";
+                }
+            }
+        }
+
+        function handleProfileClick() {
+            if (!CURRENT_USER) {
+                toggleAuth();
+                return;
+            }
+            const dropdown = document.getElementById('profile-dropdown');
+            if (dropdown.classList.contains('hidden')) {
+                dropdown.classList.remove('hidden');
+                setTimeout(() => {
+                    dropdown.classList.remove('opacity-0', 'scale-95');
+                }, 10);
+            } else {
+                dropdown.classList.add('opacity-0', 'scale-95');
+                setTimeout(() => dropdown.classList.add('hidden'), 200);
+            }
+        }
+
+        function handleLogout() {
+            fetch('/api/auth/logout', { method: 'POST' }).then(() => {
+                window.location.reload();
+            });
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            const dropdown = document.getElementById('profile-dropdown');
+            const btn = document.getElementById('nav-user-btn');
+            if (dropdown && !dropdown.classList.contains('hidden')) {
+                if (!dropdown.contains(e.target) && !btn.contains(e.target)) {
+                    dropdown.classList.add('opacity-0', 'scale-95');
+                    setTimeout(() => dropdown.classList.add('hidden'), 200);
+                }
+            }
+        });
+
+        function toggleAuth() {
+            const overlay = document.getElementById('auth-overlay');
+            if (overlay.classList.contains('hidden')) {
+                overlay.classList.remove('hidden');
+                void overlay.offsetWidth;
+                overlay.classList.remove('opacity-0');
+                if (typeof lenis !== 'undefined') lenis.stop();
+            } else {
+                overlay.classList.add('opacity-0');
+                setTimeout(() => overlay.classList.add('hidden'), 300);
+                if (typeof lenis !== 'undefined') lenis.start();
+            }
+        }
+
+        function switchAuthTab(tab) {
+            const tLogin = document.getElementById('tab-login');
+            const tSignup = document.getElementById('tab-signup');
+            const fLogin = document.getElementById('form-login');
+            const fSignup = document.getElementById('form-signup');
+            const fOtp = document.getElementById('form-otp');
+
+            document.getElementById('auth-error').classList.add('hidden');
+            fOtp.classList.add('hidden');
+            document.getElementById('form-forgot').classList.add('hidden');
+            document.getElementById('form-reset').classList.add('hidden');
+            document.getElementById('auth-tabs').classList.remove('hidden');
+
+            if (tab === 'login') {
+                tLogin.classList.replace('text-gray-500', 'text-white');
+                tLogin.classList.replace('border-transparent', 'border-[#AB0A17]');
+                tSignup.classList.replace('text-white', 'text-gray-500');
+                tSignup.classList.replace('border-[#AB0A17]', 'border-transparent');
+                fLogin.classList.remove('hidden');
+                fSignup.classList.add('hidden');
+            } else {
+                tSignup.classList.replace('text-gray-500', 'text-white');
+                tSignup.classList.replace('border-transparent', 'border-[#AB0A17]');
+                tLogin.classList.replace('text-white', 'text-gray-500');
+                tLogin.classList.replace('border-[#AB0A17]', 'border-transparent');
+                fSignup.classList.remove('hidden');
+                fLogin.classList.add('hidden');
+            }
+        }
+
+        function showError(msg) {
+            showToast("Error", msg, "bg-red-500/20 text-red-500", "⚠️");
+            const err = document.getElementById('auth-error');
+            if (err) {
+                err.textContent = msg;
+                err.classList.remove('hidden');
+            }
+        }
+
+        function showSuccess(msg) {
+            showToast("Success", msg, "bg-green-500/20 text-green-500", "✓");
+        }
+
+        function showInfo(msg) {
+            showToast("Notice", msg, "bg-blue-500/20 text-blue-400", "i");
+        }
+
+        let toastTimeout;
+        function showToast(title, msg, colorClass, iconHtml) {
+            const toast = document.getElementById('toast-notification');
+            const tTitle = document.getElementById('toast-title');
+            const tMsg = document.getElementById('toast-message');
+            const tIcon = document.getElementById('toast-icon');
+
+            tTitle.textContent = title;
+            tMsg.textContent = msg;
+            tIcon.innerHTML = iconHtml;
+            tIcon.className = `w-10 h-10 rounded-full flex items-center justify-center text-xl shrink-0 ${colorClass}`;
+
+            toast.classList.remove('translate-x-[150%]', 'opacity-0');
+            toast.classList.add('translate-x-0', 'opacity-100');
+
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.add('translate-x-[150%]', 'opacity-0');
+                toast.classList.remove('translate-x-0', 'opacity-100');
+            }, 5000);
+        }
+
+        async function handleLogin() {
+            const phone = document.getElementById('login-phone').value;
+            const pass = document.getElementById('login-pass').value;
+            const cc = document.querySelector('#form-login select').value;
+
+            if (!phone || !pass) return showError("Please enter phone and password.");
+
+            const fullPhone = cc + phone;
+
+            try {
+                const res = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone: fullPhone, password: pass })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    showOTP();
+                } else {
+                    showError(data.error);
+                }
+            } catch (e) { showError("Connection error."); }
+        }
+
+        async function handleSignup() {
+            const fname = document.getElementById('signup-fname').value;
+            const lname = document.getElementById('signup-lname').value;
+            const phone = document.getElementById('signup-phone').value;
+            const pass = document.getElementById('signup-pass').value;
+            const cc = document.getElementById('signup-cc').value;
+
+            if (!fname || !phone || !pass) return showError("Please fill required fields.");
+
+            const fullPhone = cc + phone;
+
+            try {
+                const res = await fetch('/api/auth/signup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ firstName: fname, lastName: lname, phone: fullPhone, password: pass })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    showOTP();
+                } else {
+                    showError(data.error);
+                }
+            } catch (e) { showError("Connection error."); }
+        }
+
+        function showOTP() {
+            document.getElementById('form-login').classList.add('hidden');
+            document.getElementById('form-signup').classList.add('hidden');
+            document.getElementById('form-forgot').classList.add('hidden');
+            document.getElementById('auth-tabs').classList.add('hidden');
+            document.getElementById('form-otp').classList.remove('hidden');
+            document.getElementById('auth-error').classList.add('hidden');
+            document.getElementById('otp-input').focus();
+        }
+
+        function handleForgotPasswordDisplay() {
+            document.getElementById('form-login').classList.add('hidden');
+            document.getElementById('form-signup').classList.add('hidden');
+            document.getElementById('auth-tabs').classList.add('hidden');
+            document.getElementById('form-forgot').classList.remove('hidden');
+        }
+
+        async function handleForgotPasswordSubmit() {
+            const phone = document.getElementById('forgot-phone').value;
+            const cc = document.getElementById('forgot-cc').value;
+
+            if (!phone) return showError("Please enter your phone number.");
+
+            const fullPhone = cc + phone;
+
+            try {
+                const res = await fetch('/api/auth/forgot-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone: fullPhone })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    showOTP();
+                } else {
+                    showError(data.error);
+                }
+            } catch (e) { showError("Connection error."); }
+        }
+
+        async function handleResetSubmit() {
+            const pass = document.getElementById('reset-pass').value;
+            const confirm = document.getElementById('reset-pass-confirm').value;
+
+            if (pass.length < 6) return showError("Password must be at least 6 characters.");
+            if (pass !== confirm) return showError("Passwords do not match.");
+
+            try {
+                const res = await fetch('/api/auth/reset-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password: pass })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    showSuccess("Password reset successful! You are now logged in.");
+                    setTimeout(() => window.location.reload(), 1500);
+                } else {
+                    showError(data.error);
+                }
+            } catch (e) { showError("Connection error."); }
+        }
+
+        async function handleVerify() {
+            const otp = document.getElementById('otp-input').value;
+            if (otp.length < 6) return showError("Invalid OTP.");
+
+            try {
+                const res = await fetch('/api/auth/verify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ otp: otp })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    if (data.step === 'new_password') {
+                        document.getElementById('form-otp').classList.add('hidden');
+                        document.getElementById('form-reset').classList.remove('hidden');
+                    } else {
+                        toggleAuth();
+                        window.location.reload();
+                    }
+                } else {
+                    showError(data.error);
+                }
+            } catch (e) { showError("Connection error."); }
+        }
+
+        async function handleResendOTP() {
+            const btn = document.getElementById('resend-btn');
+            btn.disabled = true;
+            btn.textContent = "Sending...";
+
+            try {
+                const res = await fetch('/api/auth/resend', { method: 'POST' });
+                const data = await res.json();
+                if (res.ok) {
+                    btn.textContent = "Sent!";
+                    setTimeout(() => {
+                        btn.disabled = false;
+                        btn.textContent = "RESEND CODE";
+                    }, 30000);
+                } else {
+                    showError(data.error);
+                    btn.disabled = false;
+                    btn.textContent = "RESEND CODE";
+                }
+            } catch (e) {
+                showError("Connection error.");
+                btn.disabled = false;
+                btn.textContent = "RESEND CODE";
+            }
+        }
+
+
+        // --- SEARCH LOGIC ---
+        let allSearchProducts = [];
+        let searchLoaded = false;
+        async function toggleSearch() {
+            const overlay = document.getElementById('search-overlay');
+            const input = document.getElementById('search-input');
+            const isOpen = !overlay.classList.contains('pointer-events-none');
+
+            if (isOpen) {
+                overlay.classList.add('opacity-0', 'pointer-events-none');
+                document.body.style.overflow = '';
+                input.value = '';
+                document.getElementById('search-results').innerHTML = '';
+                if (typeof lenis !== 'undefined') lenis.start();
+            } else {
+                overlay.classList.remove('opacity-0', 'pointer-events-none');
+                document.body.style.overflow = 'hidden';
+                setTimeout(() => input.focus(), 300);
+                if (typeof lenis !== 'undefined') lenis.stop();
+
+                if (!searchLoaded) {
+                    try {
+                        const res = await fetch('/assets/products.json');
+                        allSearchProducts = await res.json();
+                        searchLoaded = true;
+                    } catch (e) {
+                        console.error("Failed to load search products", e);
+                    }
+                }
+            }
+        }
+
+        let currentSearchResults = [];
+        let currentSearchPage = 0;
+
+        function handleSearch(query) {
+            const status = document.getElementById('search-status');
+
+            if (!query.trim()) {
+                document.getElementById('search-results').innerHTML = '';
+                status.classList.remove('hidden');
+                status.textContent = 'Start typing to search...';
+                updateSearchButtons(0);
+                return;
+            }
+
+            status.classList.add('hidden');
+
+            const lowerQuery = query.toLowerCase();
+            currentSearchResults = allSearchProducts.filter(p =>
+                p.name.toLowerCase().includes(lowerQuery) ||
+                p.brand.toLowerCase().includes(lowerQuery) ||
+                p.category.toLowerCase().includes(lowerQuery) ||
+                (p.type && p.type.toLowerCase().includes(lowerQuery))
+            );
+
+            currentSearchPage = 0;
+            renderSearchPage();
+        }
+
+        function renderSearchPage() {
+            const container = document.getElementById('search-results');
+            if (currentSearchResults.length === 0) {
+                container.innerHTML = '<p class="col-span-full text-center text-gray-500 text-xl">No products found.</p>';
+                updateSearchButtons(0);
+                return;
+            }
+
+            // Determine items per page based on screen width (simple check)
+            const itemsPerPage = window.innerWidth < 768 ? 3 : 6;
+
+            const start = currentSearchPage * itemsPerPage;
+            const end = start + itemsPerPage;
+            const pageItems = currentSearchResults.slice(start, end);
+
+            container.innerHTML = pageItems.map(p => `
+                    <a href="/product/${p.id}" class="flex items-center gap-4 bg-[#111] p-4 rounded hover:bg-[#1a1a1a] transition-colors group">
+                        <div class="w-16 h-16 bg-[#0a0a0a] rounded overflow-hidden flex-shrink-0">
+                            <img src="${p.image}" class="w-full h-full object-cover">
+                        </div>
+                        <div>
+                            <h4 class="text-white font-bold group-hover:text-[#AB0A17] transition-colors line-clamp-1">${p.name}</h4>
+                            <p class="text-gray-500 text-xs uppercase tracking-wide">${p.brand}</p>
+                            <span class="text-[#AB0A17] text-sm font-bold">${formatPrice(p.price)}</span>
+                        </div>
+                    </a>
+                `).join('');
+
+            updateSearchButtons(Math.ceil(currentSearchResults.length / itemsPerPage));
+        }
+
+        function changeSearchPage(delta) {
+            const itemsPerPage = window.innerWidth < 768 ? 3 : 6;
+            const totalPages = Math.ceil(currentSearchResults.length / itemsPerPage);
+
+            const newPage = currentSearchPage + delta;
+            if (newPage >= 0 && newPage < totalPages) {
+                currentSearchPage = newPage;
+                renderSearchPage();
+            }
+        }
+
+        function updateSearchButtons(totalPages) {
+            const prevBtn = document.getElementById('search-prev-btn');
+            const nextBtn = document.getElementById('search-next-btn');
+
+            if (totalPages <= 1) {
+                prevBtn.style.visibility = 'hidden';
+                nextBtn.style.visibility = 'hidden';
+                return;
+            }
+
+            prevBtn.style.visibility = 'visible';
+            nextBtn.style.visibility = 'visible';
+
+            prevBtn.disabled = currentSearchPage === 0;
+            nextBtn.disabled = currentSearchPage >= totalPages - 1;
+        }
+
+        // --- CART LOGIC ---
+        let cart = JSON.parse(localStorage.getItem('sixn_cart') || '[]');
+        let savedOverflow = '';
+        updateBadge();
+
+        function toggleCart() {
+            const sidebar = document.getElementById('cart-sidebar');
+            const backdrop = document.getElementById('cart-backdrop');
+
+            if (sidebar.classList.contains('translate-x-full')) {
+                // Open
+                renderCart();
+                savedOverflow = document.body.style.overflow;
+                sidebar.classList.remove('translate-x-full');
+                backdrop.classList.remove('hidden');
+                void backdrop.offsetWidth;
+                backdrop.classList.remove('opacity-0');
+                document.body.style.overflow = 'hidden';
+                if (typeof lenis !== 'undefined') lenis.stop();
+            } else {
+                // Close
+                sidebar.classList.add('translate-x-full');
+                backdrop.classList.add('opacity-0');
+                document.body.style.overflow = savedOverflow;
+                if (typeof lenis !== 'undefined') lenis.start();
+                setTimeout(() => {
+                    backdrop.classList.add('hidden');
+                }, 300);
+            }
+        }
+
+        function addToCart(product) {
+            const existing = cart.find(p =>
+                p.id === product.id &&
+                p.selectedSize === product.selectedSize &&
+                (p.selectedColor?.name === product.selectedColor?.name)
+            );
+
+            if (existing) {
+                existing.quantity = (existing.quantity || 1) + 1;
+            } else {
+                cart.push({ ...product, quantity: 1, selected: true });
+            }
+            saveCart();
+            toggleCart();
+        }
+
+        function removeFromCart(index) {
+            if (index > -1 && index < cart.length) {
+                cart.splice(index, 1);
+                saveCart();
+                renderCart();
+            }
+        }
+
+        function updateQuantity(index, delta) {
+            const item = cart[index];
+            if (item) {
+                item.quantity = (item.quantity || 1) + delta;
+                if (item.quantity <= 0) {
+                    removeFromCart(index);
+                } else {
+                    saveCart();
+                    renderCart();
+                }
+            }
+        }
+
+        function toggleItemSelection(index) {
+            const item = cart[index];
+            if (item) {
+                item.selected = !item.selected;
+                saveCart();
+                renderCart();
+            }
+        }
+
+        function saveCart() {
+            localStorage.setItem('sixn_cart', JSON.stringify(cart));
+            updateBadge();
+        }
+
+        function updateBadge() {
+            const count = cart.reduce((acc, item) => acc + (item.quantity || 1), 0);
+            const desktopBadge = document.getElementById('cart-count-badge-desktop');
+            const mobileBadge = document.getElementById('cart-count-badge-mobile');
+
+            [desktopBadge, mobileBadge].forEach(badge => {
+                if (!badge) return;
+                if (count > 0) {
+                    badge.textContent = count > 9 ? '9+' : count;
+                    badge.classList.remove('hidden');
+                } else {
+                    badge.classList.add('hidden');
+                }
+            });
+        }
+
+        function renderCart() {
+            const container = document.getElementById('cart-items');
+            if (cart.length === 0) {
+                container.innerHTML = '<div class="text-center text-gray-500 mt-20 flex flex-col items-center"><svg class="w-12 h-12 mb-4 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>Your cart is empty.</div>';
+                document.getElementById('cart-total').textContent = formatPrice(0);
+                updateCheckoutBtn();
+                return;
+            }
+
+            let total = 0;
+            container.innerHTML = cart.map((item, index) => {
+                const itemTotal = item.price * (item.quantity || 1);
+                if (item.selected !== false) total += itemTotal;
+
+                return `
+                    <div class="flex gap-4 items-start">
+                        <div class="pt-2">
+                             <input type="checkbox" onchange="toggleItemSelection(${index})" ${item.selected !== false ? 'checked' : ''} class="w-5 h-5 accent-[#AB0A17] bg-gray-800 border-gray-600 rounded cursor-pointer">
+                        </div>
+                        <div class="w-20 h-20 bg-[#151515] rounded overflow-hidden flex-shrink-0">
+                            <img src="${item.image}" alt="${item.name}" class="w-full h-full object-cover">
+                        </div>
+                        <div class="flex-1 flex flex-col justify-between min-h-[5rem]">
+                            <div>
+                                <h3 class="text-white font-bold text-sm line-clamp-1">${item.name}</h3>
+                                <div class="flex flex-wrap gap-2 my-1">
+                                     ${item.selectedSize ? `<span class="text-[10px] font-bold text-gray-400 border border-gray-700 px-1 rounded uppercase">Size: ${item.selectedSize}</span>` : ''}
+                                     ${item.selectedColor && item.selectedColor.name ? `<span class="text-[10px] font-bold text-gray-400 border border-gray-700 px-1 rounded uppercase flex items-center gap-1"><span class="w-2 h-2 rounded-full inline-block" style="background-color: ${item.selectedColor.hex}"></span> ${item.selectedColor.name}</span>` : ''}
+                                </div>
+                                <p class="text-gray-500 text-xs">${item.brand || 'SIXN'}</p>
+                            </div>
+                            <div class="flex justify-between items-end">
+                                <div class="flex items-center gap-2 border border-gray-700 rounded">
+                                    <button onclick="updateQuantity(${index}, -1)" class="px-2 text-gray-400 hover:text-white">-</button>
+                                    <span class="text-xs font-bold text-white">${item.quantity || 1}</span>
+                                    <button onclick="updateQuantity(${index}, 1)" class="px-2 text-gray-400 hover:text-white">+</button>
+                                </div>
+                                <span class="text-[#AB0A17] font-bold text-sm">${formatPrice(itemTotal)}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            const selectedTotal = cart.reduce((acc, item) => (item.selected !== false ? acc + (item.price * (item.quantity || 1)) : acc), 0);
+            document.getElementById('cart-total').textContent = formatPrice(selectedTotal);
+            updateCheckoutBtn();
+        }
+
+        function updateCheckoutBtn() {
+            const btn = document.getElementById('checkout-btn');
+            if (!btn) return;
+
+            const selectedCount = cart.filter(i => i.selected !== false).length;
+
+            if (selectedCount === 0) {
+                btn.disabled = true;
+                btn.textContent = 'Select Items';
+            } else {
+                btn.disabled = false;
+                btn.textContent = `Checkout (${selectedCount})`;
+            }
+        }
+
+        async function proceedToCheckout() {
+            const selectedItems = cart.filter(i => i.selected !== false);
+            if (selectedItems.length === 0) return;
+
+            const authRes = await fetch('/api/auth/user');
+            const authData = await authRes.json();
+
+            if (!authData.authenticated) {
+                toggleCart();
+                toggleAuth();
+                return;
+            }
+
+            localStorage.setItem('sixn_checkout_items', JSON.stringify(selectedItems));
+            window.location.href = '/checkout';
+        }
+
+        // Expose buyNow globally
+        window.buyNow = async function (productId) {
+            let product = null;
+            try {
+                const res = await fetch('/assets/products.json');
+                const products = await res.json();
+                product = products.find(p => p.id == productId);
+            } catch (e) { }
+
+            if (!product) return;
+
+            const authRes = await fetch('/api/auth/user');
+            const authData = await authRes.json();
+
+            if (!authData.authenticated) {
+                toggleAuth();
+                return;
+            }
+
+            const item = { ...product, quantity: 1 };
+            localStorage.setItem('sixn_checkout_items', JSON.stringify([item]));
+            window.location.href = '/checkout';
+        };
+
+        // Initializations
+        document.addEventListener('DOMContentLoaded', () => {
+            updateBadge();
+        });
+
+    </script>
+
+    {% block scripts %}{% endblock %}
+</body>
+
+</html>

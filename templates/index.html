@@ -1,0 +1,1003 @@
+{% extends "base.html" %}
+
+{% block title %}SIXN - Premium Shirt Showcase{% endblock %}
+
+{% block show_announcement %}{% endblock %}
+
+{% block styles %}
+<!-- Custom Styles for Index Only -->
+<style>
+    /* ===== CINEMATIC SHOWCASE ENGINE ===== */
+    :root {
+        --color-accent: #AB0A17;
+        --color-dark: #050505;
+        --color-light: #f5f5f5;
+        --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+        --ease-in-out-circ: cubic-bezier(0.85, 0, 0.15, 1);
+    }
+
+    /* Utilites */
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700;800&family=Syne:wght@700;800&display=swap');
+
+    .font-monument {
+        font-family: 'Syne', sans-serif;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: -0.02em;
+    }
+
+    .text-outline {
+        -webkit-text-stroke: 1px rgba(255, 255, 255, 0.15);
+        color: transparent;
+    }
+
+    .perspective-1000 {
+        perspective: 1000px;
+    }
+
+    /* Reveal Animations */
+    @keyframes revealText {
+        0% {
+            transform: translateY(100%);
+            opacity: 0;
+        }
+
+        100% {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    @keyframes scaleDown {
+        0% {
+            transform: scale(1.1);
+            filter: blur(10px);
+            opacity: 0;
+        }
+
+        100% {
+            transform: scale(1);
+            filter: blur(0);
+            opacity: 1;
+        }
+    }
+
+    @keyframes float {
+
+        0%,
+        100% {
+            transform: translateY(0);
+        }
+
+        50% {
+            transform: translateY(-15px);
+        }
+    }
+
+    @keyframes grain {
+
+        0%,
+        100% {
+            transform: translate(0, 0);
+        }
+
+        10% {
+            transform: translate(-5%, -10%);
+        }
+
+        20% {
+            transform: translate(-15%, 5%);
+        }
+
+        30% {
+            transform: translate(7%, -25%);
+        }
+
+        40% {
+            transform: translate(-5%, 25%);
+        }
+
+        50% {
+            transform: translate(-15%, 10%);
+        }
+
+        60% {
+            transform: translate(15%, 0%);
+        }
+
+        70% {
+            transform: translate(0%, 15%);
+        }
+
+        80% {
+            transform: translate(3%, 35%);
+        }
+
+        90% {
+            transform: translate(-10%, 10%);
+        }
+    }
+
+    @keyframes marquee {
+        0% {
+            transform: translateX(0);
+        }
+
+        100% {
+            transform: translateX(-50%);
+        }
+    }
+
+    /* Ambient Background */
+    #ambient-canvas {
+        display: none;
+    }
+
+    .noise-overlay {
+        position: fixed;
+        inset: -50%;
+        width: 200%;
+        height: 200%;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+        animation: grain 8s steps(10) infinite;
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    /* Main Grid Structure */
+    .showcase-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        min-height: auto;
+        position: relative;
+        z-index: 10;
+        padding-top: 110px;
+    }
+
+    @media (min-width: 1024px) {
+        .showcase-grid {
+            grid-template-columns: 1.1fr 0.9fr;
+            align-items: center;
+            gap: 2rem;
+            min-height: 100vh;
+            padding-top: 130px;
+        }
+    }
+
+    /* Product Visuals (Left) */
+    .product-visuals {
+        position: relative;
+        height: auto;
+        min-height: 380px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        perspective: 1200px;
+        margin-top: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    @media (min-width: 1024px) {
+        .product-visuals {
+            height: 100%;
+            min-height: 85vh;
+            justify-content: flex-end;
+            padding-right: 2rem;
+            margin-top: 0;
+            margin-bottom: 0;
+        }
+    }
+
+    .hero-card {
+        position: relative;
+        width: 270px;
+        height: 360px;
+        transform-style: preserve-3d;
+        transition: transform 0.1s ease-out;
+    }
+
+    @media (max-width: 340px) {
+        .hero-card {
+            width: 230px;
+            height: 306px;
+        }
+        .product-visuals {
+            min-height: 320px;
+        }
+    }
+
+    @media (min-width: 480px) {
+        .hero-card {
+            width: 360px;
+            height: 480px;
+        }
+    }
+
+    @media (min-width: 1024px) {
+        .hero-card {
+            width: 420px;
+            height: 560px;
+        }
+    }
+
+    .hero-image-wrapper {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        border-radius: 4px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+
+    .hero-image {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        transform: scale(1.0);
+        transition: transform 1.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    .hero-card:hover .hero-image {
+        transform: scale(1.0);
+    }
+
+    /* Glitch Effect Elements */
+    .glitch-layer {
+        position: absolute;
+        inset: 0;
+        background: url('') no-repeat center center / cover;
+        mix-blend-mode: hard-light;
+        opacity: 0;
+        z-index: 2;
+        pointer-events: none;
+    }
+
+    /* Floating Badges */
+    .floating-badge {
+        display: none;
+    }
+
+    @media (min-width: 1024px) {
+        .floating-badge {
+            display: block;
+            position: absolute;
+            background: rgba(171, 10, 23, 0.9);
+            color: white;
+            padding: 0.5rem 1rem;
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            font-size: 0.75rem;
+            letter-spacing: 0.1em;
+            backdrop-filter: blur(4px);
+            box-shadow: 0 10px 30px rgba(171, 10, 23, 0.3);
+            z-index: 20;
+            animation: float 6s ease-in-out infinite;
+        }
+    }
+
+    /* Product Info (Right) */
+    .product-info {
+        padding: 1.5rem 1rem 3rem 1rem;
+        display: flex; 
+        flex-direction: column;
+        justify-content: center;
+        z-index: 20;
+    }
+
+    @media (min-width: 1024px) {
+        .product-info {
+            padding: 2rem 2rem 2rem 4rem;
+        }
+    }
+
+    .info-wrapper {
+        max-width: 500px;
+        margin: 0 auto;
+    }
+
+    @media (min-width: 1024px) {
+        .info-wrapper {
+            margin: 0 auto 0 0;
+        }
+    }
+
+    .product-title {
+        font-size: clamp(2rem, 8vw, 3.5rem);
+        line-height: 1.1;
+        margin-bottom: 0.75rem;
+        position: relative;
+        mix-blend-mode: exclusion;
+        color: white;
+    }
+
+    @media (min-width: 1024px) {
+        .product-title {
+            margin-bottom: 1.5rem;
+        }
+    }
+
+    .product-meta {
+        display: flex;
+        gap: 1.25rem;
+        margin-bottom: 1rem;
+        font-family: 'Space Grotesk', sans-serif;
+        font-weight: 700;
+        font-size: 0.8rem;
+        color: rgba(255, 255, 255, 0.6);
+        letter-spacing: 0.1em;
+    }
+
+    @media (min-width: 1024px) {
+        .product-meta {
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+    }
+
+    .product-price {
+        font-size: 1.5rem;
+        color: #AB0A17;
+        font-weight: bold;
+    }
+
+    /* Custom Controls */
+    .controls-area {
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+        margin-top: 1.5rem;
+    }
+
+    @media (min-width: 1024px) {
+        .controls-area {
+            gap: 1.5rem;
+            margin-top: 3rem;
+        }
+    }
+
+    .nav-btn {
+        width: 50px;
+        height: 50px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        background: transparent;
+    }
+
+    .nav-btn:hover {
+        border-color: #AB0A17;
+        background: #AB0A17;
+        transform: scale(1.1);
+    }
+
+    .progress-bar-container {
+        display: none;
+    }
+
+    @media (min-width: 1024px) {
+        .progress-bar-container {
+            display: block;
+            flex: 1;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+    }
+
+    .progress-bar {
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 0%;
+        background: #AB0A17;
+        transition: width 0.1s linear;
+    }
+
+    /* Thumbnails */
+    .thumb-list {
+        display: flex;
+        gap: 1rem;
+        margin-top: 3rem;
+        overflow-x: auto;
+        padding-bottom: 1rem;
+    }
+
+    .thumb-item {
+        width: 80px;
+        aspect-ratio: 3/4;
+        opacity: 0.4;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        border: 1px solid transparent;
+    }
+
+    .thumb-item:hover,
+    .thumb-item.active {
+        opacity: 1;
+        transform: translateY(-5px);
+        border-color: #AB0A17;
+    }
+
+    /* Infinite Marquee */
+    .marquee-container {
+        display: none;
+    }
+
+    @media (min-width: 1024px) {
+        .marquee-container {
+            display: block;
+            position: absolute;
+            bottom: 5vh;
+            left: 0;
+            width: 100%;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 5;
+            opacity: 0.15;
+        }
+    }
+
+    .marquee-content {
+        display: flex;
+        white-space: nowrap;
+        animation: marquee 30s linear infinite;
+    }
+
+    .marquee-item {
+        font-family: 'Syne', sans-serif;
+        font-weight: 800;
+        font-size: 8rem;
+        padding-right: 4rem;
+        color: transparent;
+        -webkit-text-stroke: 2px white;
+    }
+
+    /* Animations Classes */
+    .reveal-up {
+        animation: revealText 0.8s var(--ease-out-expo) forwards;
+    }
+
+    .reveal-delay-1 {
+        animation-delay: 0.1s;
+    }
+
+    .reveal-delay-2 {
+        animation-delay: 0.2s;
+    }
+
+    .reveal-delay-3 {
+        animation-delay: 0.3s;
+    }
+
+    /* Button Glow */
+    .glow-button {
+        position: relative;
+        padding: 1rem 2.5rem;
+        background: #AB0A17;
+        color: white;
+        font-family: 'Space Grotesk', sans-serif;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        font-size: 0.8rem;
+        border: none;
+        overflow: hidden;
+        transition: all 0.4s ease;
+        z-index: 1;
+    }
+
+    .glow-button::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+        transition: left 0.5s ease;
+        z-index: -1;
+    }
+
+    .glow-button:hover::before {
+        left: 100%;
+    }
+
+    .glow-button:hover {
+        box-shadow: 0 0 30px rgba(171, 10, 23, 0.6);
+        transform: translateY(-2px);
+    }
+</style>
+{% endblock %}
+
+{% block navbar_class %}bg-[#0a0a0a]/95 backdrop-blur-md{% endblock %}
+
+{% block content %}
+<!-- ===== PREMIUM ANIMATED SHOWCASE ===== -->
+<div id="app-container" class="relative w-full min-h-screen overflow-hidden">
+
+    <!-- Ambient Background -->
+    <canvas id="ambient-canvas"></canvas>
+    <div class="noise-overlay"></div>
+
+    <!-- Infinite Marquee Background -->
+    <div class="marquee-container">
+        <div class="marquee-content" id="bg-marquee">
+            <!-- Populated by JS -->
+        </div>
+    </div>
+
+    <!-- Main Showcase Grid -->
+    <div class="showcase-grid max-w-[1800px] mx-auto px-6 lg:px-12">
+
+        <!-- Left: Product Visuals -->
+        <div class="product-visuals order-1 lg:order-1">
+            <div class="hero-card cursor-pointer" id="hero-card" onclick="goToProduct()">
+                <div class="hero-image-wrapper">
+                    <img src="" alt="Showcase Product" class="hero-image" id="hero-image">
+                    <div class="glitch-layer"></div>
+                </div>
+
+                <!-- Floating Badges -->
+                <div class="floating-badge" style="top: 10%; left: -5%;">NEW ARRIVAL</div>
+                <div class="floating-badge" style="bottom: 15%; right: -5%; animation-delay: 1s;">PREMIUM QUALITY</div>
+            </div>
+        </div>
+
+        <!-- Right: Product Info -->
+        <div class="product-info order-2 lg:order-2">
+            <div class="info-wrapper">
+                <div class="product-meta reveal-up">
+                    <span id="meta-brand">SIXN</span>
+                    <span id="meta-collection">2026 Collection</span>
+                </div>
+
+                <h1 class="product-title font-monument reveal-up reveal-delay-1" id="product-title">
+                    Loading...
+                </h1>
+
+                <div class="product-price font-monument reveal-up reveal-delay-2" id="product-price">
+                    $0.00
+                </div>
+
+                <p class="text-gray-400 mt-6 leading-relaxed reveal-up reveal-delay-2 max-w-md" id="product-desc">
+                    Experience the pinnacle of fashion engineering. Designed for those who dare to stand out.
+                </p>
+
+                <div class="controls-area reveal-up reveal-delay-3">
+                    <button class="nav-btn" onclick="prevSlide()">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                        </svg>
+                    </button>
+
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" id="progress-bar"></div>
+                    </div>
+
+                    <button class="nav-btn" onclick="nextSlide()">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="mt-10 reveal-up reveal-delay-3 hidden lg:flex items-center gap-6">
+                    <!-- Removed View Details Button as per request -->
+                    <div class="thumb-list" id="thumb-list">
+                        <!-- Thumbs by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+
+<!-- E-COMMERCE SECTIONS -->
+<div id="ecommerce-section" class="w-full relative z-40">
+
+    <!-- Features Section -->
+    <div id="features-section"
+        class="max-w-7xl mx-auto px-6 py-20 grid grid-cols-1 md:grid-cols-3 gap-8 border-b border-gray-900"></div>
+
+    <!-- Categories Section -->
+    <div class="px-6 py-20">
+        <div class="flex justify-between items-end mb-32 max-w-7xl mx-auto">
+            <h2 class="text-3xl md:text-5xl font-display font-bold text-white tracking-tight">Shop by Category</h2>
+            <button id="view-all-cats-btn"
+                class="text-[#AB0A17] hover:text-white transition-colors flex items-center gap-2 font-bold tracking-wider text-sm bg-transparent border-none cursor-pointer outline-none">
+                View all categories <span class="text-xl">→</span>
+            </button>
+        </div>
+        <div id="categories-section" class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-7xl mx-auto"></div>
+    </div>
+
+    <!-- New Arrivals Section -->
+    <div class="px-6 py-24">
+        <div class="text-center mb-16">
+            <h2 class="text-4xl md:text-6xl font-display font-bold text-white mb-4 tracking-tight">New Arrivals</h2>
+            <p id="new-arrivals-desc" class="text-gray-400 max-w-xl mx-auto text-lg"></p>
+        </div>
+        <div id="new-arrivals-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
+        </div>
+        <div id="load-more-container" class="text-center mt-12 hidden">
+            <button onclick="loadMoreArrivals()"
+                class="bg-white text-black px-10 py-4 font-bold hover:bg-[#AB0A17] hover:text-white transition-all duration-300 uppercase tracking-widest text-xs border-none cursor-pointer">
+                Show More
+            </button>
+        </div>
+        <div class="text-center mt-16">
+            <a href="/collection"
+                class="inline-block bg-[#1f1f1f] text-white px-8 py-4 font-bold border border-gray-800 hover:bg-[#AB0A17] hover:border-[#AB0A17] transition-all duration-300 uppercase tracking-widest text-sm">
+                Shop All Products
+            </a>
+        </div>
+    </div>
+
+    <!-- Newsletter Section -->
+    <div id="newsletter-section" class="relative py-32 px-6 overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-r from-[#1a1a1a]/80 to-[#050505]/80"></div>
+        <div class="relative z-10 max-w-4xl mx-auto text-center">
+            <h2 id="newsletter-title" class="text-3xl md:text-5xl font-display font-bold text-white mb-6"></h2>
+            <p id="newsletter-desc" class="text-gray-400 mb-10 text-lg md:text-xl"></p>
+            <div class="flex flex-col md:flex-row gap-4 max-w-md mx-auto">
+                <input type="email" placeholder="Enter your email"
+                    class="flex-1 bg-white/10 border border-gray-700 text-white px-6 py-4 outline-none focus:border-[#AB0A17] transition-colors placeholder-gray-500 rounded-sm">
+                <button
+                    class="bg-[#AB0A17] text-white px-8 py-4 font-bold hover:bg-white hover:text-black transition-all duration-300 uppercase tracking-widest rounded-sm">Subscribe</button>
+            </div>
+            <p class="text-gray-600 text-sm mt-6">We care about your data. Read our Privacy Policy.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // ===== CINEMATIC ENGINE =====
+    let PRODUCTS = [];
+    let currentIndex = 0;
+    let isAnimating = false;
+    let autoplayTimer = null;
+    let progressInterval = null;
+
+    // --- ELEMENTS ---
+    const els = {
+        title: document.getElementById('product-title'),
+        price: document.getElementById('product-price'),
+        brand: document.getElementById('meta-brand'),
+        image: document.getElementById('hero-image'),
+        card: document.getElementById('hero-card'),
+        progressBar: document.getElementById('progress-bar'),
+        thumbList: document.getElementById('thumb-list'),
+        marquee: document.getElementById('bg-marquee'),
+        canvas: document.getElementById('ambient-canvas')
+    };
+
+    // ===== 3D TILT EFFECT =====
+    // ===== 3D TILT EFFECT =====
+    if (els.card) {
+        let lastMove = 0;
+        document.addEventListener('mousemove', (e) => {
+            const now = Date.now();
+            if (now - lastMove < 20) return; // Throttle 50fps
+            lastMove = now;
+
+            if (window.innerWidth < 1024) return;
+            const x = (e.clientX / window.innerWidth - 0.5) * 10;
+            const y = (e.clientY / window.innerHeight - 0.5) * 10;
+            els.card.style.transform = `rotateY(${x}deg) rotateX(${-y}deg)`;
+        });
+    }
+
+    // ===== SCROLL OPTIMIZATION =====
+    let isScrolling = false;
+    window.addEventListener('scroll', () => {
+        if (!isScrolling) {
+            window.requestAnimationFrame(() => {
+                // Perform scroll-related updates here if needed
+                isScrolling = false;
+            });
+            isScrolling = true;
+        }
+    }, { passive: true });
+
+    // ===== AMBIENT CANVAS =====
+    // Background bubbles animation disabled as per request
+    let canvasRunning = false;
+    let isTransitioning = false;
+
+    function animateParticles() {}
+
+    // ===== CORE LOGIC =====
+    function updateProduct(animate = true) {
+        if (!PRODUCTS.length) return;
+        const p = PRODUCTS[currentIndex];
+
+        // Pause canvas immediately to free resources
+        if (animate) isTransitioning = true;
+
+        // 1. Text Animations (Re-triggering CSS anims)
+        if (animate) {
+            // Use requestAnimationFrame to batch DOM reads/writes if possible, 
+            // but for CSS animations, we need to force reflow.
+            // We'll keep it simple but ensure elements exist.
+            if (els.title) triggerAnim(els.title, 'reveal-up');
+            if (els.price) triggerAnim(els.price, 'reveal-up');
+        }
+
+        if (els.title) els.title.innerText = p.name;
+        if (els.price) els.price.innerText = formatPrice(p.price);
+        if (els.brand) els.brand.innerText = p.brand || 'SIXN EST. 2026';
+
+        // 2. Image Update - Optimized
+        const newImg = new Image();
+        newImg.src = p.image;
+
+        const onImageReady = () => {
+            els.image.style.opacity = '0'; // Fade out
+
+            setTimeout(() => {
+                els.image.src = p.image;
+
+                requestAnimationFrame(() => {
+                    els.image.onload = () => {
+                        els.image.style.opacity = '1';
+                        els.image.style.transform = 'scale(1.0)'; // No scaling, keep image fully visible
+
+                        // Resume canvas
+                        if (animate) {
+                            isTransitioning = false;
+                            if (!canvasRunning) animateParticles();
+                        }
+                    };
+                    // Handle cached case
+                    if (els.image.complete) els.image.onload();
+                });
+            }, 200); // 200ms match fade-out duration
+        };
+
+        newImg.onload = onImageReady;
+        newImg.onerror = () => {
+            // Fallback
+            if (animate) {
+                isTransitioning = false;
+                if (!canvasRunning) animateParticles();
+            }
+        };
+
+        // Fallback
+        if (newImg.complete) onImageReady();
+
+        // 3. Thumbnails
+        renderThumbs();
+
+        // 4. Marquee
+        updateMarquee(p.brand || 'SIXN');
+
+        // 5. Progress Bar
+        resetProgress();
+    }
+
+    // Helper to try and keep logic clean
+    function tryGetHighRes(url) { return url; }
+
+    function triggerAnim(el, animClass) {
+        // Remove class to reset animation
+        el.classList.remove(animClass);
+
+        // Use requestAnimationFrame to defer the addClass
+        // This allows the browser to consolidate layouts
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                el.classList.add(animClass);
+            });
+        });
+    }
+
+    function renderThumbs() {
+        // Initial render only
+        if (!els.thumbList.innerHTML.trim() && PRODUCTS.length) {
+            els.thumbList.innerHTML = PRODUCTS.map((p, idx) => `
+                <div class="thumb-item ${idx === currentIndex ? 'active' : ''}" onclick="jumpTo(${idx})" id="thumb-${idx}">
+                    <img src="${p.image}" class="w-full h-full object-cover">
+                </div>
+            `).join('');
+            return;
+        }
+
+        // Update active class only
+        const currentActive = els.thumbList.querySelector('.thumb-item.active');
+        if (currentActive) currentActive.classList.remove('active');
+
+        const newActive = document.getElementById(`thumb-${currentIndex}`);
+        if (newActive) newActive.classList.add('active');
+    }
+
+    function updateMarquee(text) {
+        // Only update if text changes
+        const currentText = els.marquee.getAttribute('data-text');
+        if (currentText === text) return;
+
+        els.marquee.setAttribute('data-text', text);
+        const str = `<span class="marquee-item">${text}</span>`.repeat(4);
+        els.marquee.innerHTML = str + str;
+    }
+
+    // ===== CONTROLS =====
+    function nextSlide() {
+        currentIndex = (currentIndex + 1) % PRODUCTS.length;
+        updateProduct();
+    }
+
+    function prevSlide() {
+        currentIndex = (currentIndex - 1 + PRODUCTS.length) % PRODUCTS.length;
+        updateProduct();
+    }
+
+    function jumpTo(idx) {
+        if (idx === currentIndex) return;
+        currentIndex = idx;
+        updateProduct();
+    }
+
+    function goToProduct() {
+        if (PRODUCTS[currentIndex]) window.location.href = `/product/${PRODUCTS[currentIndex].id}`;
+    }
+
+    // ===== AUTOPLAY =====
+    function resetProgress() {
+        if (progressInterval) clearInterval(progressInterval);
+        if (autoplayTimer) clearTimeout(autoplayTimer);
+
+        els.progressBar.style.width = '0%';
+
+        let width = 0;
+        progressInterval = setInterval(() => {
+            width += 1;
+            els.progressBar.style.width = `${width}%`;
+            if (width >= 100) {
+                nextSlide();
+            }
+        }, 50); // 50ms * 100 = 5000ms = 5s duration
+    }
+
+    // ===== KEYBOARD =====
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight') nextSlide();
+        if (e.key === 'ArrowLeft') prevSlide();
+    });
+
+    /* --- RENDER FUNCTIONS (Ecommerce sections) --- */
+    function renderFeatures(features) {
+        const container = document.getElementById('features-section');
+        container.innerHTML = features.map(f => `
+                <div class="flex flex-col items-center text-center p-6 border border-gray-800 rounded-sm hover:border-[#AB0A17] transition-colors duration-300 group">
+                    <div class="w-16 h-16 bg-[#1a1a1a] rounded-full flex items-center justify-center mb-6 text-[#AB0A17] text-2xl group-hover:scale-110 transition-transform duration-300">
+                       ${getIcon(f.icon)}
+                    </div>
+                    <h3 class="text-xl font-bold font-display text-white mb-2 uppercase tracking-widest">${f.title}</h3>
+                    <p class="text-gray-400 text-sm">${f.description}</p>
+                </div>
+            `).join('');
+    }
+
+    function getIcon(name) {
+        const icons = {
+            'truck': '<svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+            'refresh': '<svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>',
+            'shield': '<svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>'
+        };
+        return icons[name] || icons['truck'];
+    }
+
+    function renderCategories(categories) {
+        const container = document.getElementById('categories-section');
+        container.innerHTML = categories.map((c, index) => `
+                <div class="relative h-[400px] md:h-[500px] overflow-hidden group cursor-pointer ${index % 3 === 1 ? 'md:-mt-12' : ''}">
+                   <div class="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110" style="background-image: url('${c.image}');"></div>
+                   <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80 group-hover:opacity-60 transition-opacity duration-300"></div>
+                   <div class="absolute bottom-0 left-0 w-full p-8 z-10 translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+                        <h3 class="text-2xl md:text-3xl font-display font-bold text-white mb-2">${c.title}</h3>
+                        <p class="text-gray-300 text-sm mb-6 opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-100">${c.description}</p>
+                        <a href="${c.link}" class="inline-flex items-center text-white font-bold uppercase text-xs tracking-widest border-b-2 border-[#AB0A17] pb-1 hover:text-[#AB0A17] transition-colors">Shop Now <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg></a>
+                   </div>
+                </div>
+            `).join('');
+    }
+
+    /* --- NEW ARRIVALS GRID --- */
+    let newArrivalsList = [];
+    let displayedArrivalsCount = 5;
+
+    function renderNewArrivals(allProducts, textData) {
+        if (textData) document.getElementById('new-arrivals-desc').innerText = textData.description;
+        newArrivalsList = allProducts.filter(p => p.isNew);
+        displayArrivals();
+    }
+
+    function displayArrivals() {
+        const container = document.getElementById('new-arrivals-grid');
+        const loadMoreBtn = document.getElementById('load-more-container');
+        const toDisplay = newArrivalsList.slice(0, displayedArrivalsCount);
+
+        container.innerHTML = toDisplay.map(p => `
+                <a href="/product/${p.id}" class="group block">
+                    <div class="relative aspect-[3/4] mb-4 overflow-hidden rounded-xl 
+                                bg-white/5 backdrop-blur-md border border-white/10 
+                                transition-all duration-300 hover:border-white/20 hover:shadow-xl">
+                         ${p.isNew ? '<span class="absolute top-3 left-3 bg-[#AB0A17] text-white text-[9px] font-bold px-2 py-0.5 uppercase tracking-wider z-20 rounded-sm">New</span>' : ''}
+                         ${p.onSale ? '<span class="absolute top-3 right-3 bg-white/10 text-[#AB0A17] text-[9px] font-bold px-2 py-0.5 uppercase tracking-wider z-20 rounded-sm backdrop-blur-sm">Sale</span>' : ''}
+                        
+                        <img src="${p.image}" alt="${p.name}" class="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out ${p.inStock === false ? 'grayscale opacity-40' : ''}">
+                         
+                         <div class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                            <span class="bg-white/90 text-black font-bold uppercase text-[10px] px-6 py-3 tracking-widest rounded-sm hover:bg-[#AB0A17] hover:text-white transition-colors">
+                                ${p.inStock === false ? 'Out of Stock' : 'View Details'}
+                            </span>
+                         </div>
+                    </div>
+                    
+                    <div class="flex flex-col items-center text-center space-y-1 px-2">
+                        <p class="text-gray-500 text-[10px] font-bold uppercase tracking-widest">${p.brand}</p>
+                        <h3 class="text-white font-medium text-sm group-hover:text-gray-300 transition-colors">${p.name}</h3>
+                         <div class="text-sm">
+                             ${p.onSale ? `<span class="text-[#AB0A17] font-bold mr-2">${formatPrice(p.price)}</span>` : `<span class="text-gray-300 font-bold">${formatPrice(p.price)}</span>`}
+                        </div>
+                    </div>
+                </a>
+            `).join('');
+
+        if (displayedArrivalsCount < newArrivalsList.length) {
+            loadMoreBtn.classList.remove('hidden');
+        } else {
+            loadMoreBtn.classList.add('hidden');
+        }
+    }
+
+    function loadMoreArrivals() {
+        displayedArrivalsCount += 5;
+        displayArrivals();
+    }
+
+    function renderNewsletter(data) {
+        document.getElementById('newsletter-title').textContent = data.title;
+        document.getElementById('newsletter-desc').textContent = data.description;
+    }
+
+    // ===== INIT =====
+    Promise.all([
+        fetch('/assets/products.json').then(res => res.json()),
+        fetch('/assets/content.json').then(res => res.json())
+    ]).then(([productsData, contentData]) => {
+        const allProducts = productsData;
+        PRODUCTS = allProducts.filter(p => p.showcase === true);
+
+        renderFeatures(contentData.features);
+
+        const allCategories = contentData.categories;
+        renderCategories(allCategories.slice(0, 3));
+        document.getElementById('view-all-cats-btn').onclick = () => {
+            renderCategories(allCategories);
+            document.getElementById('view-all-cats-btn').style.display = 'none';
+        };
+
+        renderNewArrivals(allProducts, contentData.newArrivals);
+        renderNewsletter(contentData.newsletter);
+
+        if (PRODUCTS.length > 0) {
+            // Init cinematic engine is already running (resize/animateParticles called globally)
+            // Just need to trigger initial product render
+            updateProduct(false); // false = no text anim on first load to avoid layout shift
+        }
+    });
+
+</script>
+{% endblock %}

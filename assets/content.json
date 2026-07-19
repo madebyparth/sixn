@@ -1,0 +1,146 @@
+{
+    "categories": [
+        {
+            "description": "Everyday essentials for the modern man",
+            "id": "men",
+            "image": "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?ixlib=rb-4.0.3&auto=format&fit=crop&w=1480&q=80",
+            "link": "/collection/men",
+            "title": "Men's Collection"
+        },
+        {
+            "description": "Contemporary styles for every season",
+            "id": "women",
+            "image": "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?q=80&w=1000&auto=format&fit=crop",
+            "link": "/collection/women",
+            "title": "Women's Collection"
+        },
+        {
+            "description": "Complete your look",
+            "id": "accessories",
+            "image": "https://images.unsplash.com/photo-1523206489230-c012c64b2b48?q=80&w=1000&auto=format&fit=crop",
+            "link": "/collection/accessories",
+            "title": "Accessories"
+        },
+        {
+            "description": "Smart gadgets and modern tech",
+            "id": "electronics",
+            "image": "https://images.unsplash.com/photo-1498049794561-7780e7231661?q=80&w=1000&auto=format&fit=crop",
+            "link": "/collection/electronics",
+            "title": "Electronics"
+        },
+        {
+            "description": "Elevate your living space",
+            "id": "home-decor",
+            "image": "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?q=80&w=1000&auto=format&fit=crop",
+            "link": "/collection/home-decor",
+            "title": "Home & Kitchen"
+        },
+        {
+            "description": "Timeless elegance",
+            "id": "jewellery",
+            "image": "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?q=80&w=1000&auto=format&fit=crop",
+            "link": "/collection/jewellery",
+            "title": "Jewellery"
+        },
+        {
+            "description": "Premium comfort for the next generation",
+            "id": "kids",
+            "image": "https://images.unsplash.com/photo-1519704943920-184478ae912d?q=80&w=1000&auto=format&fit=crop",
+            "link": "/collection/kids",
+            "title": "Kids Collection"
+        }
+    ],
+    "features": [
+        {
+            "description": "On all orders over $150",
+            "icon": "truck",
+            "title": "Free Shipping"
+        },
+        {
+            "description": "30-day money back guarantee",
+            "icon": "refresh",
+            "title": "Easy Returns"
+        },
+        {
+            "description": "100% secure checkout process",
+            "icon": "shield",
+            "title": "Secure Payment"
+        }
+    ],
+    "footer": {
+        "copyright": "\u00c2\u00a9 2026 SIXN Ecommerce. All rights reserved.",
+        "sections": [
+            {
+                "links": [
+                    {
+                        "text": "New Arrivals",
+                        "url": "#"
+                    },
+                    {
+                        "text": "Men",
+                        "url": "#"
+                    },
+                    {
+                        "text": "Women",
+                        "url": "#"
+                    },
+                    {
+                        "text": "Accessories",
+                        "url": "#"
+                    }
+                ],
+                "title": "Shop"
+            },
+            {
+                "links": [
+                    {
+                        "text": "Order Status",
+                        "url": "#"
+                    },
+                    {
+                        "text": "Shipping & Returns",
+                        "url": "#"
+                    },
+                    {
+                        "text": "FAQ",
+                        "url": "#"
+                    },
+                    {
+                        "text": "Contact Us",
+                        "url": "#"
+                    }
+                ],
+                "title": "Support"
+            },
+            {
+                "links": [
+                    {
+                        "text": "About Us",
+                        "url": "#"
+                    },
+                    {
+                        "text": "Sustainability",
+                        "url": "#"
+                    },
+                    {
+                        "text": "Careers",
+                        "url": "#"
+                    },
+                    {
+                        "text": "Terms of Service",
+                        "url": "#"
+                    }
+                ],
+                "title": "Company"
+            }
+        ]
+    },
+    "newArrivals": {
+        "description": "Thoughtfully designed objects for the workspace, home, and travel.",
+        "title": "New Arrivals"
+    },
+    "newsletter": {
+        "description": "Join our newsletter today and get 20% off your first purchase. Plus, get early access to new drops.",
+        "title": "Ready to upgrade your wardrobe?"
+    }
+}

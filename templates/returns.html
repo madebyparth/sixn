@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}Returns & Exchanges - SIXN{% endblock %}
+
+{% block content %}
+<main class="pt-32 pb-20 px-6">
+    <div class="max-w-4xl mx-auto">
+        <!-- Header Section -->
+        <div class="mb-16 text-center">
+            <h1 class="text-4xl md:text-6xl font-display font-bold text-white mb-6 uppercase tracking-tight">Returns &
+                <span class="text-[#AB0A17]">Exchanges</span>
+            </h1>
+            <p class="text-gray-400 font-bold uppercase tracking-widest text-sm">Hassle-free guarantee for your premium
+                shirts</p>
+            <div class="w-20 h-1 bg-[#AB0A17] mx-auto mt-8"></div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+            <div class="p-8 bg-[#0a0a0a] border border-gray-900 rounded-sm text-center">
+                <div class="w-12 h-12 bg-[#AB0A17]/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <svg class="w-6 h-6 text-[#AB0A17]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-white font-bold uppercase tracking-widest text-sm mb-2">14-Day Window</h3>
+                <p class="text-gray-500 text-xs uppercase">From the date of delivery</p>
+            </div>
+            <div class="p-8 bg-[#0a0a0a] border border-gray-900 rounded-sm text-center">
+                <div class="w-12 h-12 bg-[#AB0A17]/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <svg class="w-6 h-6 text-[#AB0A17]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                </div>
+                <h3 class="text-white font-bold uppercase tracking-widest text-sm mb-2">Free Pickup</h3>
+                <p class="text-gray-500 text-xs uppercase">No extra cost for regular orders</p>
+            </div>
+            <div class="p-8 bg-[#0a0a0a] border border-gray-900 rounded-sm text-center">
+                <div class="w-12 h-12 bg-[#AB0A17]/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <svg class="w-6 h-6 text-[#AB0A17]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-white font-bold uppercase tracking-widest text-sm mb-2">Full Refund</h3>
+                <p class="text-gray-500 text-xs uppercase">Credited back to your source</p>
+            </div>
+        </div>
+
+        <div class="space-y-12">
+            <section class="bg-[#0a0a0a] p-8 md:p-12 border border-gray-900 rounded-sm">
+                <h2
+                    class="text-2xl font-display font-bold text-white mb-6 uppercase tracking-widest flex items-center gap-4">
+                    How it Works
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-12 text-gray-400">
+                    <div class="space-y-6">
+                        <div class="flex gap-4">
+                            <span class="text-[#AB0A17] font-bold">01.</span>
+                            <p><strong class="text-white">Visit Order History:</strong> Log in to your account and go to
+                                the "My Orders" section.</p>
+                        </div>
+                        <div class="flex gap-4">
+                            <span class="text-[#AB0A17] font-bold">02.</span>
+                            <p><strong class="text-white">Select Return/Exchange:</strong> Click on the order you wish
+                                to return and select the product.</p>
+                        </div>
+                    </div>
+                    <div class="space-y-6">
+                        <div class="flex gap-4">
+                            <span class="text-[#AB0A17] font-bold">03.</span>
+                            <p><strong class="text-white">Reverse Pickup:</strong> Our courier partner will arrive
+                                within 24-48 hours to collect the package.</p>
+                        </div>
+                        <div class="flex gap-4">
+                            <span class="text-[#AB0A17] font-bold">04.</span>
+                            <p><strong class="text-white">Validation:</strong> Once we receive the item and verify its
+                                condition, your refund/exchange is processed.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="bg-[#0a0a0a] p-8 md:p-12 border border-gray-900 rounded-sm">
+                <h2 class="text-2xl font-display font-bold text-white mb-6 uppercase tracking-widest">Return Policy
+                    Details</h2>
+                <ul class="space-y-4 text-gray-400 list-disc list-inside">
+                    <li>The item must be in its <strong class="text-white">original condition</strong>, unworn, and
+                        unwashed.</li>
+                    <li>All tags and original packaging must be intact.</li>
+                    <li>Items on "Clearance Sale" are only eligible for exchange, not full refunds.</li>
+                    <li>For hygiene reasons, certain accessories cannot be returned.</li>
+                </ul>
+            </section>
+
+            <div class="text-center">
+                <p class="text-gray-500 mb-8 italic">Need immediate help with a return?</p>
+                <a href="/contact"
+                    class="inline-block border-2 border-[#AB0A17] text-[#AB0A17] font-bold uppercase px-12 py-5 tracking-widest hover:bg-[#AB0A17] hover:text-white transition-all duration-300">
+                    Talk to Support
+                </a>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}
