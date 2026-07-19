@@ -114,8 +114,8 @@ Ensure you have the following installed on your system:
 
 ### 2. Clone the Repository
 ```bash
-git clone https://github.com/yourusername/sixn-storefront.git
-cd sixn-storefront
+git clone https://github.com/madebyparth/sixn
+cd sixn
 ```
 
 ### 3. Create a Virtual Environment
