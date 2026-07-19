@@ -84,7 +84,7 @@ Configure the project by creating a `.env` file in the root directory (use `.env
 | Key | Description | Example / Value |
 | :--- | :--- | :--- |
 | `SECRET_KEY` | Flask session cookie encryption key | `a_highly_secure_random_string` |
-| `MONGO_URI` | Connection URI for the MongoDB database | `mongodb://localhost:27017/huba2z` |
+| `MONGO_URI` | Connection URI for the MongoDB database | `mongodb://localhost:27017/sixn` |
 | `RAZORPAY_KEY` | Razorpay Merchant Key ID | `rzp_test_xxxxxxxxxxxxxx` |
 | `RAZORPAY_SECRET` | Razorpay Merchant Key Secret | `xxxxxxxxxxxxxxxxxxxxxxxx` |
 | `TWILIO_PHONE` | Twilio purchased virtual phone number | `+1xxxxxxxxxx` |
