@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block theme_class %}{% endblock %}
+
+{% block styles %}
+<style>
+    .policy h2 { text-transform: uppercase; font-size: 12px; font-weight: 600; letter-spacing: .14em; margin: 32px 0 8px; }
+    .policy p, .policy li { font-size: 13px; line-height: 1.7; margin-bottom: 8px; }
+    .policy ul { list-style: square; padding-left: 18px; }
+    .policy a { text-decoration: underline; text-underline-offset: 3px; }
+    .policy a:hover { color: var(--lime); }
+    .policy p, .policy li { color: #c9cbc7; }
+    .policy .gap { background: rgba(164,214,58,.14); color: #d7f59a; padding: 0 4px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="pt-24 pb-16 px-4">
+    <article class="policy max-w-2xl mx-auto">
+        <h1 class="nts-display text-[28px] md:text-[40px]">{% block policy_title %}{% endblock %}</h1>
+        <p class="text-[#6b6b6b] text-[11px] uppercase mt-1">{% block policy_updated %}Last updated 9 October 2026{% endblock %}</p>
+        {% block policy_body %}{% endblock %}
+    </article>
+</main>
+{% endblock %}

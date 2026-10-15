@@ -1,6 +1,7 @@
+{% from "_macros.html" import google_button %}
 {% extends "base.html" %}
 
-{% block title %}Secure Checkout - SIXN{% endblock %}
+{% block title %}Secure Checkout - NTS{% endblock %}
 
 {% block content %}
 <div class="pt-32 pb-20 px-6 min-h-screen bg-[#050505]">
@@ -23,31 +24,35 @@
             <!-- LEFT COLUMN: SHIPPING INFO -->
             <div class="lg:col-span-7 space-y-8">
 
-                <!-- Contact Info (Read Only) -->
+                <!-- Contact: guest checkout by email (no login); signed-in customers get theirs prefilled -->
                 <div class="bg-[#111] p-8 rounded-sm border border-gray-800">
                     <h2 class="text-xl font-bold text-white uppercase tracking-widest mb-6">Contact Information</h2>
+                    {% if not current_user.is_authenticated and social_providers|selectattr('name', 'equalto', 'google')|list %}
+                    <div class="mb-6">
+                        {{ google_button('/checkout') }}
+                        <p class="text-[11px] text-gray-500 mt-2 text-center">Fills in your name and email. Or continue as a guest below.</p>
+                    </div>
+                    {% endif %}
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label
-                                class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Name</label>
-                            <input type="text" value="{{ user.first_name }} {{ user.last_name }}" disabled
-                                class="w-full bg-[#0a0a0a] border border-gray-700 text-gray-400 p-4 cursor-not-allowed">
+                            <label for="contact-name" class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Full name *</label>
+                            <input type="text" id="contact-name" autocomplete="name" maxlength="100" required
+                                value="{{ (current_user.first_name ~ ' ' ~ current_user.last_name)|trim if current_user.is_authenticated else '' }}"
+                                class="w-full bg-[#1a1a1a] border border-gray-700 text-white p-4 outline-none">
                         </div>
                         <div>
-                            <label
-                                class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Phone</label>
-                            <input type="text" value="{{ user.phone }}" disabled
-                                class="w-full bg-[#0a0a0a] border border-gray-700 text-gray-400 p-4 cursor-not-allowed">
+                            <label for="contact-phone" class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Mobile (for the courier) *</label>
+                            <input type="tel" id="contact-phone" autocomplete="tel-national" inputmode="numeric" maxlength="14" required
+                                placeholder="10-digit mobile"
+                                value="{{ (current_user.phone or '')[-10:] if current_user.is_authenticated else '' }}"
+                                class="w-full bg-[#1a1a1a] border border-gray-700 text-white p-4 outline-none">
                         </div>
-                        <!-- Email (Editable) -->
                         <div class="md:col-span-2">
-                            <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-                                Email Address <span class="text-[#AB0A17]">(Optional)</span>
-                            </label>
-                            <input type="email" id="addr-email" placeholder="you@example.com"
-                                value="{{ user.email or '' }}"
-                                class="w-full bg-[#1a1a1a] border border-gray-700 text-white p-4 focus:border-[#AB0A17] outline-none transition-colors">
-                            <p class="text-[10px] text-gray-500 mt-1">We'll send order tracking updates here.</p>
+                            <label for="addr-email" class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Email *</label>
+                            <input type="email" id="addr-email" autocomplete="email" placeholder="you@gmail.com" required
+                                value="{{ (current_user.email or '') if current_user.is_authenticated else '' }}"
+                                class="w-full bg-[#1a1a1a] border border-gray-700 text-white p-4 outline-none">
+                            <p class="text-[10px] text-gray-500 mt-1">No account needed. Use this email with your order number on Order Status to track your order.</p>
                         </div>
                     </div>
                 </div>
@@ -175,9 +180,7 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <label
-                                        class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Zip
-                                        /
-                                        Postal Code <span class="text-[#AB0A17]">*</span></label>
+                                        class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">PIN code <span class="text-[#AB0A17]">*</span></label>
                                     <input type="text" id="addr-zip"
                                         class="w-full bg-[#1a1a1a] border border-gray-700 text-white p-4 focus:border-[#AB0A17] outline-none transition-colors">
                                 </div>
@@ -195,6 +198,7 @@
                             </div>
 
                             <!-- Save Address Option (only for new addresses) -->
+                            {% if current_user.is_authenticated %}
                             <div class="pt-4 border-t border-gray-800">
                                 <label class="flex items-center gap-3 cursor-pointer group">
                                     <div class="relative flex items-center justify-center">
@@ -212,6 +216,7 @@
                                         this address for future orders</span>
                                 </label>
                             </div>
+                            {% endif %}
                         </form>
                     </div>
                 </div>
@@ -260,9 +265,9 @@
 
                 <div class="mb-6 pt-4 border-t border-gray-800">
                     <!-- HIDDEN DATA FIELD FOR JS -->
-                    <input type="hidden" id="user-wallet-balance-data" value="{{ current_user.wallet_balance }}">
+                    <input type="hidden" id="user-wallet-balance-data" value="{{ current_user.wallet_balance if current_user.is_authenticated else 0 }}">
 
-                    {% if current_user.wallet_balance > 0 %}
+                    {% if current_user.is_authenticated and current_user.wallet_balance > 0 %}
                     <div class="flex items-center justify-between p-4 bg-[#1a1a1a] border border-gray-700 rounded-sm hover:border-[#AB0A17] transition-colors cursor-pointer"
                         onclick="toggleWalletUsage()">
                         <div class="flex items-center gap-3">
@@ -365,7 +370,7 @@
                     class="payment-method-option group cursor-pointer flex items-center gap-4 p-4 border border-gray-700 rounded-sm bg-[#1a1a1a] hover:border-[#AB0A17] transition-all duration-300"
                     data-method="online">
                     <div class="relative">
-                        <input type="radio" name="payment_method" value="online" checked class="sr-only peer">
+                        <input type="radio" name="payment_method" value="online" {{ 'checked' if payments_enabled else 'disabled' }} class="sr-only peer">
                         <div
                             class="w-5 h-5 border-2 border-gray-600 rounded-full peer-checked:border-[#AB0A17] transition-colors">
                         </div>
@@ -375,7 +380,7 @@
                     </div>
                     <div class="flex-1">
                         <span class="text-white font-bold block">Pay Online</span>
-                        <span class="text-gray-500 text-xs">Credit/Debit Card, UPI, Net Banking</span>
+                        <span class="text-gray-500 text-xs">{{ 'UPI / Google Pay, cards, netbanking' if payments_enabled else 'Online payments not yet enabled' }}</span>
                     </div>
                 </label>
 
@@ -384,7 +389,7 @@
                     class="payment-method-option group cursor-pointer flex items-center gap-4 p-4 border border-gray-700 rounded-sm bg-[#1a1a1a] hover:border-[#AB0A17] transition-all duration-300"
                     data-method="cod">
                     <div class="relative">
-                        <input type="radio" name="payment_method" value="cod" class="sr-only peer">
+                        <input type="radio" name="payment_method" value="cod" {{ '' if payments_enabled else 'checked' }} class="sr-only peer">
                         <div
                             class="w-5 h-5 border-2 border-gray-600 rounded-full peer-checked:border-[#AB0A17] transition-colors">
                         </div>
@@ -420,9 +425,26 @@
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script>
     // --- CHECKOUT PAGE SCRIPT ---
-    // Wait for DOM and base.html scripts to load before executing
+    // Note: CURRENCY, currentCurrency, and formatPrice are defined in base.html
+
+    document.getElementById('addr-email').addEventListener('change', function () {
+        const email = this.value.trim().toLowerCase();
+        const items = JSON.parse(localStorage.getItem('sixn_checkout_items') || '[]');
+        if (/^[^@\s]+@[^@\s]+\.[A-Za-z]{2,}$/.test(email) && items.length) {
+            fetch('/api/cart', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, items }) }).catch(() => {});
+        }
+    });
+
+    // Razorpay Checkout: show UPI (Google Pay / PhonePe / Paytm) first, then the default methods.
+    const RZP_DISPLAY_CONFIG = {
+        display: {
+            blocks: { upi: { name: 'UPI / Google Pay', instruments: [{ method: 'upi' }] } },
+            sequence: ['block.upi'],
+            preferences: { show_default_blocks: true }
+        }
+    };
+
     document.addEventListener('DOMContentLoaded', function () {
-        // Note: CURRENCY, currentCurrency, and formatPrice are defined in base.html
 
         // --- COUPON STATE ---
         // Initialize globally within this closure so renderSummary can access it
@@ -569,7 +591,7 @@
              ${item.selectedSize ? `<span class="text-[10px] font-bold text-gray-400 border border-gray-700 px-1 rounded uppercase">Size: ${item.selectedSize}</span>` : ''}
              ${item.selectedColor && item.selectedColor.name ? `<span class="text-[10px] font-bold text-gray-400 border border-gray-700 px-1 rounded uppercase flex items-center gap-1"><span class="w-2 h-2 rounded-full inline-block" style="background-color: ${item.selectedColor.hex}"></span> ${item.selectedColor.name}</span>` : ''}
         </div>
-        <p class="text-xs text-gray-500 uppercase">${item.brand || 'SIXN'}</p>
+        <p class="text-xs text-gray-500 uppercase">${item.brand || 'NTS'}</p>
         <div class="flex items-center gap-2 mt-2">
             <button onclick="updateQuantity(${index}, -1)" class="w-6 h-6 flex items-center justify-center bg-gray-800 hover:bg-[#AB0A17] text-white rounded transition-colors text-xs font-bold">−</button>
             <span class="text-white text-sm font-bold w-6 text-center">${item.quantity || 1}</span>
@@ -1007,13 +1029,24 @@
             return;
         }
 
-        // Email Validation (Optional)
+        // Contact (guest checkout): email is the customer identifier
         const emailInput = document.getElementById('addr-email');
-        const email = emailInput ? emailInput.value.trim() : '';
-
-        if (email && !email.includes('@')) {
+        const email = emailInput.value.trim().toLowerCase();
+        const contactName = document.getElementById('contact-name').value.trim();
+        const contactPhone = document.getElementById('contact-phone').value.replace(/\D/g, '').slice(-10);
+        if (!/^[^@\s]+@[^@\s]+\.[A-Za-z]{2,}$/.test(email)) {
             alert("Please enter a valid email address.");
             emailInput.focus();
+            return;
+        }
+        if (!contactName) {
+            alert("Please enter your name.");
+            document.getElementById('contact-name').focus();
+            return;
+        }
+        if (contactPhone.length !== 10) {
+            alert("Please enter a 10-digit mobile number for the courier.");
+            document.getElementById('contact-phone').focus();
             return;
         }
 
@@ -1051,6 +1084,8 @@
                 address: addressData.address,
                 save_as_default: addressData.saveAddress,
                 email: email,
+                name: contactName,
+                phone: contactPhone,
                 shipping_cost: (typeof window.appliedShippingCost !== 'undefined') ? window.appliedShippingCost : 0,
                 // Wallet specific
                 use_wallet: useWallet,
@@ -1076,7 +1111,7 @@
                     // Clear from main cart too
                     let mainCart = JSON.parse(localStorage.getItem('sixn_cart') || '[]');
                     const checkoutIds = checkoutItems.map(i => i.id);
-                    mainCart = mainCart.filter(i => !checkoutIds.includes(i.id));
+                    mainCart = mainCart.filter(i => !checkoutItems.some(c => c.id === i.id && c.selectedSize === i.selectedSize));
                     localStorage.setItem('sixn_cart', JSON.stringify(mainCart));
 
                     window.location.href = `/order-confirmation/${data.internal_order_id || data.order_id}`;
@@ -1116,10 +1151,10 @@
             // Clear cart logic
             let mainCart = JSON.parse(localStorage.getItem('sixn_cart') || '[]');
             const checkoutIds = checkoutItems.map(i => i.id);
-            mainCart = mainCart.filter(i => !checkoutIds.includes(i.id));
+            mainCart = mainCart.filter(i => !checkoutItems.some(c => c.id === i.id && c.selectedSize === i.selectedSize));
             localStorage.setItem('sixn_cart', JSON.stringify(mainCart));
 
-            window.location.href = `/order-confirmation/${data.order_id}`;
+            window.location.href = `/order-confirmation/${data.internal_order_id || data.order_id}`;
         } else {
             throw new Error(data.error || "Order creation failed");
         }
@@ -1144,7 +1179,7 @@
             "key": data.razorpay_key_id,
             "amount": data.amount, // Amount in paise from backend
             "currency": data.currency,
-            "name": "SIXN",
+            "name": "NTS",
             "description": "Order Payment",
             "order_id": data.razorpay_order_id,
             "handler": async function (response) {
@@ -1165,7 +1200,7 @@
                         localStorage.removeItem('sixn_checkout_items');
                         let mainCart = JSON.parse(localStorage.getItem('sixn_cart') || '[]');
                         const checkoutIds = checkoutItems.map(i => i.id);
-                        mainCart = mainCart.filter(i => !checkoutIds.includes(i.id));
+                        mainCart = mainCart.filter(i => !checkoutItems.some(c => c.id === i.id && c.selectedSize === i.selectedSize));
                         localStorage.setItem('sixn_cart', JSON.stringify(mainCart));
 
                         window.location.href = `/order-confirmation/${data.internal_order_id}`;
@@ -1178,13 +1213,12 @@
                 }
             },
             "prefill": {
-                "name": "{{ user.first_name }} {{ user.last_name }}",
-                "email": "{{ user.email }}",
-                "contact": "{{ user.phone }}"
+                "name": payload.name,
+                "email": payload.email,
+                "contact": payload.phone
             },
-            "theme": {
-                "color": "#AB0A17"
-            }
+            "theme": { "color": "#000000" },
+            "config": RZP_DISPLAY_CONFIG
         };
 
         console.log("Opening Razorpay with options:", options);
@@ -1242,21 +1276,19 @@
                 "key": "{{ razorpay_key }}",
                 "amount": order.amount,
                 "currency": order.currency,
-                "name": "SIXN",
+                "name": "NTS",
                 "description": "Secure Checkout Payment",
-                "image": window.location.hostname === 'localhost' ? '' : (window.location.origin + '/assets/web-media/sixn-logo-transparent.png'),
                 "order_id": order.id,
                 "handler": async function (response) {
                     verifyPayment(response, address, window.pendingSaveAsDefault);
                 },
                 "prefill": {
-                    "name": "{{ user.first_name }} {{ user.last_name }}",
-                    "contact": "{{ user.phone }}",
+                    "name": document.getElementById('contact-name').value.trim(),
+                    "contact": document.getElementById('contact-phone').value.replace(/\D/g, '').slice(-10),
                     "email": email
                 },
-                "theme": {
-                    "color": "#AB0A17"
-                }
+                "theme": { "color": "#000000" },
+                "config": RZP_DISPLAY_CONFIG
             };
 
             const rzp1 = new Razorpay(options);
@@ -1423,7 +1455,7 @@
                 showSuccess("Order placed successfully! Redirecting...");
                 setTimeout(() => {
                     if (data.order_id) {
-                        window.location.href = `/order-confirmation/${data.order_id}`;
+                        window.location.href = `/order-confirmation/${data.internal_order_id || data.order_id}`;
                     } else if (data.internal_order_id) {
                         window.location.href = `/order-confirmation/${data.internal_order_id}`;
                     } else {

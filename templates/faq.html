@@ -1,172 +1,29 @@
-{% extends "base.html" %}
+{% extends "_policy.html" %}
+{% from "_macros.html" import val %}
 
-{% block title %}FAQ - SIXN{% endblock %}
+{% block title %}FAQ — NTS{% endblock %}
+{% block policy_title %}FAQ{% endblock %}
+{% block policy_updated %}{% endblock %}
 
-{% block content %}
-<main class="pt-32 pb-20 px-6">
-    <div class="max-w-4xl mx-auto">
-        <!-- Header Section -->
-        <div class="mb-16 text-center">
-            <h1 class="text-4xl md:text-6xl font-display font-bold text-white mb-6 uppercase tracking-tight">Help & FAQ
-            </h1>
-            <p class="text-gray-500 font-bold uppercase tracking-widest text-sm">Everything you need to know about
-                SIXN</p>
-            <div class="w-20 h-1 bg-[#AB0A17] mx-auto mt-8"></div>
-        </div>
+{% block policy_body %}
+<h2>How do I pay?</h2>
+<p>With UPI (Google Pay, PhonePe, Paytm and other UPI apps), a debit or credit card, netbanking, or cash on delivery. Online payments go through Razorpay.</p>
 
-        <div class="space-y-6">
-            <!-- Category: Orders & Shipping -->
-            <div class="mb-12">
-                <h2
-                    class="text-xl font-display font-bold text-[#AB0A17] mb-8 uppercase tracking-widest border-b border-gray-900 pb-4">
-                    01. Orders & Shipping</h2>
-                <div class="space-y-4">
-                    <div
-                        class="faq-item group bg-[#0a0a0a] border border-gray-900 rounded-sm overflow-hidden transition-all duration-300 hover:border-gray-700">
-                        <button class="w-full p-6 text-left flex justify-between items-center"
-                            onclick="toggleFAQ(this)">
-                            <span class="text-white font-bold tracking-wide">How long does shipping take?</span>
-                            <svg class="w-5 h-5 text-gray-500 transition-transform duration-300 group-[.active]:rotate-180"
-                                fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M19 9l-7 7-7-7"></path>
-                            </svg>
-                        </button>
-                        <div class="faq-answer max-h-0 overflow-hidden transition-all duration-300 ease-in-out">
-                            <div class="p-6 pt-0 text-gray-400 leading-relaxed">
-                                We offer express global shipping. Standard orders are typically processed within 24-48
-                                hours. Shipping usually takes 3-5 business days for domestic orders and 7-12 business
-                                days for international destinations.
-                            </div>
-                        </div>
-                    </div>
+<h2>Do you ship outside India?</h2>
+<p>Not yet. We only deliver to PIN codes in India.</p>
 
-                    <div
-                        class="faq-item group bg-[#0a0a0a] border border-gray-900 rounded-sm overflow-hidden transition-all duration-300 hover:border-gray-700">
-                        <button class="w-full p-6 text-left flex justify-between items-center"
-                            onclick="toggleFAQ(this)">
-                            <span class="text-white font-bold tracking-wide">Do you ship internationally?</span>
-                            <svg class="w-5 h-5 text-gray-500 transition-transform duration-300 group-[.active]:rotate-180"
-                                fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M19 9l-7 7-7-7"></path>
-                            </svg>
-                        </button>
-                        <div class="faq-answer max-h-0 overflow-hidden transition-all duration-300 ease-in-out">
-                            <div class="p-6 pt-0 text-gray-400 leading-relaxed">
-                                <p class="text-gray-400 leading-relaxed">Yes, SIXN ships to over 150 countries
-                                    worldwide. Shipping costs and delivery times
-                                    vary by location and are calculated at checkout.
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+<h2>How much is shipping and how long does it take?</h2>
+<p>Shipping is free on orders of ₹1,000 or more, and most orders arrive within 5–7 business days. See <a href="/shipping">Shipping & Delivery</a>.</p>
 
-            <!-- Category: Returns & Quality -->
-            <div class="mb-12">
-                <h2
-                    class="text-xl font-display font-bold text-[#AB0A17] mb-8 uppercase tracking-widest border-b border-gray-900 pb-4">
-                    02. Returns & Quality</h2>
-                <div class="space-y-4">
-                    <div
-                        class="faq-item group bg-[#0a0a0a] border border-gray-900 rounded-sm overflow-hidden transition-all duration-300 hover:border-gray-700">
-                        <button class="w-full p-6 text-left flex justify-between items-center"
-                            onclick="toggleFAQ(this)">
-                            <span class="text-white font-bold tracking-wide">What is your return policy?</span>
-                            <svg class="w-5 h-5 text-gray-500 transition-transform duration-300 group-[.active]:rotate-180"
-                                fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M19 9l-7 7-7-7"></path>
-                            </svg>
-                        </button>
-                        <div class="faq-answer max-h-0 overflow-hidden transition-all duration-300 ease-in-out">
-                            <div class="p-6 pt-0 text-gray-400 leading-relaxed">
-                                We accept returns within 14 days of delivery for unworn items in original packaging with
-                                tags attached. Please note that personalized or sale items may have different
-                                conditions.
-                            </div>
-                        </div>
-                    </div>
+<h2>Which size should I pick?</h2>
+<p>Our tees come in S, M and L. Measurements are in the <a href="/size-guide">size guide</a>.</p>
 
-                    <div
-                        class="faq-item group bg-[#0a0a0a] border border-gray-900 rounded-sm overflow-hidden transition-all duration-300 hover:border-gray-700">
-                        <button class="w-full p-6 text-left flex justify-between items-center"
-                            onclick="toggleFAQ(this)">
-                            <span class="text-white font-bold tracking-wide">How do I choose the right size?</span>
-                            <svg class="w-5 h-5 text-gray-500 transition-transform duration-300 group-[.active]:rotate-180"
-                                fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M19 9l-7 7-7-7"></path>
-                            </svg>
-                        </button>
-                        <div class="faq-answer max-h-0 overflow-hidden transition-all duration-300 ease-in-out">
-                            <div class="p-6 pt-0 text-gray-400 leading-relaxed">
-                                Each product page features a detailed size guide. Our shirts are designed with a
-                                "Tailored Fit" – if you prefer a more relaxed look, we recommend sizing up.
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+<h2>Can I return or exchange?</h2>
+<p>You can return an item within {{ business.return_days }} days of delivery. We do not do direct exchanges, so return the item and order the size you need. See <a href="/returns">Returns</a>.</p>
 
-            <!-- Category: Payments -->
-            <div class="mb-12">
-                <h2
-                    class="text-xl font-display font-bold text-[#AB0A17] mb-8 uppercase tracking-widest border-b border-gray-900 pb-4">
-                    03. Payments & Security</h2>
-                <div class="space-y-4">
-                    <div
-                        class="faq-item group bg-[#0a0a0a] border border-gray-900 rounded-sm overflow-hidden transition-all duration-300 hover:border-gray-700">
-                        <button class="w-full p-6 text-left flex justify-between items-center"
-                            onclick="toggleFAQ(this)">
-                            <span class="text-white font-bold tracking-wide">What payment methods do you accept?</span>
-                            <svg class="w-5 h-5 text-gray-500 transition-transform duration-300 group-[.active]:rotate-180"
-                                fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M19 9l-7 7-7-7"></path>
-                            </svg>
-                        </button>
-                        <div class="faq-answer max-h-0 overflow-hidden transition-all duration-300 ease-in-out">
-                            <div class="p-6 pt-0 text-gray-400 leading-relaxed">
-                                We accept all major credit cards, UPI, and net banking via our secure payment partner,
-                                Razorpay. All transactions are encrypted and 100% secure.
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+<h2>Where is my order?</h2>
+<p>Go to <a href="/track-order">Order Status</a> and enter your email and order number. Tracking appears as soon as your order ships.</p>
 
-        <!-- Still have questions? -->
-        <div
-            class="mt-20 p-12 bg-gradient-to-br from-[#111] to-[#050505] border border-gray-900 rounded-sm text-center">
-            <h3 class="text-2xl font-display font-bold text-white mb-4 uppercase">Still have questions?</h3>
-            <p class="text-gray-400 mb-8">Our support team is available 24/7 to help you with anything.</p>
-            <a href="/contact"
-                class="inline-block bg-[#AB0A17] text-white font-bold uppercase px-10 py-4 tracking-widest hover:bg-white hover:text-black transition-all duration-300">
-                Contact Support
-            </a>
-        </div>
-    </div>
-</main>
-
-<script>
-    function toggleFAQ(button) {
-        const item = button.parentElement;
-        const answer = button.nextElementSibling;
-        const isActive = item.classList.contains('active');
-
-        // Close others in the same group? (Optional)
-        // For now, simple independent toggle
-
-        if (isActive) {
-            item.classList.remove('active');
-            answer.style.maxHeight = '0';
-        } else {
-            item.classList.add('active');
-            answer.style.maxHeight = answer.scrollHeight + 'px';
-        }
-    }
-</script>
+<h2>Something else?</h2>
+<p><a href="/contact">Contact us</a>.</p>
 {% endblock %}

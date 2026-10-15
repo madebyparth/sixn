@@ -1,0 +1,29 @@
+{% extends "_policy.html" %}
+{% from "_macros.html" import val %}
+
+{% block title %}Shipping & Delivery — NTS{% endblock %}
+{% block policy_title %}Shipping & Delivery{% endblock %}
+
+{% block policy_body %}
+<h2>Where we ship</h2>
+<p>We ship within India only. At checkout we check that your PIN code is serviceable before you pay.</p>
+
+<h2>Charges</h2>
+<ul>
+    <li>Shipping is free on orders of ₹1,000 or more.</li>
+    <li>Orders under ₹1,000 pay the courier rate for your PIN code, which we show at checkout before you pay.</li>
+    <li>All prices include GST.</li>
+</ul>
+
+<h2>Delivery time</h2>
+<p>Most orders arrive within 5–7 business days of being placed. Remote PIN codes can take longer. Once your order ships, we add the courier tracking number (AWB) to your order.</p>
+
+<h2>Tracking</h2>
+<p>Track your order from <a href="/orders">Orders</a>, or with your order number on <a href="/track-order">Order Status</a>.</p>
+
+<h2>Cash on delivery</h2>
+<p>Available on serviceable PIN codes. Please keep the exact amount ready.</p>
+
+<h2>Contact</h2>
+<p>{{ val(business.email, 'support email') }} · {{ val(business.phone, 'support phone') }}</p>
+{% endblock %}

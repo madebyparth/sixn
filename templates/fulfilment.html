@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}Fulfilment — NTS Admin{% endblock %}
+{% block theme_class %}{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block content %}
+<main class="pt-20 pb-16 px-4 max-w-6xl mx-auto text-[13px]">
+    <div class="flex flex-wrap items-baseline justify-between gap-4">
+        <h1 class="uppercase text-[15px] font-medium">Fulfilment</h1>
+        <div class="flex gap-4 uppercase text-[12px]">
+            <a href="/admin" class="underline">Admin panel</a>
+            <button onclick="act('/api/admin/fulfilment/sync', 'Tracking synced')" class="underline">Sync tracking</button>
+        </div>
+    </div>
+
+    <!-- STOCK -->
+    <section class="mt-8" aria-labelledby="stock-h">
+        <h2 id="stock-h" class="uppercase text-[12px] mb-2">Stock</h2>
+        <p class="text-[11px] text-muted mb-3">On hand = units in your warehouse. Reserved = ordered, not yet picked up.</p>
+        <div class="overflow-x-auto">
+            <table class="w-full border border-line">
+                <thead>
+                    <tr class="border-b border-line uppercase text-left text-[11px]">
+                        <th class="p-2">Product</th><th class="p-2">Size</th><th class="p-2">On hand</th><th class="p-2">Reserved</th><th class="p-2">Available</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in stock_rows %}{% for s in row.sizes %}
+                    <tr class="border-b border-line-soft">
+                        <td class="p-2">{% if loop.first %}{{ row.product.code }} · {{ row.product.name }}{% endif %}</td>
+                        <td class="p-2">{{ s.size }}</td>
+                        <td class="p-2">
+                            <form class="flex gap-2" onsubmit="event.preventDefault(); setStock({{ row.product.id|tojson }}, {{ s.size|tojson }}, this.qty.value)">
+                                <input name="qty" type="number" min="0" step="1" value="{{ s.on_hand if s.on_hand is not none else '' }}"
+                                    aria-label="On hand {{ row.product.code }} {{ s.size }}" class="nts-input !w-20 !py-1">
+                                <button class="underline uppercase text-[11px]">Save</button>
+                            </form>
+                        </td>
+                        <td class="p-2">{{ s.reserved }}</td>
+                        <td class="p-2 {{ 'text-red-400' if s.available == 0 }}">{{ '∞' if s.available is none else s.available }}</td>
+                    </tr>
+                    {% endfor %}{% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- ORDERS BY STAGE -->
+    <section class="mt-10">
+        <nav class="flex flex-wrap gap-4 border-b border-line uppercase text-[12px]" aria-label="Stages">
+            {% for key, name in stage_names %}
+            <a href="?stage={{ key }}" class="pb-2 {{ 'border-b-2 border-line' if key == active else 'opacity-40' }}">{{ name }} ({{ stages[key]|length }})</a>
+            {% endfor %}
+        </nav>
+
+        {% for o in stages.get(active, []) %}
+        {% set a = o.address or {} %}
+        <article class="border-b border-line-soft py-4 grid md:grid-cols-[1fr_1fr_auto] gap-3">
+            <div>
+                <p class="uppercase">#{{ o.razorpay_order_id or o.id[:8] }} · {{ (o.created_at or '')[:10] }}</p>
+                <p class="text-muted uppercase text-[11px]">{{ o.payment_method }} · {{ o.status }}{% if o.tracking_status %} · {{ o.tracking_status }}{% endif %}{% if o.delivery_issue %} · <span class="text-red-400">{{ o.delivery_issue }}</span>{% endif %}{% if o.coupon_over_limit %} · <span class="text-red-400">coupon over limit</span>{% endif %}</p>
+                <ul class="mt-1">
+                    {% for i in o['items'] %}<li>{{ i.code or i.name }} · {{ i.selectedSize or '-' }} × {{ i.quantity }}</li>{% endfor %}
+                </ul>
+            </div>
+            <div>
+                <p>{{ a.name }}</p>
+                <p class="text-muted">{{ a.city }}, {{ a.state }} {{ a.zip }}</p>
+                <p class="text-[11px] mt-1">AWB: {{ o.awb_code or '—' }}</p>
+            </div>
+            <div class="flex md:flex-col gap-2 uppercase text-[11px] items-start">
+                {% if active == 'to_ship' %}
+                    {% if not o.awb_code %}<button class="underline" onclick="act('/api/admin/fulfilment/{{ o.id }}/shipment', 'AWB assigned')">Create shipment</button>{% endif %}
+                    {% if o.awb_code %}
+                    <button class="underline" onclick="label('{{ o.id }}')">Label</button>
+                    <button class="underline" onclick="act('/api/admin/fulfilment/{{ o.id }}/pickup', 'Pickup scheduled')">Schedule pickup</button>
+                    {% endif %}
+                {% elif active == 'in_transit' and o.label_url %}
+                    <a class="underline" href="{{ o.label_url }}" target="_blank" rel="noopener">Label</a>
+                {% elif active == 'returns' and o.status == 'return_requested' %}
+                    <button class="underline" onclick="act('/api/admin/orders/{{ o.id }}/approve_return', 'Return approved')">Approve return</button>
+                {% endif %}
+                {% if active in ('returns', 'closed') and o.stock_deducted and not o.restocked %}
+                    <button class="underline" onclick="act('/api/admin/fulfilment/{{ o.id }}/restock', 'Restocked')">Restock</button>
+                {% endif %}
+            </div>
+        </article>
+        {% else %}
+        <p class="py-6 uppercase text-[12px] text-muted">Nothing here.</p>
+        {% endfor %}
+    </section>
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    async function post(url, body) {
+        const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || data.error) throw new Error(data.error || 'Request failed');
+        return data;
+    }
+    async function act(url, done) {
+        try { await post(url); showSuccess(done); setTimeout(() => location.reload(), 600); }
+        catch (e) { showError(e.message); }
+    }
+    async function label(orderId) {
+        try { const d = await post(`/api/admin/fulfilment/${orderId}/label`); window.open(d.label_url, '_blank', 'noopener'); }
+        catch (e) { showError(e.message); }
+    }
+    async function setStock(productId, size, qty) {
+        if (qty === '') return showError('Enter a number (0 or more).');
+        try { await post('/api/admin/stock', { product_id: productId, size: size, on_hand: qty }); showSuccess('Stock saved'); setTimeout(() => location.reload(), 600); }
+        catch (e) { showError(e.message); }
+    }
+</script>
+{% endblock %}

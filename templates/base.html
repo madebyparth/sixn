@@ -1,887 +1,334 @@
+{% from "_macros.html" import google_button %}
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="csrf-token" content="{{ csrf_token() }}"> <!-- CSRF Token for AJAX -->
-    <title>{% block title %}SIXN - Premium E-commerce{% endblock %}</title>
-    <link rel="icon" type="image/png" href="/assets/web-media/IX.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>{% block title %}NTS — NOT THAT SIMPLE{% endblock %}</title>
+    <meta name="description" content="NTS — Not That Simple.">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%23070809'/><text x='16' y='21' font-family='Arial' font-weight='800' font-size='11' fill='%23f5f5f2' text-anchor='middle'>NTS</text></svg>">
 
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-
-    <!-- Google Fonts -->
+    <script>
+        // NTS brand tokens (from ntslabel.com): near-black, off-white, lime accent, Inter
+        tailwind.config = { theme: { extend: {
+            colors: { paper: '#070809', panel: '#101211', ink: '#f5f5f2', muted: '#9a9d9a', lime: '#a4d63a',
+                      line: 'rgba(245,245,242,.20)', 'line-soft': 'rgba(245,245,242,.10)' },
+            fontFamily: { sans: ['Inter', 'Arial', 'sans-serif'] }
+        } } };
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+    <meta name="theme-color" content="#070809">
 
-    <!-- Lenis Smooth Scroll -->
-    <script src="https://cdn.jsdelivr.net/gh/studio-freight/lenis@1.0.29/bundled/lenis.min.js"></script>
-
-    <!-- Monument Extended Font & Base Styles -->
     <style>
-        @font-face {
-            font-family: 'Monument Extended';
-            src: url('/assets/web-media/MonumentExtended-Regular.otf') format('opentype');
-            font-weight: 400;
-            font-style: normal;
-        }
-
-        @font-face {
-            font-family: 'Monument Extended';
-            src: url('/assets/web-media/MonumentExtended-Ultrabold.otf') format('opentype');
-            font-weight: 800;
-            font-style: normal;
-        }
-
         :root {
             --navbar-height: 64px;
+            --bg: #070809;
+            --panel: #101211;
+            --text: #f5f5f2;
+            --muted: #9a9d9a;
+            --line: rgba(245,245,242,.20);
+            --line-soft: rgba(245,245,242,.10);
+            --lime: #a4d63a;
         }
 
-        @media (max-width: 1023px) {
-            :root {
-                --navbar-height: 56px;
-            }
-        }
-
-        html {
-            scroll-behavior: smooth;
-        }
-
-        body {
-            background-color: #0c0c0c;
-            /* Slightly softer than #050505 */
-            color: #d4d4d4;
-            /* Off-white for less harsh contrast */
-            font-family: 'Outfit', sans-serif;
+        html, body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', Arial, sans-serif;
+            font-size: 14px;
             margin: 0;
-            padding: 0;
             -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
         }
 
-        .font-display {
-            font-family: 'Monument Extended', sans-serif;
-            letter-spacing: -0.02em;
-            /* Tighter for modern look */
-        }
+        ::selection { background: var(--lime); color: var(--bg); }
+        :focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
 
-        ::selection {
-            background: #AB0A17;
-            color: white;
-        }
+        .font-display { font-family: 'Inter', Arial, sans-serif !important; font-weight: 800 !important; letter-spacing: -.025em !important; }
+        .nts-display { font-weight: 800; letter-spacing: -.025em; text-transform: uppercase; line-height: .95; }
+        .nts-kicker { font-size: 11px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; }
 
-        /* LENIS CSS RECOMMENDATIONS */
-        html.lenis,
-        html.lenis body {
-            height: auto;
+        .nts-btn {
+            display: block; width: 100%; padding: 15px 16px; text-align: center;
+            background: var(--lime); color: var(--bg); border: 1px solid var(--lime);
+            text-transform: uppercase; font-size: 12px; font-weight: 600; letter-spacing: .14em; cursor: pointer;
+            transition: opacity .2s, background .2s, color .2s;
         }
+        .nts-btn:hover { opacity: .88; }
+        .nts-btn:disabled { background: transparent; color: var(--muted); border-color: var(--line); opacity: 1; cursor: not-allowed; }
+        .nts-btn-ghost { background: transparent; color: var(--text); border-color: var(--line); }
+        .nts-btn-ghost:hover { border-color: var(--text); opacity: 1; }
 
-        .lenis.lenis-smooth {
-            scroll-behavior: auto !important;
+        .nts-input {
+            width: 100%; background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 0;
+            padding: 12px; font: inherit; outline: none; transition: border-color .2s;
         }
+        .nts-input:focus { border-color: var(--lime); }
+        .nts-label { display: block; font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 6px; color: var(--muted); }
 
-        .lenis.lenis-smooth [data-lenis-prevent] {
-            overscroll-behavior: contain;
-        }
+        .nts-link { text-transform: uppercase; font-size: 12px; font-weight: 600; letter-spacing: .12em; transition: color .2s; }
+        .nts-link:hover { color: var(--lime); }
 
-        .lenis.lenis-stopped {
-            overflow: hidden;
-        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #2a2d2b; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
 
-        .lenis.lenis-scrolling iframe {
-            pointer-events: none;
-        }
+        #toast-notification { transition: transform .3s ease, opacity .3s ease; }
 
-        /* Checkbox for removing items animation */
-        @keyframes slideOut {
-            to {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-        }
-
-        .animate-remove {
-            animation: slideOut 0.3s forwards;
-        }
-
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-
-        .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-
-        /* Custom Scrollbar Styles */
-        ::-webkit-scrollbar {
-            width: 4px;
-            /* Thinner */
-        }
-
-        ::-webkit-scrollbar-track {
-            background: #0c0c0c;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: #333;
-            border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: #AB0A17;
-        }
-
-        /* Firefox */
-        * {
-            scrollbar-width: thin;
-            scrollbar-color: #333 #0c0c0c;
-        }
-
-        #toast-notification {
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
+        /* --- Legacy layer: maps the old SIXN utility classes on not-yet-rebuilt pages (account, wallet, checkout,
+           admin) onto the NTS tokens. Rebuilt pages opt out by overriding {% raw %}{% block theme_class %}{% endraw %}. */
+        .legacy { background: var(--bg); }
+        .legacy [class*="bg-[#0"], .legacy .bg-black, .legacy .bg-gray-900, .legacy [class*="bg-black/"] { background-color: var(--bg) !important; }
+        .legacy [class*="bg-[#1"], .legacy .bg-\[\#333\], .legacy .bg-gray-800, .legacy .bg-white\/5 { background-color: var(--panel) !important; }
+        .legacy .text-white, .legacy .text-gray-200, .legacy .text-gray-300 { color: var(--text) !important; }
+        .legacy .text-gray-400, .legacy .text-gray-500, .legacy .text-gray-600, .legacy .text-gray-700 { color: var(--muted) !important; }
+        .legacy [class*="text-[#AB0A17]"], .legacy [class*="text-[#C4A35A]"], .legacy .text-green-500 { color: var(--lime) !important; }
+        .legacy [class*="border-gray-"], .legacy [class*="border-white/"] { border-color: var(--line-soft) !important; }
+        .legacy [class*="border-gray-6"], .legacy [class*="border-gray-7"] { border-color: var(--line) !important; }
+        .legacy [class*="border-[#AB0A17]"]:not([class*="hover:border"]):not([class*="focus:border"]) { border-color: var(--lime) !important; }
+        .legacy [class*="from-"], .legacy [class*="to-"] { --tw-gradient-from: transparent !important; --tw-gradient-to: transparent !important; }
+        .legacy .rounded, .legacy .rounded-sm, .legacy .rounded-md, .legacy .rounded-lg, .legacy .rounded-xl, .legacy .rounded-2xl { border-radius: 0 !important; }
+        .legacy [class*="shadow"] { box-shadow: none !important; }
+        /* Solid action buttons (white or SIXN red) become the lime NTS button */
+        .legacy .bg-white, .legacy [class~="bg-[#AB0A17]"] { background-color: var(--lime) !important; color: var(--bg) !important; }
+        .legacy .bg-white *, .legacy [class~="bg-[#AB0A17]"] * { color: var(--bg) !important; }
+        .legacy [class*=" bg-[#AB0A17]/"], .legacy [class^="bg-[#AB0A17]/"] { background-color: rgba(164,214,58,.12) !important; }
+        .legacy .peer:checked ~ [class*="peer-checked:bg-"] { background-color: var(--lime) !important; border-color: var(--lime) !important; }
+        .legacy .peer:checked ~ [class*="peer-checked:border-"] { border-color: var(--lime) !important; }
+        .legacy [class*="hover:bg-"]:hover { opacity: .88; }
+        .legacy input, .legacy select, .legacy textarea { color: var(--text) !important; background: var(--panel) !important; border-color: var(--line) !important; border-radius: 0 !important; }
+        .legacy input:focus, .legacy select:focus, .legacy textarea:focus { border-color: var(--lime) !important; }
+        .legacy input::placeholder, .legacy textarea::placeholder { color: #5f625f !important; }
+        .legacy h1, .legacy h2 { font-weight: 800 !important; letter-spacing: -.025em !important; }
+        .legacy h3 { font-weight: 600 !important; }
+        .legacy label, .legacy .uppercase { letter-spacing: .12em; }
     </style>
 
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Outfit', 'sans-serif'],
-                        display: ['Monument Extended', 'sans-serif'],
-                    },
-                    colors: {
-                        primary: '#AB0A17',
-                        brand: {
-                            red: '#AB0A17',
-                            dark: '#0c0c0c',
-                            gray: '#1f1f1f'
-                        }
-                    },
-                    letterSpacing: {
-                        tighter: '-0.05em',
-                        tight: '-0.025em',
-                        normal: '0em',
-                        wide: '0.025em',
-                        wider: '0.05em',
-                        widest: '0.1em',
-                    }
-                }
-            }
-        }
-    </script>
-
-    {% block lenis_script %}
-    <script>
-        // Global Lenis smooth scroll
-        const lenis = new Lenis({
-            duration: 1.2,
-            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-            direction: 'vertical',
-            gestureDirection: 'vertical',
-            smooth: true,
-            mouseMultiplier: 1,
-            smoothTouch: false,
-            touchMultiplier: 2,
-        });
-
-        function raf(time) {
-            lenis.raf(time);
-            requestAnimationFrame(raf);
-        }
-
-        requestAnimationFrame(raf);
-    </script>
-    {% endblock %}
-
+    {# Kept as an empty hook: some legacy pages override it. #}
+    {% block lenis_script %}{% endblock %}
     {% block styles %}{% endblock %}
 </head>
 
-<body
-    class="w-full min-h-screen relative selection:bg-[#AB0A17] selection:text-white {% block body_classes %}{% endblock %}">
+<body class="w-full min-h-screen relative {% block body_classes %}{% endblock %}">
 
-    <!-- ANNOUNCEMENT BAR - Hidden by default, pages can show via block -->
-    <div id="announcement-bar"
-        class="fixed top-0 left-0 right-0 z-[60] bg-[#0a0a0a] border-b border-gray-800/50 transition-all duration-300 {% block show_announcement %}hidden{% endblock %}">
-        <div class="relative py-1.5 px-12 overflow-hidden">
-            <div id="announcement-content" class="flex items-center justify-center gap-2 h-5 relative">
-                <span id="announcement-text" class="text-[10px] uppercase tracking-[0.2em] text-[#C4A35A] font-medium">
-                </span>
-            </div>
-        </div>
-    </div>
+    <!-- HEADER: menu (left) · wordmark (centre) · cart (right) -->
+    <nav id="main-navbar" class="fixed top-0 left-0 z-50 w-full h-16 bg-paper/85 backdrop-blur-md border-b border-line-soft flex items-center justify-between px-4">
+        <button id="mobile-menu-btn" onclick="toggleMobileMenu()" aria-label="Menu" class="h-12 w-12 -ml-3 flex flex-col items-center justify-center gap-[5px]">
+            <span class="block h-[2px] w-4 bg-ink"></span>
+            <span class="block h-[2px] w-4 bg-ink"></span>
+        </button>
 
-    <style>
-        /* Announcement bar animations */
-        #announcement-bar.hidden-bar {
-            transform: translateY(-100%);
-            opacity: 0;
-        }
+        <a href="/" class="absolute left-1/2 -translate-x-1/2 text-[18px] font-extrabold tracking-[.16em]" aria-label="NTS home">NTS</a>
 
-        #announcement-content {
-            overflow: hidden;
-        }
-
-        #announcement-text {
-            display: inline-block;
-            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        #announcement-text.slide-up-out {
-            transform: translateY(-150%);
-            opacity: 0;
-        }
-
-        #announcement-text.slide-up-in {
-            transform: translateY(0);
-            opacity: 1;
-        }
-
-        #announcement-text.start-from-bottom {
-            transform: translateY(150%);
-            opacity: 0;
-            transition: none;
-        }
-
-        /* Adjust navbar position when announcement bar is visible */
-        #main-navbar {
-            top: 0;
-            transition: top 0.3s ease;
-        }
-
-        /* If announcement-bar is present, not hidden, and not dismissed, push navbar down */
-        #announcement-bar:not(.hidden):not(.hidden-bar)~#main-navbar {
-            top: 32px;
-        }
-
-        /* Mobile menu adjustment */
-        #mobile-menu {
-            top: 0 !important;
-        }
-    </style>
-
-    <script>
-        // Announcement Bar Configuration
-        const announcementMessages = [
-            "FREE SHIPPING ON ORDERS OVER ₹1000",
-            "NEW ARRIVALS — SHOP NOW",
-            "USE CODE WELCOME20 FOR 20% OFF YOUR FIRST ORDER"
-        ];
-
-        let currentAnnouncementIndex = 0;
-        let announcementInterval;
-
-        function initAnnouncementBar() {
-            const bar = document.getElementById('announcement-bar');
-            const navbar = document.getElementById('main-navbar');
-            const textEl = document.getElementById('announcement-text');
-
-            if (!bar || bar.classList.contains('hidden')) {
-                if (navbar) navbar.classList.add('no-announcement');
-                return;
-            }
-
-            // Check if user dismissed the bar in this session
-            if (sessionStorage.getItem('announcementDismissed') === 'true') {
-                bar.classList.add('hidden-bar');
-                navbar.classList.add('no-announcement');
-                return;
-            }
-
-            // Show first message (start from bottom, slide up)
-            textEl.textContent = announcementMessages[0];
-            textEl.classList.add('start-from-bottom');
-
-            requestAnimationFrame(() => {
-                requestAnimationFrame(() => {
-                    textEl.classList.remove('start-from-bottom');
-                    textEl.classList.add('slide-up-in');
-                });
-            });
-
-            // Start rotation
-            announcementInterval = setInterval(rotateAnnouncement, 4000);
-        }
-
-        function rotateAnnouncement() {
-            const textEl = document.getElementById('announcement-text');
-
-            // Slide current text up and out
-            textEl.classList.remove('slide-up-in');
-            textEl.classList.add('slide-up-out');
-
-            setTimeout(() => {
-                // Update to next message
-                currentAnnouncementIndex = (currentAnnouncementIndex + 1) % announcementMessages.length;
-                textEl.textContent = announcementMessages[currentAnnouncementIndex];
-
-                // Reset position to bottom instantly (no transition)
-                textEl.classList.remove('slide-up-out');
-                textEl.classList.add('start-from-bottom');
-
-                // Force browser to apply the position
-                requestAnimationFrame(() => {
-                    requestAnimationFrame(() => {
-                        // Now slide up into view with transition
-                        textEl.classList.remove('start-from-bottom');
-                        textEl.classList.add('slide-up-in');
-                    });
-                });
-            }, 500);
-        }
-
-        function dismissAnnouncementBar() {
-            const bar = document.getElementById('announcement-bar');
-            const navbar = document.getElementById('main-navbar');
-
-            bar.classList.add('hidden-bar');
-            navbar.classList.add('no-announcement');
-            sessionStorage.setItem('announcementDismissed', 'true');
-
-            if (announcementInterval) {
-                clearInterval(announcementInterval);
-            }
-        }
-
-        // Initialize on DOMContentLoaded
-        document.addEventListener('DOMContentLoaded', initAnnouncementBar);
-    </script>
-
-    <!-- NAVBAR -->
-    <nav id="main-navbar"
-        class="fixed left-0 w-full z-50 px-6 lg:px-10 py-3 flex items-center justify-between transition-all duration-500 border-b border-gray-800/50 {% block navbar_class %}bg-[#0a0a0a]/95 backdrop-blur-md{% endblock %}">
-        <!-- Logo (Left on md, Left on mobile) -->
-        <div class="flex-1 lg:flex-none flex items-center self-center">
-            <a href="/" class="flex items-center cursor-pointer pointer-events-auto lg:mx-0 group">
-                <img src="/assets/web-media/sixn-logo-transparent.png" alt="SIXN"
-                    class="h-8 lg:h-10 object-contain opacity-100 group-hover:opacity-80 transition-opacity">
-            </a>
-        </div>
-
-        <!-- Links (Hidden on mobile) -->
-        {% if not hide_layout %}
-        <div class="hidden lg:flex items-center self-center gap-8 pointer-events-auto">
-            <a href="/collection/new"
-                class="text-gray-300 font-medium text-xs hover:text-white transition-colors duration-300 uppercase tracking-wider">New
-                In</a>
-
-            <a href="/collection/apparel"
-                class="text-gray-300 font-medium text-xs hover:text-white transition-colors duration-300 uppercase tracking-wider">Apparel</a>
-
-            <a href="/collection/best-sellers"
-                class="text-gray-300 font-medium text-xs hover:text-white transition-colors duration-300 uppercase tracking-wider">Best
-                Sellers</a>
-        </div>
-        {% endif %}
-
-
-        <!-- Icons -->
-        <div class="flex items-center self-center gap-3 lg:gap-6 pointer-events-auto flex-1 lg:flex-none justify-end">
-
-            <!-- Desktop Icons (Hidden on Mobile) -->
-            <div class="hidden lg:flex items-center gap-6">
-                {% if not hide_layout %}
-                <!-- Search Icon -->
-                <button onclick="toggleSearch()" class="text-white hover:text-[#AB0A17] transition-colors p-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                </button>
-                {% endif %}
-
-                <!-- Cart Button -->
-                <button onclick="toggleCart()" class="text-white hover:text-[#AB0A17] transition-colors relative">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
-                        stroke="currentColor" class="w-6 h-6">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                            d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 5.68c.496 2.228-1.045 4.313-3.323 4.313H6.453c-2.278 0-3.819-2.085-3.323-4.313l1.263-5.68c.245-1.104 1.218-1.897 2.348-1.897H17.25c1.13 0 2.103.793 2.348 1.897Z" />
-                    </svg>
-                    <span id="cart-count-badge-desktop"
-                        class="absolute -top-2 -right-2 bg-[#AB0A17] text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center hidden">0</span>
-                </button>
-
-                <!-- Profile Button & Dropdown -->
-                <div class="relative">
-                    <button id="nav-user-btn" onclick="handleProfileClick()"
-                        class="text-white hover:text-[#AB0A17] transition-colors flex items-center gap-2 relative z-50">
-                        <div
-                            class="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center overflow-hidden border border-gray-600">
-                            {% if current_user.is_authenticated and current_user.profile_image %}
-                            <img src="{{ current_user.profile_image }}" alt="Profile"
-                                class="w-full h-full object-cover">
-                            {% else %}
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
-                                class="w-5 h-5 text-gray-400">
-                                <path fill-rule="evenodd"
-                                    d="M7.5 6a4.5 4.5 0 1 1 9 0 4.5 4.5 0 0 1-9 0ZM3.751 20.105a8.25 8.25 0 0 1 16.498 0 .75.75 0 0 1-.437.695A18.683 18.683 0 0 1 12 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 0 1-.437-.695Z"
-                                    clip-rule="evenodd" />
-                            </svg>
-                            {% endif %}
-                        </div>
-                    </button>
-
-                    <!-- Profile Dropdown -->
-                    <div id="profile-dropdown"
-                        class="absolute right-0 top-full mt-4 w-56 bg-[#111] border border-gray-800 rounded shadow-xl py-2 hidden z-40 origin-top-right transition-all duration-200 opacity-0 scale-95 transform">
-                        <div class="px-4 py-3 border-b border-gray-800">
-                            <p class="text-sm text-white font-bold truncate" id="dropdown-user-name">Guest</p>
-                        </div>
-                        <a href="/orders"
-                            class="block px-4 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 transition-colors">My
-                            Orders</a>
-                        <a href="/my-wallet"
-                            class="block px-4 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 transition-colors">My
-                            Wallet</a>
-                        <a href="/orders?tab=buy-again"
-                            class="block px-4 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 transition-colors">Buy
-                            Again</a>
-                        <a href="/contact"
-                            class="block px-4 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 transition-colors">Need
-                            Help?</a>
-                        <a href="/settings"
-                            class="block px-4 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 transition-colors">Settings</a>
-                        <div class="border-t border-gray-800 mt-2 pt-2">
-                            <button onclick="handleLogout()"
-                                class="block w-full text-left px-4 py-2 text-sm text-[#AB0A17] hover:bg-white/5 transition-colors font-bold">Log
-                                Out</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Mobile Menu Toggle -->
-            <button id="mobile-menu-btn" onclick="toggleMobileMenu()"
-                class="lg:hidden text-white flex flex-col gap-1.5 p-2 transition-transform active:scale-95">
-                <span class="w-6 h-0.5 bg-white transition-all duration-300"></span>
-                <span class="w-6 h-0.5 bg-white transition-all duration-300"></span>
-                <span class="w-6 h-0.5 bg-white transition-all duration-300"></span>
+        <div class="flex items-center gap-5">
+            {% if phone_login_enabled or social_providers or current_user.is_authenticated %}
+            <button id="nav-user-btn" onclick="handleProfileClick()" class="nts-link hidden md:block">Log in</button>
+            {% endif %}
+            <button onclick="toggleCart()" aria-label="Cart" class="nts-link flex items-center gap-1">
+                Cart<span>(</span><span id="cart-count-badge-desktop">0</span><span>)</span>
             </button>
         </div>
     </nav>
 
-    <!-- GLOBAL TOAST NOTIFICATION -->
-    <div id="toast-notification" class="fixed top-24 right-6 z-[200] translate-x-[150%] opacity-0 pointer-events-none">
-        <div
-            class="bg-black/90 backdrop-blur-xl border border-white/10 p-4 rounded-lg shadow-2xl flex items-center gap-4 min-w-[300px]">
-            <div id="toast-icon" class="w-10 h-10 rounded-full flex items-center justify-center text-xl shrink-0"></div>
+    <!-- TOAST -->
+    <div id="toast-notification" class="fixed top-20 left-1/2 -translate-x-1/2 z-[200] opacity-0 pointer-events-none translate-y-[-150%]">
+        <div class="bg-paper border border-line px-4 py-3 flex items-center gap-3 min-w-[280px] max-w-[90vw]">
+            <div id="toast-icon" class="shrink-0"></div>
             <div>
-                <p id="toast-title" class="text-white font-bold uppercase text-[10px] tracking-widest mb-0.5"></p>
-                <p id="toast-message" class="text-gray-400 text-sm"></p>
+                <p id="toast-title" class="uppercase text-[11px]"></p>
+                <p id="toast-message" class="text-[13px]"></p>
             </div>
         </div>
     </div>
 
-    <!-- MOBILE MENU OVERLAY -->
-    <div id="mobile-menu"
-        class="fixed inset-0 z-[100] bg-black/95 backdrop-blur-xl translate-x-full transition-transform duration-500 lg:hidden">
-        <div class="flex flex-col h-full p-8 overflow-y-auto">
-            <div class="flex justify-between items-center mb-12">
-                <img src="/assets/web-media/sixn-logo-transparent.png" alt="Logo" class="h-8">
-                <button onclick="toggleMobileMenu()" class="text-white p-2">
-                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
-                        </path>
-                    </svg>
-                </button>
-            </div>
-
-            <nav class="flex flex-col gap-6 mb-12">
-                {% if not hide_layout %}
-                <a href="/" class="text-3xl font-display font-bold text-white uppercase tracking-tighter"
-                    onclick="toggleMobileMenu()">Home</a>
-                <a href="/collection/men" class="text-3xl font-display font-bold text-white uppercase tracking-tighter"
-                    onclick="toggleMobileMenu()">Men</a>
-                <a href="/collection/women"
-                    class="text-3xl font-display font-bold text-white uppercase tracking-tighter"
-                    onclick="toggleMobileMenu()">Women</a>
-                <a href="/collection/kids" class="text-3xl font-display font-bold text-white uppercase tracking-tighter"
-                    onclick="toggleMobileMenu()">Kids</a>
-                <a href="/collection/sale"
-                    class="text-3xl font-display font-bold text-[#AB0A17] uppercase tracking-tighter"
-                    onclick="toggleMobileMenu()">Sale</a>
-                {% endif %}
-            </nav>
-
-            <div class="mt-auto grid grid-cols-2 gap-4">
-                {% if not hide_layout %}
-                <button onclick="toggleMobileMenu(); toggleSearch()"
-                    class="flex flex-col items-center justify-center p-4 bg-white/5 border border-white/10 rounded-sm group hover:bg-[#AB0A17] transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
-                        stroke="currentColor" class="w-6 h-6 text-white mb-2">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                            d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-                    </svg>
-                    <span
-                        class="text-[10px] font-bold uppercase tracking-widest text-gray-400 group-hover:text-white">Search</span>
-                </button>
-                {% else %}
-                <div></div>
-                {% endif %}
-                <button onclick="toggleMobileMenu(); toggleCart()"
-                    class="flex flex-col items-center justify-center p-4 bg-white/5 border border-white/10 rounded-sm group hover:bg-[#AB0A17] transition-colors relative">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
-                        stroke="currentColor" class="w-6 h-6 text-white mb-2">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                            d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 5.68c.496 2.228-1.045 4.313-3.323 4.313H6.453c-2.278 0-3.819-2.085-3.323-4.313l1.263-5.68c.245-1.104 1.218-1.897 2.348-1.897H17.25c1.13 0 2.103.793 2.348 1.897Z" />
-                    </svg>
-                    <span id="cart-count-badge-mobile"
-                        class="absolute top-4 right-10 bg-[#AB0A17] text-white text-[8px] w-4 h-4 rounded-full flex items-center justify-center hidden">0</span>
-                    <span
-                        class="text-[10px] font-bold uppercase tracking-widest text-gray-400 group-hover:text-white">Cart</span>
-                </button>
-                {% if current_user.is_authenticated %}
-                <div class="col-span-2">
-                    <button
-                        onclick="document.getElementById('mobile-user-options').classList.toggle('hidden'); this.querySelector('svg.chevron').classList.toggle('rotate-90')"
-                        class="w-full flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-sm hover:bg-[#AB0A17] transition-colors group">
-                        <div class="flex items-center gap-3">
-                            <div
-                                class="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center overflow-hidden border border-gray-600">
-                                {% if current_user.profile_image %}
-                                <img src="{{ current_user.profile_image }}" alt="Profile"
-                                    class="w-full h-full object-cover">
-                                {% else %}
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
-                                    class="w-5 h-5 text-gray-400">
-                                    <path fill-rule="evenodd"
-                                        d="M7.5 6a4.5 4.5 0 1 1 9 0 4.5 4.5 0 0 1-9 0ZM3.751 20.105a8.25 8.25 0 0 1 16.498 0 .75.75 0 0 1-.437.695A18.683 18.683 0 0 1 12 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 0 1-.437-.695Z"
-                                        clip-rule="evenodd" />
-                                </svg>
-                                {% endif %}
-                            </div>
-                            <span class="text-sm font-bold text-white uppercase tracking-widest">Account</span>
-                        </div>
-                        <svg class="chevron w-5 h-5 text-gray-500 transition-transform duration-300" fill="none"
-                            stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7">
-                            </path>
-                        </svg>
-                    </button>
-                    <!-- Expandable Options -->
-                    <div id="mobile-user-options"
-                        class="hidden flex flex-col bg-white/5 border-x border-b border-white/10 mx-2 animate-fade-in">
-                        <a href="/orders" onclick="toggleMobileMenu()"
-                            class="p-4 text-gray-400 hover:text-white hover:bg-white/5 text-sm uppercase tracking-wider border-b border-white/5 transition-colors">My
-                            Orders</a>
-                        <a href="/orders?tab=buy-again" onclick="toggleMobileMenu()"
-                            class="p-4 text-gray-400 hover:text-white hover:bg-white/5 text-sm uppercase tracking-wider border-b border-white/5 transition-colors">Buy
-                            Again</a>
-                        <a href="/settings" onclick="toggleMobileMenu()"
-                            class="p-4 text-gray-400 hover:text-white hover:bg-white/5 text-sm uppercase tracking-wider border-b border-white/5 transition-colors">Settings</a>
-                        <button onclick="toggleMobileMenu(); handleLogout()"
-                            class="p-4 text-left text-[#AB0A17] hover:bg-white/5 text-sm font-bold uppercase tracking-wider transition-colors">Log
-                            Out</button>
-                    </div>
-                </div>
-                {% else %}
-                <button id="mobile-user-btn" onclick="toggleMobileMenu(); toggleAuth()"
-                    class="col-span-2 flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-sm hover:bg-[#AB0A17] transition-colors">
-                    <div class="flex items-center gap-3">
-                        <div
-                            class="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center overflow-hidden border border-gray-600">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
-                                class="w-5 h-5 text-gray-400">
-                                <path fill-rule="evenodd"
-                                    d="M7.5 6a4.5 4.5 0 1 1 9 0 4.5 4.5 0 0 1-9 0ZM3.751 20.105a8.25 8.25 0 0 1 16.498 0 .75.75 0 0 1-.437.695A18.683 18.683 0 0 1 12 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 0 1-.437-.695Z"
-                                    clip-rule="evenodd" />
-                            </svg>
-                        </div>
-                        <span class="text-sm font-bold text-white uppercase tracking-widest">Log In</span>
-                    </div>
-                    <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                    </svg>
-                </button>
-                {% endif %}
-            </div>
-
-
+    <!-- MENU PANEL -->
+    <div id="mobile-menu" class="fixed inset-0 z-[100] bg-paper -translate-x-full transition-transform duration-300 flex flex-col">
+        <div class="h-16 flex items-center justify-between px-4">
+            <button onclick="toggleMobileMenu()" aria-label="Close menu" class="nts-link">Close</button>
+            <span class="text-[18px] font-extrabold tracking-[.16em]">NTS</span>
+            <span class="w-10"></span>
         </div>
+        <nav class="flex-1 flex flex-col items-center justify-center gap-5 nts-display text-[28px]">
+            <a href="/" onclick="toggleMobileMenu()" class="hover:text-lime transition-colors">Shop</a>
+            <a href="/orders" class="hover:opacity-60 auth-only hidden">Orders</a>
+            <a href="/addresses" class="hover:opacity-60 auth-only hidden">Addresses</a>
+            <a href="/settings" class="hover:opacity-60 auth-only hidden">Account</a>
+            <a href="/track-order" class="hover:text-lime transition-colors">Order Status</a>
+            {% if current_user.is_authenticated and current_user.is_admin %}
+            <a href="/admin" class="hover:text-lime transition-colors">Admin</a>
+            <a href="/admin/fulfilment" class="hover:text-lime transition-colors">Fulfilment</a>
+            {% endif %}
+            <a href="/size-guide" class="hover:text-lime transition-colors">Size Guide</a>
+            <a href="/contact" class="hover:text-lime transition-colors">Contact</a>
+            {% if phone_login_enabled or social_providers or current_user.is_authenticated %}
+            <button id="mobile-user-btn" onclick="toggleMobileMenu(); CURRENT_USER ? handleLogout() : toggleAuth()" class="uppercase hover:opacity-60">Log in</button>
+            {% endif %}
+        </nav>
+        <p class="text-center nts-kicker text-muted pb-8">Not That Simple™ · Crafted in India</p>
     </div>
 
-
-    <!-- CONTENT -->
-    {% block content %}{% endblock %}
+    <!-- CONTENT (pages not yet rebuilt for NTS keep the "legacy" theme mapping) -->
+    <div class="{% block theme_class %}legacy{% endblock %}">
+        {% block content %}{% endblock %}
+    </div>
 
     <!-- FOOTER -->
     {% block footer %}
-    <footer class="bg-[#050505] text-white pt-24 pb-12 border-t border-gray-900 px-6">
-        <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
-            <div class="col-span-1 md:col-span-1">
-                <img src="/assets/web-media/sixn-logo-transparent.png" alt="Logo"
-                    class="h-8 mb-6 object-contain opacity-80">
-                <p class="text-gray-500 text-sm leading-relaxed">Designing the future of fashion with sustainability and
-                    style in mind.</p>
-            </div>
-            <div class="col-span-1">
-                <h4 class="text-white font-bold uppercase tracking-widest text-sm mb-6">Shop</h4>
-                <ul class="space-y-4">
-                    <li><a href="/collection/new-arrivals" class="text-gray-400 hover:text-[#AB0A17]">New Arrivals</a>
-                    </li>
-                    <li><a href="/collection/men" class="text-gray-400 hover:text-[#AB0A17]">Men</a></li>
-                    <li><a href="/collection/women" class="text-gray-400 hover:text-[#AB0A17]">Women</a></li>
-                    <li><a href="/collection/kids" class="text-gray-400 hover:text-[#AB0A17]">Kids</a></li>
-                </ul>
-            </div>
-            <div class="col-span-1">
-                <h4 class="text-white font-bold uppercase tracking-widest text-sm mb-6">Support</h4>
-                <ul class="space-y-4">
-                    <li><a href="/faq" class="text-gray-400 hover:text-[#AB0A17]">FAQ</a></li>
-                    <li><a href="/returns" class="text-gray-400 hover:text-[#AB0A17]">Returns & Exchanges</a></li>
-                    <li><a href="/size-guide" class="text-gray-400 hover:text-[#AB0A17]">Size Guide</a></li>
-                    <li><a href="/orders" class="text-gray-400 hover:text-[#AB0A17]">Track Order</a></li>
-                </ul>
-            </div>
-            <div class="col-span-1">
-                <h4 class="text-white font-bold uppercase tracking-widest text-sm mb-6">Company</h4>
-                <ul class="space-y-4">
-                    <li><a href="/about" class="text-gray-400 hover:text-[#AB0A17]">Our Story</a></li>
-                    <li><a href="/craftsmanship" class="text-gray-400 hover:text-[#AB0A17]">Quality & Craftsmanship</a>
-                    </li>
-                    <li><a href="/privacy" class="text-gray-400 hover:text-[#AB0A17]">Privacy Policy</a></li>
-                    <li><a href="/terms" class="text-gray-400 hover:text-[#AB0A17]">Terms & Conditions</a></li>
-                </ul>
-            </div>
-        </div>
-        <div
-            class="max-w-7xl mx-auto border-t border-gray-900 pt-8 flex flex-col md:flex-row justify-between items-center bg-[#050505]">
-            <p class="text-gray-600 text-sm">© 2026 SIXN Ecommerce. All rights reserved.</p>
-        </div>
+    <footer class="w-full py-8 px-4 border-t border-line-soft">
+        <p class="text-center nts-kicker text-muted mb-4">Not That Simple™ — Unbranded. Unapologetic.</p>
+        <ul class="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 nts-kicker">
+            <li><a href="/contact" class="hover:text-lime transition-colors">Contact</a></li>
+            <li><a href="/terms" class="hover:text-lime transition-colors">Terms</a></li>
+            <li><a href="/privacy" class="hover:text-lime transition-colors">Privacy</a></li>
+            <li><a href="/returns" class="hover:text-lime transition-colors">Returns</a></li>
+            <li><a href="/shipping" class="hover:text-lime transition-colors">Shipping</a></li>
+            <li><a href="/size-guide" class="hover:text-lime transition-colors">Size Guide</a></li>
+            <li><a href="/track-order" class="hover:text-lime transition-colors">Order Status</a></li>
+            <li class="text-muted">© {{ 2026 }} NTS</li>
+        </ul>
     </footer>
     {% endblock %}
 
-    <!-- AUTH MODAL -->
-    <div id="auth-overlay"
-        class="fixed inset-0 z-[70] bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4 transition-opacity duration-300 opacity-0"
+    <!-- AUTH MODAL (phone + OTP) -->
+    <div id="auth-overlay" class="fixed inset-0 z-[110] bg-paper/80 hidden flex items-center justify-center p-4 transition-opacity duration-300 opacity-0"
         onclick="if(event.target === this) toggleAuth()">
-        <div class="bg-[#111] border border-gray-800 w-full max-w-md p-8 relative shadow-2xl rounded-sm">
-            <button onclick="toggleAuth()" class="absolute top-4 right-4 text-gray-400 hover:text-white"><svg
-                    class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
-                    </path>
-                </svg></button>
+        <div class="bg-paper border border-line w-full max-w-sm p-6 relative" role="dialog" aria-modal="true" aria-label="Log in">
+            <button onclick="toggleAuth()" aria-label="Close" class="absolute top-3 right-4 nts-link">Close</button>
 
-            <!-- TABS -->
-            <div id="auth-tabs" class="flex border-b border-gray-800 mb-8">
-                <button onclick="switchAuthTab('login')" id="tab-login"
-                    class="flex-1 pb-4 text-white font-bold uppercase tracking-widest border-b-2 border-[#AB0A17] transition-colors">Login</button>
-                <button onclick="switchAuthTab('signup')" id="tab-signup"
-                    class="flex-1 pb-4 text-gray-500 font-bold uppercase tracking-widest border-b-2 border-transparent hover:text-white transition-colors">Signup</button>
+            {% set google_on = social_providers|selectattr('name', 'equalto', 'google')|list %}
+            {% if google_on %}
+            <p class="nts-display text-[24px]">Sign in</p>
+            <p class="text-muted text-[13px] mt-2 mb-5">See your orders and check out faster. Orders you placed as a guest with the same Gmail are added to your account.</p>
+            {{ google_button(request.path if request.path != '/' else '') }}
+            {% endif %}
+            {% set phone_collapsed = google_on and not phone_login_enabled %}
+            {% if phone_collapsed %}
+            <details id="phone-auth" class="mt-6 border-t border-line-soft pt-4" {{ 'open' if request.args.get('next', '').startswith('/admin') }}>
+                <summary class="nts-kicker text-muted cursor-pointer select-none">Admin sign-in with phone</summary>
+                <div class="mt-4">
+            {% endif %}
+
+            <div id="auth-tabs" class="flex gap-6 mb-6 uppercase text-[12px]">
+                <button onclick="switchAuthTab('login')" id="tab-login" class="pb-1 border-b border-line">Log in</button>
+                <button onclick="switchAuthTab('signup')" id="tab-signup" class="pb-1 border-b border-transparent opacity-40 {{ '' if phone_login_enabled else 'hidden' }}">Sign up</button>
             </div>
 
-            <!-- LOGIN FORM -->
             <form id="form-login" class="block space-y-4" onsubmit="event.preventDefault(); handleLogin();">
-                <div class="space-y-2">
-                    <label class="text-xs text-gray-500 font-bold uppercase tracking-wider">Mobile Number</label>
+                <div>
+                    <label class="nts-label" for="login-phone">Mobile number</label>
                     <div class="flex">
-                        <select
-                            class="bg-[#1a1a1a] text-white border border-gray-700 px-3 py-3 outline-none border-r-0 w-24 text-sm appearance-none country-code-select">
-                            <!-- JS Populated -->
-                        </select>
-                        <input type="tel" id="login-phone" placeholder="9876543210"
-                            class="flex-1 bg-[#1a1a1a] text-white border border-gray-700 px-4 py-3 outline-none focus:border-[#AB0A17] transition-colors">
+                        <select aria-label="Country code" class="nts-input !w-20 border-r-0 country-code-select"></select>
+                        <input type="tel" id="login-phone" inputmode="numeric" autocomplete="tel-national" placeholder="9876543210" class="nts-input">
                     </div>
                 </div>
-                <div class="space-y-2">
-                    <label class="text-xs text-gray-500 font-bold uppercase tracking-wider">Password</label>
-                    <input type="password" id="login-pass" placeholder="••••••"
-                        class="w-full bg-[#1a1a1a] text-white border border-gray-700 px-4 py-3 outline-none focus:border-[#AB0A17] transition-colors">
-                    <div class="flex justify-end">
-                        <button type="button" onclick="handleForgotPasswordDisplay()"
-                            class="text-[10px] text-[#AB0A17] font-bold uppercase tracking-widest hover:underline">Forgot
-                            Password?</button>
-                    </div>
+                <div>
+                    <label class="nts-label" for="login-pass">Password</label>
+                    <input type="password" id="login-pass" autocomplete="current-password" class="nts-input">
+                    <button type="button" onclick="handleForgotPasswordDisplay()" class="mt-2 text-[11px] uppercase underline">Forgot password</button>
                 </div>
-                <button type="submit"
-                    class="w-full bg-white text-black font-bold uppercase py-4 tracking-widest hover:bg-[#AB0A17] hover:text-white transition-colors mt-4">Send
-                    OTP & Login</button>
+                <button type="submit" class="nts-btn">Send OTP</button>
             </form>
 
-            <!-- FORGOT FORM -->
             <div id="form-forgot" class="hidden space-y-4">
-                <h3 class="text-white font-display font-bold text-xl uppercase text-center mb-4">Reset Password</h3>
-                <p class="text-gray-500 text-xs text-center mb-6">Enter your phone number to receive a verification
-                    code.</p>
-                <div class="space-y-2">
-                    <label class="text-xs text-gray-500 font-bold uppercase tracking-wider">Mobile Number</label>
+                <p class="uppercase text-[12px]">Reset password</p>
+                <div>
+                    <label class="nts-label" for="forgot-phone">Mobile number</label>
                     <div class="flex">
-                        <select id="forgot-cc"
-                            class="bg-[#1a1a1a] text-white border border-gray-700 px-3 py-3 outline-none border-r-0 w-24 text-sm appearance-none country-code-select">
-                            <!-- JS Populated -->
-                        </select>
-                        <input type="tel" id="forgot-phone" placeholder="9876543210"
-                            class="flex-1 bg-[#1a1a1a] text-white border border-gray-700 px-4 py-3 outline-none focus:border-[#AB0A17] transition-colors">
+                        <select id="forgot-cc" aria-label="Country code" class="nts-input !w-20 border-r-0 country-code-select"></select>
+                        <input type="tel" id="forgot-phone" inputmode="numeric" placeholder="9876543210" class="nts-input">
                     </div>
                 </div>
-                <button onclick="handleForgotPasswordSubmit()"
-                    class="w-full bg-white text-black font-bold uppercase py-4 tracking-widest hover:bg-[#AB0A17] hover:text-white transition-colors mt-4">Send
-                    Reset Code</button>
-                <button onclick="switchAuthTab('login')"
-                    class="w-full text-gray-500 text-[10px] font-bold uppercase tracking-widest hover:text-white transition-colors py-2">Back
-                    to Login</button>
+                <button onclick="handleForgotPasswordSubmit()" class="nts-btn">Send reset code</button>
+                <button onclick="switchAuthTab('login')" class="w-full text-[11px] uppercase underline">Back to log in</button>
             </div>
 
-            <!-- RESET PASSWORD FORM -->
             <form id="form-reset" class="hidden space-y-4" onsubmit="event.preventDefault(); handleResetSubmit();">
-                <h3 class="text-white font-display font-bold text-xl uppercase text-center mb-4">New Password</h3>
-                <p class="text-gray-500 text-xs text-center mb-6">Create a strong password for your account.</p>
-                <div class="space-y-2">
-                    <label class="text-xs text-gray-500 font-bold uppercase tracking-wider">New Password</label>
-                    <input type="password" id="reset-pass" placeholder="••••••"
-                        class="w-full bg-[#1a1a1a] text-white border border-gray-700 px-4 py-3 outline-none focus:border-[#AB0A17] transition-colors">
+                <p class="uppercase text-[12px]">New password</p>
+                <div>
+                    <label class="nts-label" for="reset-pass">New password</label>
+                    <input type="password" id="reset-pass" autocomplete="new-password" class="nts-input">
                 </div>
-                <div class="space-y-2">
-                    <label class="text-xs text-gray-500 font-bold uppercase tracking-wider">Confirm New Password</label>
-                    <input type="password" id="reset-pass-confirm" placeholder="••••••"
-                        class="w-full bg-[#1a1a1a] text-white border border-gray-700 px-4 py-3 outline-none focus:border-[#AB0A17] transition-colors">
+                <div>
+                    <label class="nts-label" for="reset-pass-confirm">Confirm password</label>
+                    <input type="password" id="reset-pass-confirm" autocomplete="new-password" class="nts-input">
                 </div>
-                <button type="submit"
-                    class="w-full bg-[#AB0A17] text-white font-bold uppercase py-4 tracking-widest hover:bg-white hover:text-black transition-colors mt-4">Update
-                    Password</button>
+                <button type="submit" class="nts-btn">Update password</button>
             </form>
 
-            <!-- SIGNUP FORM -->
             <form id="form-signup" class="hidden space-y-4" onsubmit="event.preventDefault(); handleSignup();">
-                <div class="flex gap-4">
-                    <div class="space-y-2 flex-1">
-                        <label class="text-xs text-gray-500 font-bold uppercase tracking-wider">First Name*</label>
-                        <input type="text" id="signup-fname"
-                            class="w-full bg-[#1a1a1a] text-white border border-gray-700 px-4 py-3 outline-none focus:border-[#AB0A17] transition-colors">
+                <div class="flex gap-3">
+                    <div class="flex-1">
+                        <label class="nts-label" for="signup-fname">First name*</label>
+                        <input type="text" id="signup-fname" autocomplete="given-name" class="nts-input">
                     </div>
-                    <div class="space-y-2 flex-1">
-                        <label class="text-xs text-gray-500 font-bold uppercase tracking-wider">Last Name</label>
-                        <input type="text" id="signup-lname"
-                            class="w-full bg-[#1a1a1a] text-white border border-gray-700 px-4 py-3 outline-none focus:border-[#AB0A17] transition-colors">
+                    <div class="flex-1">
+                        <label class="nts-label" for="signup-lname">Last name</label>
+                        <input type="text" id="signup-lname" autocomplete="family-name" class="nts-input">
                     </div>
                 </div>
-                <div class="space-y-2">
-                    <label class="text-xs text-gray-500 font-bold uppercase tracking-wider">Mobile Number*</label>
+                <div>
+                    <label class="nts-label" for="signup-phone">Mobile number*</label>
                     <div class="flex">
-                        <select id="signup-cc"
-                            class="bg-[#1a1a1a] text-white border border-gray-700 px-3 py-3 outline-none border-r-0 w-24 text-sm appearance-none country-code-select">
-                            <!-- JS Populated -->
-                        </select>
-                        <input type="tel" id="signup-phone" placeholder="9876543210"
-                            class="flex-1 bg-[#1a1a1a] text-white border border-gray-700 px-4 py-3 outline-none focus:border-[#AB0A17] transition-colors">
+                        <select id="signup-cc" aria-label="Country code" class="nts-input !w-20 border-r-0 country-code-select"></select>
+                        <input type="tel" id="signup-phone" inputmode="numeric" autocomplete="tel-national" placeholder="9876543210" class="nts-input">
                     </div>
                 </div>
-                <div class="space-y-2">
-                    <label class="text-xs text-gray-500 font-bold uppercase tracking-wider">Password*</label>
-                    <input type="password" id="signup-pass"
-                        class="w-full bg-[#1a1a1a] text-white border border-gray-700 px-4 py-3 outline-none focus:border-[#AB0A17] transition-colors">
+                <div>
+                    <label class="nts-label" for="signup-pass">Password*</label>
+                    <input type="password" id="signup-pass" autocomplete="new-password" class="nts-input">
                 </div>
-                <button type="submit"
-                    class="w-full bg-[#AB0A17] text-white font-bold uppercase py-4 tracking-widest hover:bg-white hover:text-black transition-colors mt-4">Create
-                    Account</button>
+                <button type="submit" class="nts-btn">Create account</button>
             </form>
 
-            <!-- OTP FORM -->
-            <div id="form-otp" class="hidden space-y-6 text-center">
-                <div
-                    class="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4 text-[#AB0A17]">
-                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
-                        </path>
-                    </svg>
-                </div>
-                <h3 class="text-white font-display font-bold text-xl uppercase">Verify Mobile</h3>
-                <p class="text-gray-500 text-sm">Enter the OTP sent to your number.</p>
-                <input type="text" id="otp-input" placeholder="• • • • • •" maxlength="6"
-                    class="w-full bg-[#1a1a1a] text-white border border-gray-700 px-4 py-4 text-center text-2xl tracking-[1em] outline-none focus:border-[#AB0A17] transition-colors font-mono">
-
-                <button onclick="handleVerify()"
-                    class="w-full bg-white text-black font-bold uppercase py-4 tracking-widest hover:bg-[#AB0A17] hover:text-white transition-colors shadow-lg">Verify
-                    & Proceed</button>
-
-                <div class="flex justify-between items-center px-2 mt-4">
-                    <button onclick="handleResendOTP()" id="resend-btn"
-                        class="text-[#AB0A17] text-xs font-bold uppercase hover:text-white transition-colors tracking-wider">Resend
-                        Code</button>
-                    <button onclick="switchAuthTab('login')"
-                        class="text-gray-500 text-xs hover:text-white uppercase transition-colors tracking-wider">Change
-                        Number</button>
+            <div id="form-otp" class="hidden space-y-4">
+                <p class="uppercase text-[12px]">Enter the 6-digit code sent to your phone</p>
+                <input type="text" id="otp-input" inputmode="numeric" autocomplete="one-time-code" maxlength="6" aria-label="OTP"
+                    class="nts-input text-center text-xl tracking-[.6em]">
+                <button onclick="handleVerify()" class="nts-btn">Verify</button>
+                <div class="flex justify-between text-[11px] uppercase">
+                    <button onclick="handleResendOTP()" id="resend-btn" class="underline">Resend code</button>
+                    <button onclick="switchAuthTab('login')" class="underline">Change number</button>
                 </div>
             </div>
 
-            <p id="auth-error" class="text-red-500 text-xs font-bold text-center mt-4 hidden"></p>
-
-        </div>
-    </div>
-
-    <!-- CART SIDEPANEL -->
-    <div id="cart-backdrop" onclick="toggleCart()"
-        class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[55] hidden transition-opacity duration-300 opacity-0">
-    </div>
-    <div id="cart-sidebar"
-        class="fixed top-0 right-0 h-full w-[400px] max-w-[90vw] bg-[#0a0a0a] border-l border-gray-800 z-[60] transform translate-x-full transition-transform duration-300 flex flex-col shadow-2xl">
-        <div class="p-6 border-b border-gray-800 flex justify-between items-center bg-[#111]">
-            <h2 class="text-xl font-display font-bold text-white uppercase tracking-widest">Your Cart</h2>
-            <button onclick="toggleCart()" class="text-gray-400 hover:text-white transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
-                    stroke="currentColor" class="w-6 h-6">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
-                </svg>
-            </button>
-        </div>
-        <div id="cart-items" class="flex-1 overflow-y-auto p-6 space-y-6">
-            <div class="text-center text-gray-500 mt-20">Your cart is empty.</div>
-        </div>
-        <div class="p-6 border-t border-gray-800 bg-[#111]">
-            <div class="flex justify-between items-center mb-4">
-                <div class="flex flex-col">
-                    <span class="text-gray-400 font-bold uppercase text-xs tracking-widest">Subtotal (Selected)</span>
+            {% if phone_collapsed %}
                 </div>
-                <span id="cart-total" class="text-white font-bold text-xl">$0.00</span>
-            </div>
-            <button id="checkout-btn" onclick="proceedToCheckout()"
-                class="w-full bg-white text-black font-extrabold uppercase py-4 hover:bg-[#AB0A17] hover:text-white transition-colors tracking-widest shadow-lg disabled:opacity-50 disabled:cursor-not-allowed">Checkout</button>
+            </details>
+            {% endif %}
+
+            {% for p in social_providers if p.name != 'google' %}
+            <a href="/auth/{{ p.name }}/login" class="nts-btn nts-btn-ghost mt-3">Continue with {{ p.label }}</a>
+            {% endfor %}
+
+            <p id="auth-error" class="text-red-400 text-[12px] mt-4 hidden" role="alert"></p>
         </div>
     </div>
 
-    <!-- SEARCH OVERLAY -->
-    <div id="search-overlay"
-        class="fixed inset-0 z-[60] bg-black/95 transition-opacity duration-300 opacity-0 pointer-events-none flex flex-col items-center pt-32 px-6">
-        <button onclick="toggleSearch()"
-            class="absolute top-8 right-8 text-gray-400 hover:text-white transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
-                stroke="currentColor" class="w-10 h-10">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
-            </svg>
-        </button>
-
-        <div class="w-full max-w-3xl">
-            <input type="text" id="search-input" oninput="handleSearch(this.value)" placeholder="Search products..."
-                class="w-full bg-transparent border-b-2 border-gray-800 text-white text-3xl md:text-5xl font-display font-bold py-4 outline-none focus:border-[#AB0A17] transition-colors placeholder-gray-700 text-center uppercase tracking-tight">
-
-            <div class="relative w-full mt-12 flex items-center justify-between gap-4">
-                <button id="search-prev-btn" onclick="changeSearchPage(-1)"
-                    class="p-2 text-white hover:text-[#AB0A17] disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
-                        stroke="currentColor" class="w-8 h-8">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-                    </svg>
-                </button>
-
-                <div id="search-results" class="flex-1 grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <!-- Results Rendered Here -->
-                </div>
-
-                <button id="search-next-btn" onclick="changeSearchPage(1)"
-                    class="p-2 text-white hover:text-[#AB0A17] disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
-                        stroke="currentColor" class="w-8 h-8">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                    </svg>
-                </button>
-            </div>
-
-            <p id="search-status" class="text-gray-600 text-center mt-8 hidden">Start typing to search...</p>
+    <!-- CART DRAWER -->
+    <div id="cart-backdrop" onclick="toggleCart()" class="fixed inset-0 bg-paper/70 z-[55] hidden transition-opacity duration-300 opacity-0"></div>
+    <aside id="cart-sidebar" aria-label="Cart"
+        class="fixed top-0 right-0 h-full w-[420px] max-w-full bg-paper border-l border-line z-[60] translate-x-full transition-transform duration-300 flex flex-col">
+        <div class="h-16 px-4 flex justify-between items-center border-b border-line">
+            <h2 class="uppercase text-[13px]">Cart</h2>
+            <button onclick="toggleCart()" class="nts-link">Close</button>
         </div>
-    </div>
+        <div id="cart-items" class="flex-1 overflow-y-auto"></div>
+        <div class="p-4 border-t border-line space-y-3">
+            <div class="flex justify-between uppercase text-[13px]">
+                <span>Subtotal</span>
+                <span id="cart-total">₹0</span>
+            </div>
+            <p class="text-[11px] uppercase text-muted">Shipping calculated at checkout. UPI / Google Pay, cards, netbanking.</p>
+            <button id="checkout-btn" onclick="proceedToCheckout()" class="nts-btn">Checkout</button>
+        </div>
+    </aside>
 
     <!-- CSRF & Fetch Interceptor -->
     <script>
@@ -900,138 +347,21 @@
         };
     </script>
 
-    <!-- SHARED SCRIPTS -->
     <script>
-        // --- CURRENCY LOGIC ---
-        const CURRENCY = {
-            INR: { rate: 1, symbol: '₹' },
-            USD: { rate: 0.012, symbol: '$' },
-            EUR: { rate: 0.011, symbol: '€' },
-            GBP: { rate: 0.0095, symbol: '£' },
-        };
-
-        let currentCurrency = localStorage.getItem('sixn_currency');
-
-        if (!currentCurrency) {
-            detectCurrency();
-        } else {
-            const sel = document.getElementById('currency-select');
-            if (sel) sel.value = currentCurrency;
+        // Prices are stored and charged in INR only.
+        const CURRENCY = { INR: { rate: 1, symbol: '₹' } };
+        const currentCurrency = 'INR';
+        function formatPrice(amount) {
+            return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount || 0);
         }
 
-        function updateCurrency(code) {
-            localStorage.setItem('sixn_currency', code);
-            window.location.reload();
-        }
-
-        async function detectCurrency() {
-            try {
-                const res = await fetch('https://ipapi.co/json/');
-                const data = await res.json();
-                const country = data.country_code;
-                let code = 'USD';
-
-                if (country === 'IN') code = 'INR';
-                else if (country === 'GB') code = 'GBP';
-                else if (['AT', 'BE', 'CY', 'EE', 'FI', 'FR', 'DE', 'GR', 'IE', 'IT', 'LV', 'LT', 'LU', 'MT', 'NL', 'PT', 'SK', 'SI', 'ES'].includes(country)) code = 'EUR';
-
-                localStorage.setItem('sixn_currency', code);
-                window.location.reload();
-            } catch (e) {
-                console.log("Auto-currency failed, default USD");
-                localStorage.setItem('sixn_currency', 'USD');
-                currentCurrency = 'USD';
-            }
-        }
-
-        function formatPrice(amountInUSD) {
-            // If amountInUSD is actually in INR (because strict mode simplified), we might need conversion or not.
-            // But version-1 logic assumes amountInUSD. 
-            // However, the checkout might be passing INR.
-            // Let's check formatPrice usages. 
-            // If the site is INR based, maybe we should just fix checkout.html to NOT use currentCurrency?
-            // BUT user wants me to fix "currentCurrency is not defined".
-            // So providing definition is the safest first step.
-
-            const currency = CURRENCY[currentCurrency] || CURRENCY['USD'];
-            // If the input is INR, and we want to convert:
-            // But wait, if the DB prices are INR, then rate 1 is correct for INR. 
-            // And 0.012 for USD means 1 INR = 0.012 USD.
-            // So logic: `converted = amount * rate` works if amount is INR.
-            // Variable name `amountInUSD` in version-1 might be a misnomer if base is INR.
-            // Let's stick to version-1 logic which seemed to work.
-            const converted = amountInUSD * currency.rate;
-
-            return new Intl.NumberFormat('en-IN', {
-                style: 'currency',
-                currency: currentCurrency,
-                minimumFractionDigits: 2
-            }).format(converted);
-        }
-
-        // --- AUTH LOGIC ---
         let CURRENT_USER = null;
 
-        // Valid Country Codes List
-        const countryCodes = [
-            { code: "+93", country: "Afghanistan" }, { code: "+355", country: "Albania" }, { code: "+213", country: "Algeria" }, { code: "+1-684", country: "American Samoa" }, { code: "+376", country: "Andorra" },
-            { code: "+244", country: "Angola" }, { code: "+1-264", country: "Anguilla" }, { code: "+672", country: "Antarctica" }, { code: "+1-268", country: "Antigua and Barbuda" }, { code: "+54", country: "Argentina" },
-            { code: "+374", country: "Armenia" }, { code: "+297", country: "Aruba" }, { code: "+61", country: "Australia" }, { code: "+43", country: "Austria" }, { code: "+994", country: "Azerbaijan" },
-            { code: "+1-242", country: "Bahamas" }, { code: "+973", country: "Bahrain" }, { code: "+880", country: "Bangladesh" }, { code: "+1-246", country: "Barbados" }, { code: "+375", country: "Belarus" },
-            { code: "+32", country: "Belgium" }, { code: "+501", country: "Belize" }, { code: "+229", country: "Benin" }, { code: "+1-441", country: "Bermuda" }, { code: "+975", country: "Bhutan" },
-            { code: "+591", country: "Bolivia" }, { code: "+387", country: "Bosnia and Herzegovina" }, { code: "+267", country: "Botswana" }, { code: "+55", country: "Brazil" }, { code: "+246", country: "British Indian Ocean Territory" },
-            { code: "+1-284", country: "British Virgin Islands" }, { code: "+673", country: "Brunei" }, { code: "+359", country: "Bulgaria" }, { code: "+226", country: "Burkina Faso" }, { code: "+257", country: "Burundi" },
-            { code: "+855", country: "Cambodia" }, { code: "+237", country: "Cameroon" }, { code: "+1", country: "Canada" }, { code: "+238", country: "Cape Verde" }, { code: "+1-345", country: "Cayman Islands" },
-            { code: "+236", country: "Central African Republic" }, { code: "+235", country: "Chad" }, { code: "+56", country: "Chile" }, { code: "+86", country: "China" }, { code: "+61", country: "Christmas Island" },
-            { code: "+61", country: "Cocos Islands" }, { code: "+57", country: "Colombia" }, { code: "+269", country: "Comoros" }, { code: "+682", country: "Cook Islands" }, { code: "+506", country: "Costa Rica" },
-            { code: "+385", country: "Croatia" }, { code: "+53", country: "Cuba" }, { code: "+599", country: "Curacao" }, { code: "+357", country: "Cyprus" }, { code: "+420", country: "Czech Republic" },
-            { code: "+243", country: "Democratic Republic of the Congo" }, { code: "+45", country: "Denmark" }, { code: "+253", country: "Djibouti" }, { code: "+1-767", country: "Dominica" }, { code: "+1-809", country: "Dominican Republic" },
-            { code: "+670", country: "East Timor" }, { code: "+593", country: "Ecuador" }, { code: "+20", country: "Egypt" }, { code: "+503", country: "El Salvador" }, { code: "+240", country: "Equatorial Guinea" },
-            { code: "+291", country: "Eritrea" }, { code: "+372", country: "Estonia" }, { code: "+251", country: "Ethiopia" }, { code: "+500", country: "Falkland Islands" }, { code: "+298", country: "Faroe Islands" },
-            { code: "+679", country: "Fiji" }, { code: "+358", country: "Finland" }, { code: "+33", country: "France" }, { code: "+689", country: "French Polynesia" }, { code: "+241", country: "Gabon" },
-            { code: "+220", country: "Gambia" }, { code: "+995", country: "Georgia" }, { code: "+49", country: "Germany" }, { code: "+233", country: "Ghana" }, { code: "+350", country: "Gibraltar" },
-            { code: "+30", country: "Greece" }, { code: "+299", country: "Greenland" }, { code: "+1-473", country: "Grenada" }, { code: "+1-671", country: "Guam" }, { code: "+502", country: "Guatemala" },
-            { code: "+44-1481", country: "Guernsey" }, { code: "+224", country: "Guinea" }, { code: "+245", country: "Guinea-Bissau" }, { code: "+592", country: "Guyana" }, { code: "+509", country: "Haiti" },
-            { code: "+504", country: "Honduras" }, { code: "+852", country: "Hong Kong" }, { code: "+36", country: "Hungary" }, { code: "+354", country: "Iceland" }, { code: "+91", country: "India" },
-            { code: "+62", country: "Indonesia" }, { code: "+98", country: "Iran" }, { code: "+964", country: "Iraq" }, { code: "+353", country: "Ireland" }, { code: "+44-1624", country: "Isle of Man" },
-            { code: "+972", country: "Israel" }, { code: "+39", country: "Italy" }, { code: "+225", country: "Ivory Coast" }, { code: "+1-876", country: "Jamaica" }, { code: "+81", country: "Japan" },
-            { code: "+44-1534", country: "Jersey" }, { code: "+962", country: "Jordan" }, { code: "+7", country: "Kazakhstan" }, { code: "+254", country: "Kenya" }, { code: "+686", country: "Kiribati" },
-            { code: "+383", country: "Kosovo" }, { code: "+965", country: "Kuwait" }, { code: "+996", country: "Kyrgyzstan" }, { code: "+856", country: "Laos" }, { code: "+371", country: "Latvia" },
-            { code: "+961", country: "Lebanon" }, { code: "+266", country: "Lesotho" }, { code: "+231", country: "Liberia" }, { code: "+218", country: "Libya" }, { code: "+423", country: "Liechtenstein" },
-            { code: "+370", country: "Lithuania" }, { code: "+352", country: "Luxembourg" }, { code: "+853", country: "Macau" }, { code: "+389", country: "Macedonia" }, { code: "+261", country: "Madagascar" },
-            { code: "+265", country: "Malawi" }, { code: "+60", country: "Malaysia" }, { code: "+960", country: "Maldives" }, { code: "+223", country: "Mali" }, { code: "+356", country: "Malta" },
-            { code: "+692", country: "Marshall Islands" }, { code: "+222", country: "Mauritania" }, { code: "+230", country: "Mauritius" }, { code: "+262", country: "Mayotte" }, { code: "+52", country: "Mexico" },
-            { code: "+691", country: "Micronesia" }, { code: "+373", country: "Moldova" }, { code: "+377", country: "Monaco" }, { code: "+976", country: "Mongolia" }, { code: "+382", country: "Montenegro" },
-            { code: "+1-664", country: "Montserrat" }, { code: "+212", country: "Morocco" }, { code: "+258", country: "Mozambique" }, { code: "+95", country: "Myanmar" }, { code: "+264", country: "Namibia" },
-            { code: "+674", country: "Nauru" }, { code: "+977", country: "Nepal" }, { code: "+31", country: "Netherlands" }, { code: "+599", country: "Netherlands Antilles" }, { code: "+687", country: "New Caledonia" },
-            { code: "+64", country: "New Zealand" }, { code: "+505", country: "Nicaragua" }, { code: "+227", country: "Niger" }, { code: "+234", country: "Nigeria" }, { code: "+683", country: "Niue" },
-            { code: "+850", country: "North Korea" }, { code: "+1-670", country: "Northern Mariana Islands" }, { code: "+47", country: "Norway" }, { code: "+968", country: "Oman" }, { code: "+92", country: "Pakistan" },
-            { code: "+680", country: "Palau" }, { code: "+970", country: "Palestine" }, { code: "+507", country: "Panama" }, { code: "+675", country: "Papua New Guinea" }, { code: "+595", country: "Paraguay" },
-            { code: "+51", country: "Peru" }, { code: "+63", country: "Philippines" }, { code: "+64", country: "Pitcairn" }, { code: "+48", country: "Poland" }, { code: "+351", country: "Portugal" },
-            { code: "+1-787", country: "Puerto Rico" }, { code: "+974", country: "Qatar" }, { code: "+242", country: "Republic of the Congo" }, { code: "+262", country: "Reunion" }, { code: "+40", country: "Romania" },
-            { code: "+7", country: "Russia" }, { code: "+250", country: "Rwanda" }, { code: "+590", country: "Saint Barthelemy" }, { code: "+290", country: "Saint Helena" }, { code: "+1-869", country: "Saint Kitts and Nevis" },
-            { code: "+1-758", country: "Saint Lucia" }, { code: "+590", country: "Saint Martin" }, { code: "+508", country: "Saint Pierre and Miquelon" }, { code: "+1-784", country: "Saint Vincent and the Grenadines" }, { code: "+685", country: "Samoa" },
-            { code: "+378", country: "San Marino" }, { code: "+239", country: "Sao Tome and Principe" }, { code: "+966", country: "Saudi Arabia" }, { code: "+221", country: "Senegal" }, { code: "+381", country: "Serbia" },
-            { code: "+248", country: "Seychelles" }, { code: "+232", country: "Sierra Leone" }, { code: "+65", country: "Singapore" }, { code: "+1-721", country: "Sint Maarten" }, { code: "+421", country: "Slovakia" },
-            { code: "+386", country: "Slovenia" }, { code: "+677", country: "Solomon Islands" }, { code: "+252", country: "Somalia" }, { code: "+27", country: "South Africa" }, { code: "+82", country: "South Korea" },
-            { code: "+211", country: "South Sudan" }, { code: "+34", country: "Spain" }, { code: "+94", country: "Sri Lanka" }, { code: "+249", country: "Sudan" }, { code: "+597", country: "Suriname" },
-            { code: "+47", country: "Svalbard and Jan Mayen" }, { code: "+268", country: "Swaziland" }, { code: "+46", country: "Sweden" }, { code: "+41", country: "Switzerland" }, { code: "+963", country: "Syria" },
-            { code: "+886", country: "Taiwan" }, { code: "+992", country: "Tajikistan" }, { code: "+255", country: "Tanzania" }, { code: "+66", country: "Thailand" }, { code: "+228", country: "Togo" },
-            { code: "+690", country: "Tokelau" }, { code: "+676", country: "Tonga" }, { code: "+1-868", country: "Trinidad and Tobago" }, { code: "+216", country: "Tunisia" }, { code: "+90", country: "Turkey" },
-            { code: "+993", country: "Turkmenistan" }, { code: "+1-649", country: "Turks and Caicos Islands" }, { code: "+688", country: "Tuvalu" }, { code: "+1-340", country: "U.S. Virgin Islands" }, { code: "+256", country: "Uganda" },
-            { code: "+380", country: "Ukraine" }, { code: "+971", country: "United Arab Emirates" }, { code: "+44", country: "United Kingdom" }, { code: "+1", country: "United States" }, { code: "+598", country: "Uruguay" },
-            { code: "+998", country: "Uzbekistan" }, { code: "+678", country: "Vanuatu" }, { code: "+379", country: "Vatican" }, { code: "+58", country: "Venezuela" }, { code: "+84", country: "Vietnam" },
-            { code: "+681", country: "Wallis and Futuna" }, { code: "+212", country: "Western Sahara" }, { code: "+967", country: "Yemen" }, { code: "+260", country: "Zambia" }, { code: "+263", country: "Zimbabwe" }
-        ];
-
-        // Init Country Codes
-        const selects = document.querySelectorAll('.country-code-select');
-        const opts = countryCodes.map(c => `<option value="${c.code}">${c.code} (${c.country})</option>`).join('');
-        selects.forEach(s => {
-            s.innerHTML = opts;
-            s.value = "+91";
+        // India-only launch: phone numbers are +91.
+        document.querySelectorAll('.country-code-select').forEach(s => {
+            s.innerHTML = '<option value="+91">+91</option>';
+            s.value = '+91';
         });
-
         // Check Session on Load
         fetch('/api/auth/user').then(r => r.json()).then(data => {
             if (data.authenticated) {
@@ -1043,103 +373,27 @@
 
         function toggleMobileMenu() {
             const menu = document.getElementById('mobile-menu');
-            if (menu.classList.contains('translate-x-full')) {
-                menu.classList.remove('translate-x-full');
-                document.body.classList.add('overflow-hidden');
-            } else {
-                menu.classList.add('translate-x-full');
-                document.body.classList.remove('overflow-hidden');
-            }
+            const open = menu.classList.toggle('-translate-x-full') === false;
+            document.body.classList.toggle('overflow-hidden', open);
         }
 
         function updateUserUI() {
+            const loggedIn = !!CURRENT_USER;
             const btn = document.getElementById('nav-user-btn');
-            const dropdownName = document.getElementById('dropdown-user-name');
-            const mobileName = document.getElementById('mobile-user-name');
-            const mobileAvatar = document.getElementById('mobile-user-avatar');
-
-            if (CURRENT_USER) {
-                // Update Desktop Button Content
-                let avatarHtml = '';
-                if (CURRENT_USER.profile_image) {
-                    avatarHtml = `<div class="w-8 h-8 rounded-full bg-gray-700 overflow-hidden border border-gray-600"><img src="${CURRENT_USER.profile_image}" class="w-full h-full object-cover"></div>`;
-                } else {
-                    avatarHtml = `<div class="w-8 h-8 rounded-full bg-[#AB0A17] text-white flex items-center justify-center font-bold text-sm border border-orange-700">${CURRENT_USER.firstName[0]}</div>`;
-                }
-
-                btn.innerHTML = `
-                    <div class="flex items-center gap-2">
-                        <span class="text-xs font-bold uppercase text-gray-300 hidden md:inline">Hi, ${CURRENT_USER.firstName}</span>
-                        ${avatarHtml}
-                    </div>
-                `;
-
-                // Update Mobile
-                if (mobileName) mobileName.textContent = `Hi, ${CURRENT_USER.firstName}`;
-                if (mobileAvatar) {
-                    if (CURRENT_USER.profile_image) {
-                        mobileAvatar.innerHTML = `<img src="${CURRENT_USER.profile_image}" class="w-full h-full object-cover">`;
-                        mobileAvatar.className = "w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center overflow-hidden border border-gray-600";
-                    } else {
-                        mobileAvatar.innerHTML = `<span class="font-bold text-white">${CURRENT_USER.firstName[0]}</span>`;
-                        mobileAvatar.className = "w-8 h-8 rounded-full bg-[#AB0A17] flex items-center justify-center border border-orange-700 overflow-hidden";
-                    }
-                }
-
-                // Update Dropdown Name
-                if (dropdownName) {
-                    const fullName = `${CURRENT_USER.firstName} ${CURRENT_USER.lastName || ''}`.trim();
-                    dropdownName.textContent = fullName;
-                }
-
-                // Set Click Handler for Menu
-                btn.onclick = handleProfileClick;
-            } else {
-                btn.innerHTML = `<div class="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center overflow-hidden border border-gray-600"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 text-gray-400"><path fill-rule="evenodd" d="M7.5 6a4.5 4.5 0 1 1 9 0 4.5 4.5 0 0 1-9 0ZM3.751 20.105a8.25 8.25 0 0 1 16.498 0 .75.75 0 0 1-.437.695A18.683 18.683 0 0 1 12 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 0 1-.437-.695Z" clip-rule="evenodd" /></svg></div>`;
-                btn.onclick = toggleAuth;
-
-                if (mobileName) mobileName.textContent = "Account";
-                if (mobileAvatar) {
-                    mobileAvatar.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 text-gray-400"><path fill-rule="evenodd" d="M7.5 6a4.5 4.5 0 1 1 9 0 4.5 4.5 0 0 1-9 0ZM3.751 20.105a8.25 8.25 0 0 1 16.498 0 .75.75 0 0 1-.437.695A18.683 18.683 0 0 1 12 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 0 1-.437-.695Z" clip-rule="evenodd" /></svg>`;
-                    mobileAvatar.className = "w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center overflow-hidden border border-gray-600";
-                }
-            }
+            if (btn) btn.textContent = loggedIn ? CURRENT_USER.firstName : 'Log in';
+            const mBtn = document.getElementById('mobile-user-btn');
+            if (mBtn) mBtn.textContent = loggedIn ? 'Log out' : 'Log in';
+            document.querySelectorAll('.auth-only').forEach(el => el.classList.toggle('hidden', !loggedIn));
         }
 
         function handleProfileClick() {
-            if (!CURRENT_USER) {
-                toggleAuth();
-                return;
-            }
-            const dropdown = document.getElementById('profile-dropdown');
-            if (dropdown.classList.contains('hidden')) {
-                dropdown.classList.remove('hidden');
-                setTimeout(() => {
-                    dropdown.classList.remove('opacity-0', 'scale-95');
-                }, 10);
-            } else {
-                dropdown.classList.add('opacity-0', 'scale-95');
-                setTimeout(() => dropdown.classList.add('hidden'), 200);
-            }
+            if (!CURRENT_USER) return toggleAuth();
+            window.location.href = '/orders';
         }
 
         function handleLogout() {
-            fetch('/api/auth/logout', { method: 'POST' }).then(() => {
-                window.location.reload();
-            });
+            fetch('/api/auth/logout', { method: 'POST' }).then(() => window.location.reload());
         }
-
-        // Close dropdown when clicking outside
-        document.addEventListener('click', (e) => {
-            const dropdown = document.getElementById('profile-dropdown');
-            const btn = document.getElementById('nav-user-btn');
-            if (dropdown && !dropdown.classList.contains('hidden')) {
-                if (!dropdown.contains(e.target) && !btn.contains(e.target)) {
-                    dropdown.classList.add('opacity-0', 'scale-95');
-                    setTimeout(() => dropdown.classList.add('hidden'), 200);
-                }
-            }
-        });
 
         function toggleAuth() {
             const overlay = document.getElementById('auth-overlay');
@@ -1155,34 +409,15 @@
             }
         }
 
+
         function switchAuthTab(tab) {
-            const tLogin = document.getElementById('tab-login');
-            const tSignup = document.getElementById('tab-signup');
-            const fLogin = document.getElementById('form-login');
-            const fSignup = document.getElementById('form-signup');
-            const fOtp = document.getElementById('form-otp');
-
-            document.getElementById('auth-error').classList.add('hidden');
-            fOtp.classList.add('hidden');
-            document.getElementById('form-forgot').classList.add('hidden');
-            document.getElementById('form-reset').classList.add('hidden');
+            ['form-otp', 'form-forgot', 'form-reset', 'auth-error'].forEach(id => document.getElementById(id).classList.add('hidden'));
             document.getElementById('auth-tabs').classList.remove('hidden');
-
-            if (tab === 'login') {
-                tLogin.classList.replace('text-gray-500', 'text-white');
-                tLogin.classList.replace('border-transparent', 'border-[#AB0A17]');
-                tSignup.classList.replace('text-white', 'text-gray-500');
-                tSignup.classList.replace('border-[#AB0A17]', 'border-transparent');
-                fLogin.classList.remove('hidden');
-                fSignup.classList.add('hidden');
-            } else {
-                tSignup.classList.replace('text-gray-500', 'text-white');
-                tSignup.classList.replace('border-transparent', 'border-[#AB0A17]');
-                tLogin.classList.replace('text-white', 'text-gray-500');
-                tLogin.classList.replace('border-[#AB0A17]', 'border-transparent');
-                fSignup.classList.remove('hidden');
-                fLogin.classList.add('hidden');
-            }
+            const login = tab === 'login';
+            document.getElementById('form-login').classList.toggle('hidden', !login);
+            document.getElementById('form-signup').classList.toggle('hidden', login);
+            document.getElementById('tab-login').className = 'pb-1 border-b ' + (login ? 'border-line' : 'border-transparent opacity-40');
+            document.getElementById('tab-signup').className = 'pb-1 border-b ' + (login ? 'border-transparent opacity-40' : 'border-line');
         }
 
         function showError(msg) {
@@ -1202,26 +437,16 @@
             showToast("Notice", msg, "bg-blue-500/20 text-blue-400", "i");
         }
 
+
         let toastTimeout;
         function showToast(title, msg, colorClass, iconHtml) {
             const toast = document.getElementById('toast-notification');
-            const tTitle = document.getElementById('toast-title');
-            const tMsg = document.getElementById('toast-message');
-            const tIcon = document.getElementById('toast-icon');
-
-            tTitle.textContent = title;
-            tMsg.textContent = msg;
-            tIcon.innerHTML = iconHtml;
-            tIcon.className = `w-10 h-10 rounded-full flex items-center justify-center text-xl shrink-0 ${colorClass}`;
-
-            toast.classList.remove('translate-x-[150%]', 'opacity-0');
-            toast.classList.add('translate-x-0', 'opacity-100');
-
+            document.getElementById('toast-title').textContent = title;
+            document.getElementById('toast-message').textContent = msg;
+            document.getElementById('toast-icon').textContent = '';
+            toast.classList.remove('translate-y-[-150%]', 'opacity-0');
             clearTimeout(toastTimeout);
-            toastTimeout = setTimeout(() => {
-                toast.classList.add('translate-x-[150%]', 'opacity-0');
-                toast.classList.remove('translate-x-0', 'opacity-100');
-            }, 5000);
+            toastTimeout = setTimeout(() => toast.classList.add('translate-y-[-150%]', 'opacity-0'), 4000);
         }
 
         async function handleLogin() {
@@ -1388,126 +613,6 @@
             }
         }
 
-
-        // --- SEARCH LOGIC ---
-        let allSearchProducts = [];
-        let searchLoaded = false;
-        async function toggleSearch() {
-            const overlay = document.getElementById('search-overlay');
-            const input = document.getElementById('search-input');
-            const isOpen = !overlay.classList.contains('pointer-events-none');
-
-            if (isOpen) {
-                overlay.classList.add('opacity-0', 'pointer-events-none');
-                document.body.style.overflow = '';
-                input.value = '';
-                document.getElementById('search-results').innerHTML = '';
-                if (typeof lenis !== 'undefined') lenis.start();
-            } else {
-                overlay.classList.remove('opacity-0', 'pointer-events-none');
-                document.body.style.overflow = 'hidden';
-                setTimeout(() => input.focus(), 300);
-                if (typeof lenis !== 'undefined') lenis.stop();
-
-                if (!searchLoaded) {
-                    try {
-                        const res = await fetch('/assets/products.json');
-                        allSearchProducts = await res.json();
-                        searchLoaded = true;
-                    } catch (e) {
-                        console.error("Failed to load search products", e);
-                    }
-                }
-            }
-        }
-
-        let currentSearchResults = [];
-        let currentSearchPage = 0;
-
-        function handleSearch(query) {
-            const status = document.getElementById('search-status');
-
-            if (!query.trim()) {
-                document.getElementById('search-results').innerHTML = '';
-                status.classList.remove('hidden');
-                status.textContent = 'Start typing to search...';
-                updateSearchButtons(0);
-                return;
-            }
-
-            status.classList.add('hidden');
-
-            const lowerQuery = query.toLowerCase();
-            currentSearchResults = allSearchProducts.filter(p =>
-                p.name.toLowerCase().includes(lowerQuery) ||
-                p.brand.toLowerCase().includes(lowerQuery) ||
-                p.category.toLowerCase().includes(lowerQuery) ||
-                (p.type && p.type.toLowerCase().includes(lowerQuery))
-            );
-
-            currentSearchPage = 0;
-            renderSearchPage();
-        }
-
-        function renderSearchPage() {
-            const container = document.getElementById('search-results');
-            if (currentSearchResults.length === 0) {
-                container.innerHTML = '<p class="col-span-full text-center text-gray-500 text-xl">No products found.</p>';
-                updateSearchButtons(0);
-                return;
-            }
-
-            // Determine items per page based on screen width (simple check)
-            const itemsPerPage = window.innerWidth < 768 ? 3 : 6;
-
-            const start = currentSearchPage * itemsPerPage;
-            const end = start + itemsPerPage;
-            const pageItems = currentSearchResults.slice(start, end);
-
-            container.innerHTML = pageItems.map(p => `
-                    <a href="/product/${p.id}" class="flex items-center gap-4 bg-[#111] p-4 rounded hover:bg-[#1a1a1a] transition-colors group">
-                        <div class="w-16 h-16 bg-[#0a0a0a] rounded overflow-hidden flex-shrink-0">
-                            <img src="${p.image}" class="w-full h-full object-cover">
-                        </div>
-                        <div>
-                            <h4 class="text-white font-bold group-hover:text-[#AB0A17] transition-colors line-clamp-1">${p.name}</h4>
-                            <p class="text-gray-500 text-xs uppercase tracking-wide">${p.brand}</p>
-                            <span class="text-[#AB0A17] text-sm font-bold">${formatPrice(p.price)}</span>
-                        </div>
-                    </a>
-                `).join('');
-
-            updateSearchButtons(Math.ceil(currentSearchResults.length / itemsPerPage));
-        }
-
-        function changeSearchPage(delta) {
-            const itemsPerPage = window.innerWidth < 768 ? 3 : 6;
-            const totalPages = Math.ceil(currentSearchResults.length / itemsPerPage);
-
-            const newPage = currentSearchPage + delta;
-            if (newPage >= 0 && newPage < totalPages) {
-                currentSearchPage = newPage;
-                renderSearchPage();
-            }
-        }
-
-        function updateSearchButtons(totalPages) {
-            const prevBtn = document.getElementById('search-prev-btn');
-            const nextBtn = document.getElementById('search-next-btn');
-
-            if (totalPages <= 1) {
-                prevBtn.style.visibility = 'hidden';
-                nextBtn.style.visibility = 'hidden';
-                return;
-            }
-
-            prevBtn.style.visibility = 'visible';
-            nextBtn.style.visibility = 'visible';
-
-            prevBtn.disabled = currentSearchPage === 0;
-            nextBtn.disabled = currentSearchPage >= totalPages - 1;
-        }
-
         // --- CART LOGIC ---
         let cart = JSON.parse(localStorage.getItem('sixn_cart') || '[]');
         let savedOverflow = '';
@@ -1547,12 +652,13 @@
             );
 
             if (existing) {
-                existing.quantity = (existing.quantity || 1) + 1;
+                existing.quantity = Math.min(10, (existing.quantity || 1) + 1);
             } else {
                 cart.push({ ...product, quantity: 1, selected: true });
             }
             saveCart();
-            toggleCart();
+            if (document.getElementById('cart-sidebar').classList.contains('translate-x-full')) toggleCart();
+            else renderCart();
         }
 
         function removeFromCart(index) {
@@ -1566,7 +672,7 @@
         function updateQuantity(index, delta) {
             const item = cart[index];
             if (item) {
-                item.quantity = (item.quantity || 1) + delta;
+                item.quantity = Math.min(10, (item.quantity || 1) + delta);
                 if (item.quantity <= 0) {
                     removeFromCart(index);
                 } else {
@@ -1592,96 +698,51 @@
 
         function updateBadge() {
             const count = cart.reduce((acc, item) => acc + (item.quantity || 1), 0);
-            const desktopBadge = document.getElementById('cart-count-badge-desktop');
-            const mobileBadge = document.getElementById('cart-count-badge-mobile');
-
-            [desktopBadge, mobileBadge].forEach(badge => {
-                if (!badge) return;
-                if (count > 0) {
-                    badge.textContent = count > 9 ? '9+' : count;
-                    badge.classList.remove('hidden');
-                } else {
-                    badge.classList.add('hidden');
-                }
-            });
+            const badge = document.getElementById('cart-count-badge-desktop');
+            if (badge) badge.textContent = count;
         }
 
         function renderCart() {
             const container = document.getElementById('cart-items');
+            cart.forEach(i => { i.selected = true; });  // no per-item selection in NTS; checkout takes the whole cart
             if (cart.length === 0) {
-                container.innerHTML = '<div class="text-center text-gray-500 mt-20 flex flex-col items-center"><svg class="w-12 h-12 mb-4 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>Your cart is empty.</div>';
-                document.getElementById('cart-total').textContent = formatPrice(0);
-                updateCheckoutBtn();
-                return;
-            }
-
-            let total = 0;
-            container.innerHTML = cart.map((item, index) => {
-                const itemTotal = item.price * (item.quantity || 1);
-                if (item.selected !== false) total += itemTotal;
-
-                return `
-                    <div class="flex gap-4 items-start">
-                        <div class="pt-2">
-                             <input type="checkbox" onchange="toggleItemSelection(${index})" ${item.selected !== false ? 'checked' : ''} class="w-5 h-5 accent-[#AB0A17] bg-gray-800 border-gray-600 rounded cursor-pointer">
-                        </div>
-                        <div class="w-20 h-20 bg-[#151515] rounded overflow-hidden flex-shrink-0">
-                            <img src="${item.image}" alt="${item.name}" class="w-full h-full object-cover">
-                        </div>
-                        <div class="flex-1 flex flex-col justify-between min-h-[5rem]">
+                container.innerHTML = '<p class="p-4 uppercase text-[12px] text-muted">Your cart is empty.</p>';
+            } else {
+                container.innerHTML = cart.map((item, index) => `
+                    <div class="flex gap-4 p-4 border-b border-line">
+                        <a href="/product/${item.id}" class="w-24 h-24 flex-shrink-0 bg-paper">
+                            <img src="${item.image}" alt="${item.name}" class="w-full h-full object-contain">
+                        </a>
+                        <div class="flex-1 flex flex-col justify-between uppercase text-[12px]">
                             <div>
-                                <h3 class="text-white font-bold text-sm line-clamp-1">${item.name}</h3>
-                                <div class="flex flex-wrap gap-2 my-1">
-                                     ${item.selectedSize ? `<span class="text-[10px] font-bold text-gray-400 border border-gray-700 px-1 rounded uppercase">Size: ${item.selectedSize}</span>` : ''}
-                                     ${item.selectedColor && item.selectedColor.name ? `<span class="text-[10px] font-bold text-gray-400 border border-gray-700 px-1 rounded uppercase flex items-center gap-1"><span class="w-2 h-2 rounded-full inline-block" style="background-color: ${item.selectedColor.hex}"></span> ${item.selectedColor.name}</span>` : ''}
-                                </div>
-                                <p class="text-gray-500 text-xs">${item.brand || 'SIXN'}</p>
+                                <p>${item.name}</p>
+                                ${item.selectedSize ? `<p class="text-muted">Size ${item.selectedSize}</p>` : ''}
                             </div>
-                            <div class="flex justify-between items-end">
-                                <div class="flex items-center gap-2 border border-gray-700 rounded">
-                                    <button onclick="updateQuantity(${index}, -1)" class="px-2 text-gray-400 hover:text-white">-</button>
-                                    <span class="text-xs font-bold text-white">${item.quantity || 1}</span>
-                                    <button onclick="updateQuantity(${index}, 1)" class="px-2 text-gray-400 hover:text-white">+</button>
+                            <div class="flex justify-between items-center">
+                                <div class="flex items-center border border-line">
+                                    <button onclick="updateQuantity(${index}, -1)" aria-label="Decrease quantity" class="w-7 h-7">−</button>
+                                    <span class="w-6 text-center">${item.quantity || 1}</span>
+                                    <button onclick="updateQuantity(${index}, 1)" aria-label="Increase quantity" class="w-7 h-7" ${(item.quantity || 1) >= 10 ? 'disabled' : ''}>+</button>
                                 </div>
-                                <span class="text-[#AB0A17] font-bold text-sm">${formatPrice(itemTotal)}</span>
+                                <span>${formatPrice(item.price * (item.quantity || 1))}</span>
                             </div>
+                            <button onclick="removeFromCart(${index})" class="self-start underline text-[11px] mt-1">Remove</button>
                         </div>
-                    </div>
-                `;
-            }).join('');
-
-            const selectedTotal = cart.reduce((acc, item) => (item.selected !== false ? acc + (item.price * (item.quantity || 1)) : acc), 0);
-            document.getElementById('cart-total').textContent = formatPrice(selectedTotal);
+                    </div>`).join('');
+            }
+            const total = cart.reduce((acc, item) => acc + item.price * (item.quantity || 1), 0);
+            document.getElementById('cart-total').textContent = formatPrice(total);
             updateCheckoutBtn();
         }
 
         function updateCheckoutBtn() {
             const btn = document.getElementById('checkout-btn');
-            if (!btn) return;
-
-            const selectedCount = cart.filter(i => i.selected !== false).length;
-
-            if (selectedCount === 0) {
-                btn.disabled = true;
-                btn.textContent = 'Select Items';
-            } else {
-                btn.disabled = false;
-                btn.textContent = `Checkout (${selectedCount})`;
-            }
+            if (btn) btn.disabled = cart.length === 0;
         }
 
         async function proceedToCheckout() {
             const selectedItems = cart.filter(i => i.selected !== false);
             if (selectedItems.length === 0) return;
-
-            const authRes = await fetch('/api/auth/user');
-            const authData = await authRes.json();
-
-            if (!authData.authenticated) {
-                toggleCart();
-                toggleAuth();
-                return;
-            }
 
             localStorage.setItem('sixn_checkout_items', JSON.stringify(selectedItems));
             window.location.href = '/checkout';
@@ -1714,6 +775,9 @@
         // Initializations
         document.addEventListener('DOMContentLoaded', () => {
             updateBadge();
+            const q = new URLSearchParams(location.search);
+            if ((q.get('login') === '1' || q.has('next')) && !CURRENT_USER) toggleAuth();  // sent here by an admin page or a failed sign-in
+            if (q.get('auth_error')) showError(q.get('auth_error'));
         });
 
     </script>

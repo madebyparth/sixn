@@ -35,3 +35,5 @@ Desktop.ini
 static/uploads/
 data/
 *.log
+
+client_secret_*.json

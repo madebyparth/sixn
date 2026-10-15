@@ -79,31 +79,45 @@ graph TD
 
 ## Environment Configuration
 
-Configure the project by creating a `.env` file in the root directory (use `.env.example` as a template):
+Copy `.env.example` to `.env`. Empty values (or `REPLACE_ME`) mean "not configured": the app still starts, logs which
+integrations are disabled (`[STARTUP] Integrations:`), and turns the dependent feature off instead of crashing.
+`python preflight.py` lists everything still missing for launch and exits non-zero until it passes.
 
-| Key | Description | Example / Value |
+### Required for launch
+
+| Key | What it is | If missing |
 | :--- | :--- | :--- |
-| `SECRET_KEY` | Flask session cookie encryption key | `a_highly_secure_random_string` |
-| `MONGO_URI` | Connection URI for the MongoDB database | `mongodb://localhost:27017/sixn` |
-| `RAZORPAY_KEY` | Razorpay Merchant Key ID | `rzp_test_xxxxxxxxxxxxxx` |
-| `RAZORPAY_SECRET` | Razorpay Merchant Key Secret | `xxxxxxxxxxxxxxxxxxxxxxxx` |
-| `TWILIO_PHONE` | Twilio purchased virtual phone number | `+1xxxxxxxxxx` |
-| `TWILIO_SID` | Twilio Account SID | `ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx` |
-| `TWILIO_TOKEN` | Twilio Auth Token | `xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx` |
-| `ADMIN_USER_ID` | MongoDB UUID of the system administrator account | `user-uuid-xxxx-xxxx` |
-| `SHIPROCKET_EMAIL`| Shiprocket merchant email | `admin@sixn.com` |
-| `SHIPROCKET_PASSWORD`| Shiprocket merchant password | `password123` |
-| `SHIPROCKET_PICKUP_LOCATION`| Pickup warehouse name configured in Shiprocket | `Primary` |
-| `SHIPROCKET_PICKUP_PINCODE`| Pincode of the pickup warehouse | `110046` |
-| `ENCRYPTION_KEY` | Symmetric Fernet key for general database encryption | Base64 URL-safe key |
-| `PHONE_ENCRYPTION_KEY`| Symmetric Fernet key for encrypting user phone numbers| Base64 URL-safe key |
-| `ADDRESS_ENCRYPTION_KEY`| Symmetric Fernet key for encrypting user addresses | Base64 URL-safe key |
+| `SECRET_KEY` | Flask session key (`python -c "import secrets; print(secrets.token_hex(32))"`) | Sessions are insecure |
+| `MONGO_URI` | MongoDB connection string | App cannot store anything |
+| `ENCRYPTION_KEY`, `PHONE_ENCRYPTION_KEY`, `ADDRESS_ENCRYPTION_KEY` | Fernet keys for PII | Addresses/phones cannot be saved |
+| `ADMIN_USER_ID` | User id of the admin account | No access to `/admin`, `/admin/fulfilment` |
+| `RAZORPAY_KEY`, `RAZORPAY_SECRET` | Razorpay live keys (after KYC) | Checkout shows "Online payments not yet enabled"; Cash on Delivery still works |
+| `RAZORPAY_WEBHOOK_SECRET` | Webhook to `https://<domain>/api/payment/webhook` (events `payment.captured`, `order.paid`) | A paid order is lost if the shopper closes the tab before the browser confirms |
+| `SHIPROCKET_EMAIL`, `SHIPROCKET_PASSWORD`, `SHIPROCKET_PICKUP_LOCATION`, `SHIPROCKET_PICKUP_PINCODE` | Shiprocket API user + pickup address | No PIN-code checks, shipments, labels or pickups |
+| `TWILIO_SID`, `TWILIO_TOKEN`, `TWILIO_PHONE` | SMS for OTP | OTP is off, so the admin cannot sign in (customers do not need it) |
+| `BUSINESS_LEGAL_NAME`, `BUSINESS_ADDRESS`, `SUPPORT_EMAIL`, `SUPPORT_PHONE`, `GRIEVANCE_OFFICER_NAME` (+ `BUSINESS_GSTIN`, `BUSINESS_JURISDICTION_CITY`, `GRIEVANCE_OFFICER_EMAIL`) | Shown on Terms / Privacy / Returns / Contact | Highlighted gaps on those pages; Razorpay will not activate live mode |
 
-> [!TIP]
-> You can generate secure Fernet encryption keys by running the following command in your terminal:
-> ```bash
-> python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
-> ```
+**Google Pay** has no key of its own: in India it is paid through Razorpay's UPI option, which checkout shows first.
+
+### Optional for now
+
+| Key | Default | What it does |
+| :--- | :--- | :--- |
+| `RETURN_WINDOW_DAYS` | `7` | Days after delivery a return can be requested (enforced and shown on `/returns`) |
+| `PHONE_LOGIN_ENABLED` | `0` | `1` = customers can sign up / log in with phone + OTP. `0` = guest checkout by email (admins can always sign in) |
+| `REQUIRE_EMAIL_CONFIRMATION` | `0` | `1` = guests must confirm their email first. Keep `0` until a confirmation email is implemented |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | empty | "Continue with Google" (sign-in modal + checkout). Redirect URI: `<site>/auth/google/callback` |
+| `PUBLIC_BASE_URL` | empty | Site URL for OAuth redirect URIs in production, e.g. `https://ntslabel.com` |
+| `META_APP_ID`, `META_APP_SECRET` | empty | Facebook / Instagram sign-in, same as above |
+| `FLASK_DEBUG` | `0` | Development only; with no Twilio, OTPs are printed to the console |
+
+### Checkout and sign-in
+
+- **Guest checkout:** name, email and a mobile number for the courier. No login or OTP. Orders, carts and customer
+  records are keyed by email (`customers`, `carts` collections; `orders.customer_email` + optional `orders.user_id`).
+- **Order status:** guests use `/track-order` with their email + order number.
+- **Google sign-in:** optional "Continue with Google"; earlier guest orders with the same verified Gmail move into
+  the account (`link_social_identity()`). Meta can plug into the same seam in `services/auth_providers.py`.
 
 ---
 
@@ -154,6 +168,14 @@ python migrate_to_mongo.py
 *   **Populates Showcase Catalog**: It reads default catalog products from `assets/products.json` and writes them into your local MongoDB `products` collection, seeding your store with items out-of-the-box.
 *   **Configures Homepage Layout**: It imports homepage layout configs (slider details, meta banners) from `assets/content.json` to establish default themes and styling.
 *   **Initializes Collection Schemas**: It boots empty structures for operational databases (users, orders, ratings, OTP keys, coupons, notifications) so your backend can query and record transactions immediately.
+
+> [!WARNING]
+> `migrate_to_mongo.py` re-imports **every** collection from local JSON files and empties collections whose file is
+> missing. On a live database use these instead:
+> ```bash
+> python seed_nts.py                      # replace the product catalog with assets/products.json (4 NTS tees)
+> python migrate_guest_checkout.py        # key existing orders by email (idempotent, add --dry-run to preview)
+> ```
 
 ### 7. Run the Application
 Start the Flask development server:

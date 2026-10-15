@@ -1,90 +1,45 @@
-{% extends "base.html" %}
+{% extends "_policy.html" %}
+{% from "_macros.html" import val %}
 
-{% block title %}Terms & Conditions - SIXN{% endblock %}
+{% block title %}Terms of Service — NTS{% endblock %}
+{% block policy_title %}Terms of Service{% endblock %}
 
-{% block content %}
-<main class="pt-32 pb-20 px-6">
-    <div class="max-w-4xl mx-auto">
-        <!-- Header Section -->
-        <div class="mb-16 text-center">
-            <h1 class="text-4xl md:text-6xl font-display font-bold text-white mb-6 uppercase tracking-tight">Terms &
-                Conditions</h1>
-            <p class="text-gray-500 font-bold uppercase tracking-widest text-sm">Effective Date: January 1, 2026</p>
-            <div class="w-20 h-1 bg-[#AB0A17] mx-auto mt-8"></div>
-        </div>
+{% block policy_body %}
+<h2>Who we are</h2>
+<p>This website is operated by {{ val(business.legal_name, 'registered business name') }}, {{ val(business.address, 'registered address') }}{% if business.gstin %} (GSTIN {{ business.gstin }}){% endif %}, trading as NTS — Not That Simple ("NTS", "we"). By using this site or placing an order, you agree to these terms.</p>
 
-        <!-- Content Section -->
-        <div class="space-y-12 text-gray-400 leading-relaxed text-lg">
-            <section class="bg-[#0a0a0a] p-8 md:p-12 border border-gray-900 rounded-sm">
-                <h2
-                    class="text-2xl font-display font-bold text-white mb-6 uppercase tracking-widest flex items-center gap-4">
-                    <span class="text-[#AB0A17]">01.</span> Agreement to Terms
-                </h2>
-                <p class="text-gray-400 mb-8 leading-relaxed">Welcome to SIXN. By accessing or using our website, you
-                    agree to be bound by these Terms & Conditions. and
-                    all applicable laws and regulations. If you do not agree with any of these terms, you are prohibited
-                    from using or accessing this site.
-                </p>
-            </section>
+<h2>Ordering and accounts</h2>
+<p>You can order as a guest with your name, email address and a mobile number for delivery. Use a real email address you can access: it is how we identify your order. If you create an account, keep your login private. You are responsible for any activity on your account.</p>
 
-            <section class="bg-[#0a0a0a] p-8 md:p-12 border border-gray-900 rounded-sm">
-                <h2
-                    class="text-2xl font-display font-bold text-white mb-6 uppercase tracking-widest flex items-center gap-4">
-                    <span class="text-[#AB0A17]">02.</span> Intellectual Property
-                </h2>
-                <p class="text-gray-400 leading-relaxed">All content on this site, including text, graphics, logos, and
-                    images, is the property of SIXN and is protected by international copyright and trademark laws.
-                    Unauthorized use of any
-                    materials is strictly prohibited.
-                </p>
-            </section>
+<h2>Products and prices</h2>
+<ul>
+    <li>Prices are in Indian Rupees (₹) and include GST. Any shipping charge is shown at checkout before you pay.</li>
+    <li>We try to show colours and sizes accurately, but your screen may show colours a little differently.</li>
+    <li>If a product is listed at a clearly wrong price, we may cancel the order and refund you in full.</li>
+</ul>
 
-            <section class="bg-[#0a0a0a] p-8 md:p-12 border border-gray-900 rounded-sm">
-                <h2
-                    class="text-2xl font-display font-bold text-white mb-6 uppercase tracking-widest flex items-center gap-4">
-                    <span class="text-[#AB0A17]">03.</span> Product Purchases
-                </h2>
-                <ul class="space-y-4 list-disc list-inside">
-                    <li><strong class="text-white">Pricing:</strong> All prices are subject to change without notice.
-                    </li>
-                    <li><strong class="text-white">Availability:</strong> We reserve the right to limit quantities or
-                        discontinue products at any time.</li>
-                    <li><strong class="text-white">Shipping:</strong> Shipping times are estimates and may vary based on
-                        location and carrier performance.</li>
-                </ul>
-            </section>
+<h2>Orders and payment</h2>
+<ul>
+    <li>Your order is confirmed once payment succeeds (or, for cash on delivery, once the order is placed).</li>
+    <li>Online payments are processed by Razorpay. We never see or store your card, UPI PIN or bank details.</li>
+    <li>We may cancel an order and refund you in full if the item is out of stock, your address cannot be served, or we suspect fraud.</li>
+</ul>
 
-            <section class="bg-[#0a0a0a] p-8 md:p-12 border border-gray-900 rounded-sm">
-                <h2
-                    class="text-2xl font-display font-bold text-white mb-6 uppercase tracking-widest flex items-center gap-4">
-                    <span class="text-[#AB0A17]">04.</span> Limitation of Liability
-                </h2>
-                <p class="text-gray-400 leading-relaxed">SIXN shall not be liable for any direct, indirect, incidental,
-                    or consequential damages arising out of
-                    the use or inability to use the products purchased from this website. Our total liability is limited
-                    to the purchase price of the specific product.
-                </p>
-            </section>
+<h2>Wallet credit</h2>
+<p>NTS wallet credit comes from refunds. You can use it only on this site, it cannot be withdrawn as cash, and it cannot be transferred to anyone else.</p>
 
-            <section class="bg-[#0a0a0a] p-8 md:p-12 border border-gray-900 rounded-sm">
-                <h2
-                    class="text-2xl font-display font-bold text-white mb-6 uppercase tracking-widest flex items-center gap-4">
-                    <span class="text-[#AB0A17]">05.</span> Governing Law
-                </h2>
-                <p>
-                    These terms and conditions are governed by and construed in accordance with the laws of the
-                    jurisdiction in which SIXN operates, and you irrevocably submit to the exclusive jurisdiction of
-                    the courts in that location.
-                </p>
-            </section>
-        </div>
+<h2>Shipping, returns and refunds</h2>
+<p>See <a href="/shipping">Shipping & Delivery</a> and <a href="/returns">Returns, Cancellations & Refunds</a>.</p>
 
-        <div class="mt-16 text-center">
-            <a href="/contact"
-                class="inline-block bg-white text-black font-bold uppercase px-12 py-5 tracking-widest hover:bg-[#AB0A17] hover:text-white transition-colors duration-300">
-                Contact Support
-            </a>
-        </div>
-    </div>
-</main>
+<h2>Intellectual property</h2>
+<p>The NTS name, designs, photos and content on this site belong to NTS. You may not use them without written permission.</p>
+
+<h2>Liability</h2>
+<p>As far as the law allows, our liability for any order is limited to the amount you paid for it. Nothing in these terms limits your rights under the Consumer Protection Act, 2019.</p>
+
+<h2>Governing law</h2>
+<p>These terms are governed by the laws of India. Courts at {{ val(business.jurisdiction, 'city for jurisdiction') }} have jurisdiction.</p>
+
+<h2>Grievance officer</h2>
+<p>As required by the Consumer Protection (E-Commerce) Rules, 2020: {{ val(business.grievance_name, 'grievance officer name') }}, {{ val(business.grievance_email, 'grievance email') }}. We acknowledge complaints within 48 hours and resolve them within one month.</p>
 {% endblock %}

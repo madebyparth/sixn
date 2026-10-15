@@ -31,6 +31,12 @@ def get_collection_info(filepath):
         return 'coupons', True
     elif filename == 'products.json':
         return 'products', True
+    elif filename == 'pending_orders.json':
+        return 'pending_orders', True
+    elif filename == 'customers.json':
+        return 'customers', True
+    elif filename == 'carts.json':
+        return 'carts', True
     elif filename == 'otps.json':
         return 'otps', False
     elif filename == 'content.json':

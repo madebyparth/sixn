@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Order Placed Successfully - SIXN{% endblock %}
+{% block title %}Order Placed Successfully - NTS{% endblock %}
 
 {% block content %}
 <div class="pt-32 pb-20 px-6 min-h-[80vh] bg-[#050505] flex items-center justify-center">
@@ -60,7 +60,7 @@
                 <div class="flex justify-between items-center">
                     <span class="text-gray-500 text-sm">Order Reference</span>
                     <span class="text-white font-mono font-bold tracking-tighter" id="order-id">
-                        {% if order %}#{{ order.razorpay_order_id }}{% else %}#SIXN-{{ range(1000, 9999)|random }}{%
+                        {% if order %}#{{ order.razorpay_order_id }}{% else %}{%
                         endif %}
                     </span>
                 </div>

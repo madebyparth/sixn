@@ -4,14 +4,15 @@ import requests
 import datetime
 from datetime import timedelta
 from utils.db import read_json, write_json
+from utils.config import env_value
 
 TOKEN_FILE = 'data/shiprocket_token.json'
 BASE_URL = "https://apiv2.shiprocket.in/v1/external"
 
 class ShiprocketService:
     def __init__(self):
-        self.email = os.environ.get('SHIPROCKET_EMAIL')
-        self.password = os.environ.get('SHIPROCKET_PASSWORD')
+        self.email = env_value('SHIPROCKET_EMAIL')
+        self.password = env_value('SHIPROCKET_PASSWORD')
 
     def get_token(self):
         """Retrieves a valid token, refreshing if it's older than 6 days."""
@@ -39,6 +40,9 @@ class ShiprocketService:
 
     def login(self):
         """Authenticates with Shiprocket and saves the token."""
+        if not (self.email and self.password):
+            print("[SHIPROCKET] Not configured: SHIPROCKET_EMAIL / SHIPROCKET_PASSWORD missing.")
+            return None
         url = f"{BASE_URL}/auth/login"
         payload = {
             "email": self.email,
@@ -288,3 +292,22 @@ class ShiprocketService:
             return response.json()
         except Exception as e:
             return {"error": str(e)}
+
+    def _post(self, path, payload):
+        token = self.get_token()
+        if not token:
+            return {"error": "Authentication failed"}
+        try:
+            response = requests.post(f"{BASE_URL}{path}", json=payload, timeout=30,
+                                     headers={'Content-Type': 'application/json', 'Authorization': f'Bearer {token}'})
+            return response.json()
+        except Exception as e:
+            return {"error": str(e)}
+
+    def generate_label(self, shipment_ids):
+        """Returns {"label_created": 1, "label_url": "...pdf"} for the given shipment ids."""
+        return self._post("/courier/generate/label", {"shipment_id": shipment_ids})
+
+    def generate_pickup(self, shipment_ids):
+        """Requests courier pickup; returns {"pickup_status": 1, "response": {...}} on success."""
+        return self._post("/courier/generate/pickup", {"shipment_id": shipment_ids})

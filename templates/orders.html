@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block lenis_script %}{% endblock %}
 
-{% block title %}My Orders - SIXN{% endblock %}
+{% block title %}My Orders - NTS{% endblock %}
 
 {% block content %}
 <div class="pt-32 pb-20 px-6 min-h-screen">
@@ -623,7 +623,7 @@
                 <body>
                     <div style="display: flex; justify-content: space-between; align-items: start; border-bottom: 2px solid #000; padding-bottom: 20px; margin-bottom: 40px;">
                         <div>
-                            <img src="${window.location.origin}/assets/web-media/sixn-logo-red.jpg" alt="SIXN" style="height: 32px; margin-bottom: 5px;">
+                            <div style="font-family: monospace; font-size: 20px; letter-spacing: .2em; margin-bottom: 5px;">NTS</div>
                             <p style="margin: 5px 0 0; font-size: 12px; color: #666;">Premium Lifestyle Store</p>
                         </div>
                         <div style="text-align: right;">
@@ -670,7 +670,7 @@
                     </table>
 
                     <div class="footer">
-                        <p>Thank you for shopping with SIXN. For any queries, contact support@sixn.com</p>
+                        <p>Thank you for shopping with NTS. For any queries, contact {{ support_email }}</p>
                         <p style="margin-top: 8px; font-size: 10px;">This is a computer generated invoice and does not require a physical signature.</p>
                     </div>
 

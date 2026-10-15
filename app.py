@@ -21,10 +21,12 @@ from datetime import datetime, timedelta
 import base64
 import threading
 from dotenv import load_dotenv
+from utils.config import env_value, env_flag
+from urllib.parse import urlencode
 
 coupon_lock = threading.Lock()
 user_lock = threading.Lock()
-order_lock = threading.Lock()
+order_lock = threading.RLock()  # re-entrant: refund helpers take it again while sync_order_status holds it
 otp_lock = threading.Lock()
 rating_lock = threading.Lock()
 
@@ -81,20 +83,20 @@ limiter = Limiter(
 )
 
 # Twilio Config
-TWILIO_PHONE = os.environ.get('TWILIO_PHONE')
-TWILIO_SID = os.environ.get('TWILIO_SID')
-TWILIO_TOKEN = os.environ.get('TWILIO_TOKEN')
+TWILIO_PHONE = env_value('TWILIO_PHONE')
+TWILIO_SID = env_value('TWILIO_SID')
+TWILIO_TOKEN = env_value('TWILIO_TOKEN')
 twilio_client = None
 
-if TWILIO_SID and TWILIO_TOKEN:
+if TWILIO_SID and TWILIO_TOKEN and TWILIO_PHONE:
     try:
         twilio_client = Client(TWILIO_SID, TWILIO_TOKEN)
     except Exception as e:
         print(f"Twilio Init Error: {e}")
 
 # Razorpay Config
-RAZORPAY_KEY = os.environ.get('RAZORPAY_KEY')
-RAZORPAY_SECRET = os.environ.get('RAZORPAY_SECRET')
+RAZORPAY_KEY = env_value('RAZORPAY_KEY')
+RAZORPAY_SECRET = env_value('RAZORPAY_SECRET')
 razorpay_client = None
 
 if RAZORPAY_KEY and RAZORPAY_SECRET:
@@ -195,7 +197,8 @@ def update_user_profile():
                      }
                      with otp_lock:
                          # Send OTP logic
-                         send_otp_sms(new_phone, otp)
+                         if not send_otp_sms(new_phone, otp):
+                             return jsonify({'error': 'SMS verification is not available right now.'}), 503
                      
                      with user_lock:
                         write_json(USERS_FILE, users)
@@ -358,15 +361,16 @@ def load_user(user_id):
     return None
 
 def send_otp_sms(phone, otp):
-    # Always log OTP to console for development
-    print(f"\n[DEV] OTP for {phone}: {otp}\n")
-    
+    """Returns False when the SMS could not be sent. Without Twilio, OTP is off (dev mode prints it to the console)."""
     if not twilio_client:
-        print(f"Twilio not configured. Mock OTP for {phone}: {otp}")
-        return True 
+        if env_flag('FLASK_DEBUG'):
+            print(f"[DEV] Twilio not configured. OTP for {phone}: {otp}")
+            return True
+        print("[OTP] Not sent: Twilio is not configured (TWILIO_SID / TWILIO_TOKEN / TWILIO_PHONE).")
+        return False
     try:
         twilio_client.messages.create(
-            body=f"Your SIXN Verification Code is: {otp}",
+            body=f"Your NTS Verification Code is: {otp}",
             from_=TWILIO_PHONE,
             to=phone
         )
@@ -454,8 +458,202 @@ def get_notifications(user_id=None, unread_only=False):
 
 # Context processor to make get_notifications available in all templates
 @app.context_processor
+def inject_feature_flags():
+    return dict(phone_login_enabled=PHONE_LOGIN_ENABLED, payments_enabled=razorpay_client is not None,
+                social_providers=[p for p in AUTH_PROVIDERS.values() if p.enabled])
+
+
+@app.context_processor
 def inject_notifications_helper():
-    return dict(get_notifications=get_notifications)
+    return dict(get_notifications=get_notifications, support_email=BUSINESS['email'], business=BUSINESS)
+
+
+# Shown on policy/contact pages; Razorpay live activation needs real values here (set them in .env).
+BUSINESS = {
+    'name': 'NTS — Not That Simple',
+    'legal_name': os.environ.get('BUSINESS_LEGAL_NAME', ''),
+    'address': os.environ.get('BUSINESS_ADDRESS', ''),
+    'email': os.environ.get('SUPPORT_EMAIL', ''),
+    'phone': os.environ.get('SUPPORT_PHONE', ''),
+    'gstin': os.environ.get('BUSINESS_GSTIN', ''),
+    'jurisdiction': os.environ.get('BUSINESS_JURISDICTION_CITY', ''),
+    'return_days': int(os.environ.get('RETURN_WINDOW_DAYS', '7')),
+    # Grievance officer is mandatory under the Consumer Protection (E-Commerce) Rules, 2020
+    'grievance_name': os.environ.get('GRIEVANCE_OFFICER_NAME', ''),
+    'grievance_email': os.environ.get('GRIEVANCE_OFFICER_EMAIL', '') or os.environ.get('SUPPORT_EMAIL', ''),
+}
+for _key in ('legal_name', 'address', 'email', 'phone', 'grievance_name'):
+    if not BUSINESS[_key]:
+        print(f"[CONFIG] BUSINESS {_key} is empty — policy pages will show a gap. Set it in .env before going live.")
+
+
+PHONE_LOGIN_ENABLED = env_flag('PHONE_LOGIN_ENABLED')  # customer phone+OTP login; admins can always sign in
+REQUIRE_EMAIL_CONFIRMATION = env_flag('REQUIRE_EMAIL_CONFIRMATION')  # needs an email sender before turning on
+CUSTOMERS_FILE = os.path.join(DATA_DIR, 'customers.json')
+CARTS_FILE = os.path.join(DATA_DIR, 'carts.json')
+EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[A-Za-z]{2,}$')
+
+from services.auth_providers import PROVIDERS as AUTH_PROVIDERS
+
+
+def integration_status():
+    """(name, enabled, what is missing / what happens) for the startup log and preflight."""
+    def missing(*keys):
+        return ', '.join(k for k in keys if not env_value(k))
+    rows = [
+        ('Razorpay online payments (UPI / Google Pay / cards)', razorpay_client is not None,
+         f"{missing('RAZORPAY_KEY', 'RAZORPAY_SECRET')} missing -> checkout shows 'Online payments not yet enabled'; COD still works"),
+        ('Razorpay webhook', bool(env_value('RAZORPAY_WEBHOOK_SECRET')),
+         "RAZORPAY_WEBHOOK_SECRET missing -> orders rely on the browser /verify call only"),
+        ('Twilio SMS OTP', twilio_client is not None,
+         f"{missing('TWILIO_SID', 'TWILIO_TOKEN', 'TWILIO_PHONE')} missing -> OTP sending is off (admin sign-in needs it)"),
+        ('Shiprocket', bool(env_value('SHIPROCKET_EMAIL') and env_value('SHIPROCKET_PASSWORD')),
+         "SHIPROCKET_EMAIL / SHIPROCKET_PASSWORD missing -> no serviceability checks, labels or pickups"),
+        ('Phone login for customers', PHONE_LOGIN_ENABLED, "PHONE_LOGIN_ENABLED is off -> guest checkout by email"),
+    ]
+    for provider in AUTH_PROVIDERS.values():
+        rows.append((f"{provider.label} sign-in", provider.enabled, provider.disabled_reason()))
+    return rows
+
+
+def log_integration_status():
+    print("[STARTUP] Integrations:")
+    for name, enabled, why in integration_status():
+        print(f"  - {name}: {'enabled' if enabled else 'DISABLED (' + why + ')'}")
+    if REQUIRE_EMAIL_CONFIRMATION:
+        print("  ! REQUIRE_EMAIL_CONFIRMATION is on, but no confirmation email is sent yet: guest checkout will be refused.")
+
+
+def normalize_email(value):
+    email = (value or '').strip().lower()
+    return email if len(email) <= 254 and EMAIL_RE.match(email) else None
+
+
+class Buyer:
+    """Who is placing an order: a signed-in user, or a guest identified by email (SPEC-guest-checkout.md)."""
+    def __init__(self, id=None, email=None, first_name='', last_name='', phone=None, wallet_balance=0.0):
+        self.id, self.email, self.phone = id, email, phone
+        self.first_name, self.last_name = first_name or '', last_name or ''
+        self.wallet_balance = float(wallet_balance or 0)
+
+    @property
+    def name(self):
+        return f"{self.first_name} {self.last_name}".strip()
+
+    @property
+    def key(self):
+        """Identity for coupon limits and rate limits."""
+        return self.id or f"email:{self.email}"
+
+    def order_fields(self):
+        return {'customer_email': self.email, 'customer_name': self.name, 'customer_phone': self.phone}
+
+
+def order_key(order):
+    return order.get('user_id') or f"email:{order.get('customer_email')}"
+
+
+def upsert_customer(email, name, user_id=None):
+    with user_lock:
+        customers = read_json(CUSTOMERS_FILE)
+        customer = next((c for c in customers if c['id'] == email), None)
+        if customer is None:
+            customer = {'id': email, 'email': email, 'name': name, 'user_id': user_id,
+                        'email_verified': False, 'created_at': datetime.now().isoformat()}
+            customers.append(customer)
+        else:
+            customer['name'] = name or customer.get('name')
+            customer['user_id'] = user_id or customer.get('user_id')
+        write_json(CUSTOMERS_FILE, customers)
+    return customer
+
+
+def resolve_buyer(data):
+    """Buyer for a checkout request. Raises ValueError with a shopper-facing message on bad input."""
+    data = data or {}
+    address = data.get('address') or {}
+    email = normalize_email(data.get('email'))
+    if not email:
+        raise ValueError('Enter a valid email address.')
+    if current_user.is_authenticated:
+        buyer = Buyer(current_user.id, email, current_user.first_name, current_user.last_name,
+                      current_user.phone, current_user.wallet_balance)
+    else:
+        name = ' '.join(str(data.get('name') or '').split())
+        if not name or len(name) > 100:
+            raise ValueError('Enter your name.')
+        first, _, last = name.partition(' ')
+        buyer = Buyer(None, email, first, last)
+    phone = ''.join(ch for ch in str(data.get('phone') or address.get('phone') or buyer.phone or '') if ch.isdigit())[-10:]
+    if len(phone) != 10:
+        raise ValueError('Enter a 10-digit mobile number for the courier.')
+    buyer.phone = phone
+    customer = upsert_customer(email, buyer.name, buyer.id)
+    if REQUIRE_EMAIL_CONFIRMATION and not customer.get('email_verified') and not buyer.id:
+        raise ValueError('Please confirm your email address before ordering.')
+    session['customer_email'] = email
+    return buyer
+
+
+def owns_order(order):
+    if current_user.is_authenticated and order.get('user_id') == current_user.id:
+        return True
+    return bool(order.get('customer_email')) and order.get('customer_email') == session.get('customer_email')
+
+
+def order_contact(order):
+    """Name / phone / email for courier and invoices: stored on the order, or from the account for old orders."""
+    if order.get('customer_email'):
+        first, _, last = (order.get('customer_name') or '').partition(' ')
+        return Buyer(order.get('user_id'), order['customer_email'], first, last, order.get('customer_phone'))
+    return load_user(order['user_id']) if order.get('user_id') else None
+
+
+def clear_saved_cart(email):
+    if email:
+        write_json(CARTS_FILE, [c for c in read_json(CARTS_FILE) if c['id'] != email])
+
+
+def link_social_identity(identity):
+    """Sign-in with Google/Meta: find or create the account for this verified email and attach the guest orders
+    and customer record with the same email, so order history carries over. Returns the user id."""
+    email = normalize_email(identity.email)
+    if not email or not identity.email_verified:
+        raise ValueError('This account has no verified email address.')
+    with user_lock:
+        users = read_json(USERS_FILE)
+        user = next((u for u in users if (u.get('social_ids') or {}).get(identity.provider) == identity.provider_user_id), None) \
+            or next((u for u in users if (u.get('email') or '').lower() == email), None)
+        if user is None:
+            first, _, last = (identity.name or email.split('@')[0]).partition(' ')
+            user = {'id': str(uuid.uuid4()), 'first_name': first, 'last_name': last, 'email': email,
+                    'is_verified': True, 'addresses': [], 'wallet_balance': 0.0, 'created_at': datetime.now().isoformat()}
+            users.append(user)
+        user.setdefault('social_ids', {})[identity.provider] = identity.provider_user_id
+        user['email'] = user.get('email') or email
+        write_json(USERS_FILE, users)
+    customer = upsert_customer(email, f"{user['first_name']} {user.get('last_name', '')}".strip(), user['id'])
+    with user_lock:
+        customers = read_json(CUSTOMERS_FILE)
+        for c in customers:
+            if c['id'] == email:
+                c['email_verified'] = True
+        write_json(CUSTOMERS_FILE, customers)
+    with order_lock:
+        orders = read_json(ORDERS_FILE)
+        for o in orders:
+            if o.get('customer_email') == email and not o.get('user_id'):
+                o['user_id'] = user['id']
+        write_json(ORDERS_FILE, orders)
+    return user['id']
+
+
+def return_window_open(order):
+    """Returns are allowed for RETURN_WINDOW_DAYS after delivery (matches /returns policy)."""
+    delivered_at = order.get('delivered_at')
+    if not delivered_at:
+        return True  # delivery time unknown (status synced without timestamp); let the admin approval step decide
+    return datetime.now() <= datetime.fromisoformat(delivered_at) + timedelta(days=BUSINESS['return_days'])
 
 # --- REFUND LOGIC ---
 
@@ -608,6 +806,18 @@ def refund_cod_order(order_id):
              
         if order.get('cod_refund_status') == 'credited':
              return False, "Refund already credited"
+
+        if not order.get('user_id'):
+            # Guest checkout: no NTS wallet. Cash was only collected if the parcel was delivered.
+            if order.get('status') in ['delivered', 'return_initiated', 'returned'] or order.get('delivered_at'):
+                order['cod_refund_status'] = 'manual_required'
+                order['status'] = 'refunded'
+                write_json(ORDERS_FILE, orders)
+                return True, (f"Guest COD order: refund ₹{order.get('final_payable', 0)} to {order.get('customer_email')} "
+                              "manually (UPI / bank transfer).")
+            order['status'] = 'cancelled'
+            write_json(ORDERS_FILE, orders)
+            return True, "Order cancelled. Nothing was paid, so nothing to refund."
 
         # Logic:
         # 1. Always refund Wallet usage (if any).
@@ -784,6 +994,34 @@ def my_wallet():
     transactions = get_wallet_transactions(current_user.id)
     return render_template('wallet.html', balance=balance, transactions=transactions)
 
+# --- INVENTORY (SPEC-fulfilment.md) ---
+# product['stock'] = units on hand per size; a size with no entry is unlimited.
+# Orders placed but not yet handed to the courier reserve units; on-hand drops once, at pickup.
+RESERVING_STATUSES = {'paid', 'cod_pending'}
+
+
+def reserved_units(orders):
+    reserved = {}
+    for o in orders:
+        if o.get('status') in RESERVING_STATUSES and not o.get('stock_deducted'):
+            for i in o.get('items', []):
+                key = (str(i.get('id')), i.get('selectedSize'))
+                reserved[key] = reserved.get(key, 0) + int(i.get('quantity', 1))
+    return reserved
+
+
+def available_units(product, size, reserved):
+    """Units a shopper can still buy, or None when stock is not tracked for this size."""
+    stock = product.get('stock') or {}
+    if size not in stock:
+        return None
+    return max(0, int(stock[size]) - reserved.get((str(product['id']), size), 0))
+
+
+def size_availability(product, reserved):
+    return {size: available_units(product, size, reserved) for size in product.get('availableSizes') or []}
+
+
 def calculate_order_total(items, coupon_code, user_id, shipping_cost=None, use_wallet=False):
     """
     Calculate order total server-side using products.json.
@@ -796,7 +1034,11 @@ def calculate_order_total(items, coupon_code, user_id, shipping_cost=None, use_w
         raise Exception("Products data missing")
         
     product_map = {str(p['id']): p for p in all_products}
-    
+    # shortcut: two shoppers paying online for the last unit at the same moment can both succeed (online orders reserve
+    # only once paid); acceptable at 4 SKUs, add a hold at create_order if that starts happening.
+    reserved = reserved_units(read_json(ORDERS_FILE))
+    wanted = {}
+
     total_amount = 0
     validated_items = []
     
@@ -805,13 +1047,25 @@ def calculate_order_total(items, coupon_code, user_id, shipping_cost=None, use_w
         qty = int(item.get('quantity', 1))
         
         if pid not in product_map:
-            raise Exception(f"Invalid product ID: {pid}")
+            raise ValueError("An item in your cart is no longer available. Please remove it and try again.")
             
         product = product_map[pid]
         price = float(product['price'])
-        
-        # Check stock if needed (omitted for now as per products.json structure)
-        
+
+        if qty < 1 or qty > 10:
+            raise ValueError(f"Invalid quantity for {product['name']}")
+        if product.get('inStock') is False:
+            raise ValueError(f"{product['name']} is sold out")
+        sizes = product.get('availableSizes') or []
+        size = item.get('selectedSize')
+        if sizes and (size not in sizes or size in (product.get('soldOutSizes') or [])):
+            raise ValueError(f"Size {size} is not available for {product['name']}")
+        key = (pid, size)
+        wanted[key] = wanted.get(key, 0) + qty
+        left = available_units(product, size, reserved)
+        if left is not None and wanted[key] > left:
+            raise ValueError(f"Only {left} left in size {size} for {product['name']}" if left else f"Size {size} of {product['name']} is sold out")
+
         item_total = price * qty
         total_amount += item_total
         
@@ -870,10 +1124,13 @@ def calculate_order_total(items, coupon_code, user_id, shipping_cost=None, use_w
         shipping_cost = 0
         if total_amount < 1000 and total_amount > 0:
             shipping_cost = 99 # Standard Shipping Rule
+    elif total_amount >= 1000:
+        shipping_cost = 0  # free-shipping rule, same as checkout UI
     else:
+        # shortcut: below ₹1000 the client-quoted Shiprocket rate is trusted (floored at 0); re-quote server-side if prices drop under ₹1000
         try:
-            shipping_cost = float(shipping_cost)
-        except:
+            shipping_cost = max(0.0, float(shipping_cost))
+        except (TypeError, ValueError):
             shipping_cost = 99
         
     final_amount = total_amount - discount_amount + shipping_cost
@@ -910,44 +1167,52 @@ def serve_assets(filename):
     assets_folder = os.path.join(app.root_path, 'assets')
     return send_from_directory(assets_folder, filename)
 
+PRODUCTS_FILE = os.path.join(app.root_path, 'assets/products.json')
+
 @app.route('/')
 def index():
-    return render_template('index.html', user=current_user)
+    products = read_json(PRODUCTS_FILE)
+    reserved = reserved_units(read_json(ORDERS_FILE))
+    for p in products:
+        avail = size_availability(p, reserved)
+        p['soldOutEverywhere'] = bool(avail) and all(v == 0 for v in avail.values())
+    return render_template('index.html', user=current_user, products=products)
 
 @app.route('/collection')
 @app.route('/collection/<category_id>')
 def collection(category_id=None):
-    return render_template('collection.html', category_id=category_id, user=current_user)
+    return redirect(url_for('index'))  # NTS has a single shop grid
 
 @app.route('/product/<product_id>')
 def product(product_id):
-    return render_template('product.html', product_id=product_id, user=current_user)
+    item = next((p for p in read_json(PRODUCTS_FILE) if str(p.get('id')) == product_id), None)
+    if item is None:
+        return redirect(url_for('index'))
+    availability = size_availability(item, reserved_units(read_json(ORDERS_FILE)))
+    return render_template('product.html', product=item, availability=availability, user=current_user)
 
 @app.route('/checkout')
-@login_required
 def checkout():
-    # Get user's saved addresses for selection
-    addresses = current_user.addresses
-    default_address_id = current_user.default_address_id
+    # Saved addresses only exist for signed-in customers; guests type theirs in
+    addresses = current_user.addresses if current_user.is_authenticated else []
+    default_address_id = current_user.default_address_id if current_user.is_authenticated else None
     return render_template('checkout.html', user=current_user, razorpay_key=RAZORPAY_KEY, 
                          addresses=addresses, default_address_id=default_address_id,
                          hide_layout=True)
 
 @app.route('/order-success')
-@login_required
 def order_success():
     orders = read_json(ORDERS_FILE)
-    user_orders = [o for o in orders if o['user_id'] == current_user.id]
+    user_orders = [o for o in orders if owns_order(o)]
     latest_order = user_orders[-1] if user_orders else None
     return render_template('order_success.html', user=current_user, order=latest_order)
 
 @app.route('/order-confirmation/<order_id>')
-@login_required
 def order_confirmation(order_id):
     orders = read_json(ORDERS_FILE)
-    order = next((o for o in orders if o['id'] == order_id and o['user_id'] == current_user.id), None)
+    order = next((o for o in orders if o['id'] == order_id and owns_order(o)), None)
     if not order:
-        return redirect(url_for('my_orders'))
+        return redirect(url_for('track_order_page'))
     return render_template('order_success.html', user=current_user, order=order)
 
 
@@ -970,11 +1235,11 @@ def contact():
 
 @app.route('/about')
 def about():
-    return render_template('about.html')
+    return redirect(url_for('index'))  # SIXN-era page; NTS has no brand-story page yet
 
 @app.route('/craftsmanship')
 def craftsmanship():
-    return render_template('craftsmanship.html')
+    return redirect(url_for('index'))  # SIXN-era page; NTS has no brand-story page yet
 
 @app.route('/privacy')
 def privacy():
@@ -994,13 +1259,21 @@ def returns():
 
 @app.route('/size-guide')
 def size_guide():
-    return render_template('size-guide.html')
+    # Measurements live in content.json -> sizeChart (editable from /admin), e.g. {"S": {"chest": 104, "length": 70}}
+    content = read_json(os.path.join(app.root_path, 'assets/content.json')) or {}
+    return render_template('size-guide.html', size_chart=content.get('sizeChart', {}))
+
+@app.route('/shipping')
+def shipping():
+    return render_template('shipping.html')
 
 # --- ADMIN PANEL ---
 def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if not current_user.is_authenticated or not current_user.is_admin:
+        if not current_user.is_authenticated:
+            return redirect('/?login=1')  # opens the sign-in modal (admin phone login stays available)
+        if not current_user.is_admin:
             return redirect(url_for('index'))
         return f(*args, **kwargs)
     return decorated_function
@@ -1052,6 +1325,186 @@ def admin_panel():
                          stats=stats,
                          products_json=json.dumps(products, indent=4),
                          content_json=json.dumps(content, indent=4))
+
+# --- FULFILMENT DESK (SPEC-fulfilment.md) ---
+FULFILMENT_STAGES = [('to_ship', 'To ship'), ('in_transit', 'In transit'), ('delivered', 'Delivered'),
+                     ('returns', 'Returns'), ('closed', 'Closed')]
+
+
+def fulfilment_stage(order):
+    status = order.get('status')
+    if status in RESERVING_STATUSES:
+        return 'in_transit' if order.get('stock_deducted') else 'to_ship'
+    if status == 'shipped':
+        return 'in_transit'
+    if status == 'delivered':
+        return 'delivered'
+    if status in ('return_requested', 'return_approved', 'return_initiated', 'returned', 'rto_received'):
+        return 'returns'
+    return 'closed'
+
+
+def _adjust_stock(items, sign):
+    """Add (sign=+1) or remove (sign=-1) order units from on-hand stock for sizes that are tracked."""
+    products = read_json(PRODUCTS_FILE)
+    by_id = {str(p['id']): p for p in products}
+    for item in items:
+        product = by_id.get(str(item.get('id')))
+        stock = (product or {}).get('stock') or {}
+        size = item.get('selectedSize')
+        if size in stock:
+            stock[size] = max(0, int(stock[size]) + sign * int(item.get('quantity', 1)))
+    write_json(PRODUCTS_FILE, products)
+
+
+def _assign_awb(order):
+    """Pick the recommended courier for this PIN and assign an AWB to an existing Shiprocket shipment."""
+    clean_zip = ''.join(filter(str.isdigit, str((order.get('address') or {}).get('zip', ''))))
+    is_cod = 1 if order.get('payment_method') == 'cod' else 0
+    pickup_pin = os.environ.get('SHIPROCKET_PICKUP_PINCODE', '')
+    best = shiprocket_service.select_best_courier(shiprocket_service.check_serviceability(pickup_pin, clean_zip, 0.5, is_cod))
+    if not best:
+        return "No courier serves this PIN code right now."
+    res = shiprocket_service.generate_awb(order['shiprocket_shipment_id'], best['courier_company_id'])
+    if res and res.get('awb_assign_status') == 1:
+        order['awb_code'] = res['response']['data']['awb_code']
+        return None
+    return f"Shiprocket did not assign an AWB: {res}"
+
+
+@app.route('/admin/fulfilment')
+@login_required
+@admin_required
+def admin_fulfilment():
+    orders = sorted(read_json(ORDERS_FILE), key=lambda o: o.get('created_at', ''), reverse=True)
+    products = read_json(PRODUCTS_FILE)
+    reserved = reserved_units(orders)
+    stages = {key: [] for key, _ in FULFILMENT_STAGES}
+    for o in orders:
+        stages[fulfilment_stage(o)].append(o)
+    stock_rows = [{'product': p, 'sizes': [{'size': size, 'on_hand': (p.get('stock') or {}).get(size),
+                                            'reserved': reserved.get((str(p['id']), size), 0),
+                                            'available': available_units(p, size, reserved)}
+                                           for size in p.get('availableSizes') or []]}
+                  for p in products]
+    return render_template('fulfilment.html', stages=stages, stage_names=FULFILMENT_STAGES,
+                           active=request.args.get('stage', 'to_ship'), stock_rows=stock_rows)
+
+
+@app.route('/api/admin/stock', methods=['POST'])
+@login_required
+@admin_required
+def admin_set_stock():
+    data = request.json or {}
+    try:
+        on_hand = int(data.get('on_hand'))
+    except (TypeError, ValueError):
+        return jsonify({'error': 'Stock must be a whole number'}), 400
+    if on_hand < 0:
+        return jsonify({'error': 'Stock cannot be negative'}), 400
+    with order_lock:
+        products = read_json(PRODUCTS_FILE)
+        product = next((p for p in products if str(p['id']) == str(data.get('product_id'))), None)
+        if not product or data.get('size') not in (product.get('availableSizes') or []):
+            return jsonify({'error': 'Unknown product or size'}), 404
+        product.setdefault('stock', {})[data['size']] = on_hand
+        write_json(PRODUCTS_FILE, products)
+    return jsonify({'status': 'success'})
+
+
+@app.route('/api/admin/fulfilment/<order_id>/<action>', methods=['POST'])
+@login_required
+@admin_required
+def admin_fulfilment_action(order_id, action):
+    with order_lock:
+        order = next((o for o in read_json(ORDERS_FILE) if o['id'] == order_id), None)
+        if not order:
+            return jsonify({'error': 'Order not found'}), 404
+
+        if action == 'shipment':
+            if not order.get('shiprocket_shipment_id'):
+                if order.get('payment_method') == 'cod':
+                    return jsonify({'error': 'COD shipments are created at checkout; create this one in the Shiprocket dashboard.'}), 400
+                user = order_contact(order)
+                if not user:
+                    return jsonify({'error': 'Customer details not found on this order'}), 400
+                create_prepaid_shipment(order, user)
+                if not order.get('shiprocket_shipment_id'):
+                    return jsonify({'error': 'Shiprocket rejected the order; check the server log.'}), 502
+            if not order.get('awb_code'):
+                error = _assign_awb(order)
+                if error:
+                    return jsonify({'error': error}), 502
+                _update_order(order)
+            return jsonify({'status': 'success', 'awb': order['awb_code']})
+
+        if action == 'label':
+            if not order.get('shiprocket_shipment_id') or not order.get('awb_code'):
+                return jsonify({'error': 'Create the shipment (AWB) first.'}), 400
+            res = shiprocket_service.generate_label([order['shiprocket_shipment_id']])
+            if not res or not res.get('label_url'):
+                return jsonify({'error': f'Label not generated: {res}'}), 502
+            order['label_url'] = res['label_url']
+            _update_order(order)
+            return jsonify({'status': 'success', 'label_url': res['label_url']})
+
+        if action == 'pickup':
+            if fulfilment_stage(order) != 'to_ship':
+                return jsonify({'error': 'Only orders waiting to ship can be picked up.'}), 400
+            if not order.get('shiprocket_shipment_id') or not order.get('awb_code'):
+                return jsonify({'error': 'Create the shipment (AWB) first.'}), 400
+            res = shiprocket_service.generate_pickup([order['shiprocket_shipment_id']]) or {}
+            already = 'already' in json.dumps(res).lower()
+            if res.get('pickup_status') != 1 and not already:
+                return jsonify({'error': f'Pickup not scheduled: {res}'}), 502
+            _adjust_stock(order.get('items', []), -1)
+            order.update(stock_deducted=True, status='shipped', shipped_at=datetime.now().isoformat())
+            _update_order(order)
+            return jsonify({'status': 'success'})
+
+        if action == 'restock':
+            if fulfilment_stage(order) not in ('returns', 'closed') or not order.get('stock_deducted') or order.get('restocked'):
+                return jsonify({'error': 'Nothing to restock for this order.'}), 400
+            _adjust_stock(order.get('items', []), +1)
+            order['restocked'] = True
+            _update_order(order)
+            return jsonify({'status': 'success'})
+
+    return jsonify({'error': 'Unknown action'}), 400
+
+
+@app.route('/api/admin/fulfilment/sync', methods=['POST'])
+@login_required
+@admin_required
+def admin_fulfilment_sync():
+    """Pull courier status for every in-transit AWB and mark delivered ones."""
+    delivered = 0
+    with order_lock:
+        orders = read_json(ORDERS_FILE)
+        for order in orders:
+            if fulfilment_stage(order) != 'in_transit' or not order.get('awb_code'):
+                continue
+            track = (shiprocket_service.track_awb(order['awb_code']) or {}).get('tracking_data') or {}
+            events = track.get('shipment_track') or [{}]
+            current = (events[0].get('current_status') or '').upper()
+            if current:
+                order['tracking_status'] = current
+            if current.startswith('RTO'):
+                # Courier is returning the parcel to us after failed delivery attempts
+                order['delivery_issue'] = current
+                if current == 'RTO DELIVERED':
+                    order['status'] = 'rto_received'
+                    order.setdefault('rto_received_at', datetime.now().isoformat())
+            elif current == 'DELIVERED' or track.get('track_status') == 7:
+                order['status'] = 'delivered'
+                order.pop('delivery_issue', None)
+                order.setdefault('delivered_at', datetime.now().isoformat())
+                delivered += 1
+            elif 'UNDELIVERED' in current or 'NDR' in current or 'FAILED' in current:
+                order['delivery_issue'] = current  # shown on the desk; resolve with the customer / in Shiprocket NDR
+        write_json(ORDERS_FILE, orders)
+    return jsonify({'status': 'success', 'delivered': delivered})
+
 
 @app.route('/api/admin/save_data', methods=['POST'])
 @login_required
@@ -1139,37 +1592,28 @@ def edit_rating():
     return jsonify({'status': 'success'})
 
 @app.route('/api/payment/create_order', methods=['POST'])
-@login_required
+@limiter.limit("30 per hour")
 def create_order():
     data = request.json
     items = data.get('items')
     coupon_code = data.get('coupon_code') or data.get('coupon')
     address = data.get('address')
-    currency = data.get('currency', 'INR')
+    currency = 'INR'  # prices are stored in INR; never let the client pick the charge currency
     shipping_cost = data.get('shipping_cost')
     use_wallet = data.get('use_wallet', False)
     
-    # Save Email if provided
-    user_email = data.get('email')
-    if user_email:
-        current_user.email = user_email
-        users = read_json(USERS_FILE)
-        updated_users = False
-        for u in users:
-            if u['id'] == current_user.id:
-                if u.get('email') != user_email:
-                    u['email'] = user_email
-                    updated_users = True
-                break
-        if updated_users:
-            write_json(USERS_FILE, users)
+    try:
+        buyer = resolve_buyer(data)
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
+    user_email = buyer.email
 
     if not items:
         return jsonify({'error': 'Cart is empty'}), 400
 
     try:
         # Server-side calculation WITH wallet support
-        calculation = calculate_order_total(items, coupon_code, current_user.id, shipping_cost=shipping_cost, use_wallet=use_wallet)
+        calculation = calculate_order_total(items, coupon_code, buyer.key, shipping_cost=shipping_cost, use_wallet=use_wallet)
         
         final_amount = calculation['final_amount']
         wallet_deducted = calculation.get('wallet_deducted', 0)
@@ -1178,7 +1622,7 @@ def create_order():
         if use_wallet and final_amount <= 0:
             # Debit wallet
             if wallet_deducted > 0:
-                add_wallet_balance(current_user.id, -wallet_deducted, "Order Payment (Full Wallet)", None)
+                add_wallet_balance(buyer.id, -wallet_deducted, "Order Payment (Full Wallet)", None)
             
             # Create Order directly with 'paid' status
             order_id = str(uuid.uuid4())
@@ -1190,7 +1634,7 @@ def create_order():
             order = {
                 'id': order_id,
                 'razorpay_order_id': order_number,  # For template display
-                'user_id': current_user.id,
+                'user_id': buyer.id, **buyer.order_fields(),
                 'items': calculation['items'],
                 'amount': 0,
                 'wallet_amount': wallet_deducted,
@@ -1217,7 +1661,7 @@ def create_order():
                 raw_zip = str(address.get('zip', ''))
                 clean_zip = ''.join(filter(str.isdigit, raw_zip))
                 
-                raw_phone = current_user.phone or ""
+                raw_phone = buyer.phone or ""
                 clean_phone = ''.join(filter(str.isdigit, raw_phone))
                 if len(clean_phone) > 10: clean_phone = clean_phone[-10:]
 
@@ -1225,14 +1669,14 @@ def create_order():
                     "order_id": order_id[:20],
                     "order_date": datetime.now().strftime("%Y-%m-%d %H:%M"),
                     "pickup_location": os.getenv('SHIPROCKET_PICKUP_LOCATION', 'Primary'),
-                    "billing_customer_name": address.get('name', current_user.first_name),
-                    "billing_last_name": current_user.last_name or "",
+                    "billing_customer_name": address.get('name', buyer.first_name),
+                    "billing_last_name": buyer.last_name or "",
                     "billing_address": address.get('street', ''),
                     "billing_city": address.get('city', ''),
                     "billing_pincode": int(clean_zip) if clean_zip else 0,
                     "billing_state": address.get('state', ''),
                     "billing_country": address.get('country', 'India'),
-                    "billing_email": user_email or current_user.email or "customer@example.com",
+                    "billing_email": user_email or buyer.email or "customer@example.com",
                     "billing_phone": clean_phone,
                     "shipping_is_billing": True,
                     "order_items": [{"name": i['name'][:50], "sku": str(i['id'])[:20], "units": int(i.get('quantity', 1)), "selling_price": float(i['price'])} for i in items],
@@ -1273,7 +1717,7 @@ def create_order():
         
         # Normal Razorpay flow
         if not razorpay_client:
-            return jsonify({'error': 'Payment gateway not configured'}), 500
+            return jsonify({'error': 'Online payments are not yet enabled. Please choose Cash on Delivery.'}), 503
         
         final_amount_paise = int(final_amount * 100)
         
@@ -1288,7 +1732,7 @@ def create_order():
         # Save Pending Order to SESSION (not DB)
         pending_order = {
             'id': str(uuid.uuid4()),
-            'user_id': current_user.id,
+            'user_id': buyer.id, **buyer.order_fields(),
             'razorpay_order_id': rp_order['id'],
             'items': calculation['items'],
             'amount': final_amount,
@@ -1306,6 +1750,7 @@ def create_order():
         
         session['pending_order'] = pending_order
         session.modified = True
+        _save_pending_order(pending_order)
         
         return jsonify({
             'id': rp_order['id'],
@@ -1315,7 +1760,9 @@ def create_order():
             'currency': currency,
             'internal_order_id': pending_order['id']
         })
-        
+
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
     except Exception as e:
         print(f"Order Creation Error: {e}")
         import traceback
@@ -1323,7 +1770,6 @@ def create_order():
         return jsonify({'error': 'Error creating order'}), 500
 
 @app.route('/api/payment/cod_order', methods=['POST'])
-@login_required
 @limiter.limit("50 per day") # Increased limit for testing
 def create_cod_order():
     """Handle Cash on Delivery orders"""
@@ -1338,11 +1784,17 @@ def create_cod_order():
     if not items or not address:
         return jsonify({'error': 'Missing required order details'}), 400
     
+    try:
+        buyer = resolve_buyer(data)
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
+    user_email = buyer.email
+
     # RATE LIMIT CHECK
     orders = read_json(ORDERS_FILE)
     
     # 1. Check for pending Unpaid CODs
-    pending_cods = [o for o in orders if o.get('user_id') == current_user.id and o.get('status') == 'cod_pending']
+    pending_cods = [o for o in orders if order_key(o) == buyer.key and o.get('status') == 'cod_pending']
     if pending_cods:
          return jsonify({'error': 'You have a pending COD order. Please wait for it to be processed.'}), 429
          
@@ -1350,7 +1802,7 @@ def create_cod_order():
     today_str = datetime.now().strftime('%Y-%m-%d')
     today_cods = [
         o for o in orders 
-        if o.get('user_id') == current_user.id 
+        if order_key(o) == buyer.key 
         and o.get('payment_method') == 'cod' 
         and o.get('created_at', '').startswith(today_str)
     ]
@@ -1368,27 +1820,10 @@ def create_cod_order():
         if isinstance(val, str) and len(val) > 200:
             return jsonify({'error': f'Address field {field} too long (max 200 chars)'}), 400
     
-    # Save Email if provided (and missing)
-    user_email = data.get('email')
-    if user_email:
-        # Update in-memory current_user (for this request)
-        current_user.email = user_email
-        # Persist to JSON
-        users = read_json(USERS_FILE)
-        updated_users = False
-        for u in users:
-            if u['id'] == current_user.id:
-                if u.get('email') != user_email:
-                    u['email'] = user_email
-                    updated_users = True
-                break
-        if updated_users:
-            write_json(USERS_FILE, users)
-
     try:
         # Server-side calculation with wallet support
         use_wallet = data.get('use_wallet', False)
-        calculation = calculate_order_total(items, coupon_code, current_user.id, shipping_cost=shipping_cost, use_wallet=use_wallet)
+        calculation = calculate_order_total(items, coupon_code, buyer.key, shipping_cost=shipping_cost, use_wallet=use_wallet)
         
         # STRICT PRICE CHECK (COD)
         client_amount = float(data.get('amount', 0))
@@ -1399,13 +1834,13 @@ def create_cod_order():
         
         # Deduct Wallet Balance Immediately if used
         if calculation.get('wallet_deducted', 0) > 0:
-             add_wallet_balance(current_user.id, -calculation['wallet_deducted'], "Order Payment (Partial/COD)", "PENDING_COD")
+             add_wallet_balance(buyer.id, -calculation['wallet_deducted'], "Order Payment (Partial/COD)", "PENDING_COD")
         
         # Save new address if requested
         if save_as_default:
             users = read_json(USERS_FILE)
             for user in users:
-                if user['id'] == current_user.id:
+                if user['id'] == buyer.id:
                     if 'addresses' not in user: user['addresses'] = []
                     new_addr = {
                         'id': str(uuid.uuid4()),
@@ -1527,7 +1962,7 @@ def create_cod_order():
             clean_zip = ''.join(filter(str.isdigit, str(address.get('zip'))))
 
             # Sanitize Phone
-            raw_phone = current_user.phone or ""
+            raw_phone = buyer.phone or ""
             clean_phone = ''.join(filter(str.isdigit, raw_phone))
             if len(clean_phone) > 10: clean_phone = clean_phone[-10:]
             
@@ -1542,15 +1977,15 @@ def create_cod_order():
                 "order_id": cod_order_id,
                 "order_date": datetime.now().strftime("%Y-%m-%d %H:%M"),
                 "pickup_location": os.environ.get('SHIPROCKET_PICKUP_LOCATION', 'Primary'),
-                "billing_customer_name": current_user.first_name,
-                "billing_last_name": current_user.last_name,
+                "billing_customer_name": buyer.first_name,
+                "billing_last_name": buyer.last_name,
                 "billing_address": address.get('street'),
                 "billing_address_2": address.get('landmark', ''),
                 "billing_city": address.get('city'),
                 "billing_pincode": int(clean_zip) if clean_zip.isdigit() else 0,
                 "billing_state": address.get('state'),
                 "billing_country": address.get('country'),
-                "billing_email": current_user.email,
+                "billing_email": buyer.email,
                 "billing_phone": clean_phone,
                 "shipping_is_billing": True,
                 "order_items": sr_items,
@@ -1580,7 +2015,7 @@ def create_cod_order():
 
     new_order = {
         'id': str(uuid.uuid4()),
-        'user_id': current_user.id,
+        'user_id': buyer.id, **buyer.order_fields(),
         'razorpay_order_id': cod_order_id, # Internal Ref
         'razorpay_payment_id': None,
         'items': calculation['items'],
@@ -1605,49 +2040,222 @@ def create_cod_order():
         orders.append(new_order)
         write_json(ORDERS_FILE, orders)
     
-    return jsonify({'status': 'success', 'order_id': cod_order_id})
+    clear_saved_cart(buyer.email)
+    return jsonify({'status': 'success', 'order_id': cod_order_id, 'internal_order_id': new_order['id']})
+
+
+PENDING_ORDERS_FILE = os.path.join(DATA_DIR, 'pending_orders.json')
+
+
+def _save_pending_order(pending_order):
+    """Persist a created-but-unpaid online order so a captured payment can always be matched (webhook or verify)."""
+    cutoff = (datetime.now() - timedelta(days=3)).isoformat()  # abandoned checkouts; Razorpay orders are long settled by then
+    with order_lock:
+        pending = [p for p in read_json(PENDING_ORDERS_FILE)
+                   if p.get('razorpay_order_id') != pending_order['razorpay_order_id'] and p.get('created_at', '') > cutoff]
+        pending.append(pending_order)
+        write_json(PENDING_ORDERS_FILE, pending)
+
+
+def _find_pending_order(razorpay_order_id):
+    return next((p for p in read_json(PENDING_ORDERS_FILE) if p.get('razorpay_order_id') == razorpay_order_id), None)
+
+
+def _update_order(order):
+    with order_lock:
+        orders = read_json(ORDERS_FILE)
+        for i, o in enumerate(orders):
+            if o['id'] == order['id']:
+                orders[i] = order
+                break
+        write_json(ORDERS_FILE, orders)
+
+
+def create_prepaid_shipment(order, user):
+    """Create the Shiprocket order (+ AWB when a courier is available) for a paid online order and store the ids."""
+    # --- SHIPROCKET ORDER CREATION (Prepaid) ---
+    try:
+        # Prepare Items & Stats
+        sr_items_subtotal = 0
+        sr_items = []
+        for item in order['items']:
+            s_price = float(item['price'])
+            u = int(item['quantity'])
+            sr_items_subtotal += (s_price * u)
+            sr_items.append({
+                "name": item['name'],
+                "sku": str(item['id']),
+                "units": u,
+                "selling_price": s_price,
+                "discount": 0,
+                "tax": 0,
+                "hsn": 0
+            })
+
+        # Ensure sub_total is rounded
+        sr_items_subtotal = round(sr_items_subtotal, 2)
+
+        # Calculate Discount (Coupon + Wallet)
+        # order['amount'] is the Final Payable (which matches RP payment).
+        # We want Shiprocket Total to match this.
+        # Total = Subtotal - Discount + Shipping
+        # Discount = Subtotal + Shipping - Total
+
+        shipping_charges = round(float(order.get('shipping_amount', 0)), 2)
+
+        # Use stored values if available, else derive
+        wallet_ded = float(order.get('wallet_deduction', 0))
+        coupon_disc = float(order.get('discount_amount', 0))
+        total_discount = round(wallet_ded + coupon_disc, 2)
+
+        # Format Phone
+        billing_phone = user.phone or ""
+        clean_phone = ''.join(filter(str.isdigit, billing_phone))
+        if len(clean_phone) > 10: clean_phone = clean_phone[-10:]
+
+        pickup_loc = os.environ.get('SHIPROCKET_PICKUP_LOCATION', 'Primary')
+
+        # 1. Check Serviceability & Pick Best Courier
+        # Default pickup location
+        pickup_loc_pincode = os.environ.get('SHIPROCKET_PICKUP_PINCODE', '122004')
+
+        # Sanitize ZIP
+        raw_zip = str(order['address'].get('zip', ''))
+        clean_zip = ''.join(filter(str.isdigit, raw_zip))
+
+        serviceability = shiprocket_service.check_serviceability(pickup_loc_pincode, clean_zip, 0.5, 0) # 0 for Prepaid
+        best_courier_prepaid = shiprocket_service.select_best_courier(serviceability)
+
+        selected_courier_id = best_courier_prepaid['courier_company_id'] if best_courier_prepaid else None
+
+        sr_order_data = {
+            "order_id": order['id'], # Channel Order ID
+            "order_date": datetime.now().strftime("%Y-%m-%d %H:%M"),
+            "pickup_location": pickup_loc,
+            "billing_customer_name": user.first_name,
+            "billing_last_name": user.last_name,
+            "billing_address": order['address'].get('street'),
+            "billing_address_2": order['address'].get('landmark', ''),
+            "billing_city": order['address'].get('city'),
+            "billing_pincode": int(clean_zip) if clean_zip else 0,
+            "billing_state": order['address'].get('state'),
+            "billing_country": order['address'].get('country'),
+            "billing_email": user.email or "", 
+            "billing_phone": clean_phone,
+            "shipping_is_billing": True,
+            "order_items": sr_items,
+            "payment_method": "Prepaid",
+            "sub_total": sr_items_subtotal,
+            "discount": total_discount,
+            "shipping_charges": shipping_charges,
+            "length": 10, "breadth": 10, "height": 10, "weight": 0.5
+        }
+
+        print(f"DEBUG: Prepaid Order SR Payload: {json.dumps(sr_order_data, indent=2)}")
+
+        sr_response = shiprocket_service.create_order(sr_order_data)
+        print(f"DEBUG: Prepaid Order SR Response: {sr_response}")
+
+        # Update order with Shiprocket ID if successful
+        if sr_response and 'order_id' in sr_response:
+             order['shiprocket_order_id'] = sr_response['order_id']
+             order['shiprocket_shipment_id'] = sr_response.get('shipment_id')
+
+             # AUTOMATE: Generate AWB
+             if selected_courier_id and sr_response.get('shipment_id'):
+                 awb_res = shiprocket_service.generate_awb(sr_response['shipment_id'], selected_courier_id)
+                 if awb_res and awb_res.get('awb_assign_status') == 1:
+                     sr_response['awb_code'] = awb_res['response']['data']['awb_code']
+                     order['awb_code'] = sr_response['awb_code']
+                 # else:
+                     # print(f"AWB Generation Failed (Prepaid): {awb_res}")
+
+             _update_order(order)
+
+
+    except Exception as e:
+         print(f"Shiprocket Integration Error (Prepaid): {e}")
+    return order
+
+
+def finalize_paid_order(order, razorpay_payment_id):
+    """Turn a pending online order into a paid order. Idempotent: /verify and the webhook may both call it.
+    Returns the stored order."""
+    with order_lock:
+        orders = read_json(ORDERS_FILE)
+        existing = next((o for o in orders if o.get('razorpay_order_id') == order['razorpay_order_id']), None)
+        if existing:
+            return existing
+        order['status'] = 'paid'
+        order['razorpay_payment_id'] = razorpay_payment_id
+        orders.append(order)
+        write_json(ORDERS_FILE, orders)
+        write_json(PENDING_ORDERS_FILE, [p for p in read_json(PENDING_ORDERS_FILE)
+                                         if p.get('razorpay_order_id') != order['razorpay_order_id']])
+
+    user = order_contact(order)
+
+    # --- COUPON USAGE --- payment is already captured, so never drop the order; flag overuse for the admin instead
+    if order.get('coupon_applied'):
+        with coupon_lock:
+            coupons = read_json(COUPONS_FILE)
+            for c in coupons:
+                if c['code'] == order['coupon_applied']:
+                    if c.get('limit_type') == 'global' and c.get('times_used', 0) >= c.get('max_uses', 0):
+                        order['coupon_over_limit'] = True
+                    c['times_used'] = c.get('times_used', 0) + 1
+                    c.setdefault('used_by_users', [])
+                    if order_key(order) not in c['used_by_users']:
+                        c['used_by_users'].append(order_key(order))
+                    break
+            write_json(COUPONS_FILE, coupons)
+
+    # --- WALLET DEDUCTION (partial wallet + online) ---
+    if order.get('user_id') and order.get('use_wallet') and order.get('wallet_deduction', 0) > 0:
+        add_wallet_balance(order['user_id'], -order['wallet_deduction'], "Order Payment (Partial/Online)", "PAID_ONLINE")
+        order['wallet_amount'] = order['wallet_deduction']
+
+    _update_order(order)
+    clear_saved_cart(order.get('customer_email'))
+
+    if user:
+        create_prepaid_shipment(order, user)
+
+    return order
 
 
 @app.route('/api/payment/verify', methods=['POST'])
-@login_required
 def verify_payment():
     data = request.json
     razorpay_order_id = data.get('razorpay_order_id')
     razorpay_payment_id = data.get('razorpay_payment_id')
     razorpay_signature = data.get('razorpay_signature')
     save_as_default = data.get('save_as_default', False)
-    
-    # Verify Signature
+
     params_dict = {
         'razorpay_order_id': razorpay_order_id,
         'razorpay_payment_id': razorpay_payment_id,
         'razorpay_signature': razorpay_signature
     }
-    
+
     try:
         razorpay_client.utility.verify_payment_signature(params_dict)
-        
-        # Find Pending Order
-        # Find Pending Order from SESSION
+
         order = session.get('pending_order')
-        
-        # Verify it matches the callback order_id
         if not order or order.get('razorpay_order_id') != razorpay_order_id:
-             # Fallback check DB just in case (optional, but good for edge cases if we revert)
-             # But for pure flow, we should rely on session or specific "pending_orders" temp DB table.
-             # For now, relying on Session as requested.
-             return jsonify({'error': 'Order session expired or invalid'}), 404
-             
-        if order.get('status') == 'paid':
-             return jsonify({'status': 'success'}) # Already processed
-             
-        # Update Order Status
-        order['status'] = 'paid'
-        order['razorpay_payment_id'] = razorpay_payment_id
-        
+            order = _find_pending_order(razorpay_order_id)
+        if not order:
+            # Already finalized (e.g. by the webhook) or unknown
+            done = next((o for o in read_json(ORDERS_FILE) if o.get('razorpay_order_id') == razorpay_order_id), None)
+            if done and owns_order(done):
+                return jsonify({'status': 'success', 'order_id': done['id']})
+            return jsonify({'error': 'Order not found'}), 404
+        if not owns_order(order):
+            return jsonify({'error': 'Order not found'}), 404
+
         # Update Address if saved in pending order
         address = order.get('address')
-        if save_as_default and address:
+        if save_as_default and address and current_user.is_authenticated:
              # (Address saving logic reuse - ideally should be a function)
              users = read_json(USERS_FILE)
              for user in users:
@@ -1674,148 +2282,10 @@ def verify_payment():
                     break
              write_json(USERS_FILE, users)
              
-        # --- COUPON LOCK & UPDATE ---
-        if order.get('coupon_applied'):
-             with coupon_lock:
-                 coupons = read_json(COUPONS_FILE)
-                 c_code = order['coupon_applied']
-                 for c in coupons:
-                     if c['code'] == c_code:
-                          # STRICT RE-VALIDATION INSIDE LOCK (Online Payment)
-                          # If limit reached here, we flag it but usually accept payment if already done.
-                          # However, for strict security challenge, we might reject.
-                          # Let's enforce strictness.
-                          if c.get('limit_type') == 'global' and c.get('times_used', 0) >= c.get('max_uses', 0):
-                               # Strictly fail order fulfillment if limit exceeded.
-                               # This prevents 'double usage' even if payment was captured.
-                               # Admin can handle refund for the stuck 'pending' order.
-                               raise Exception("Coupon limit reached during processing") 
-                          
-                          # Just increment securely to avoid race condition undercounting
-                          c['times_used'] = c.get('times_used', 0) + 1
-                          if 'used_by_users' not in c: c['used_by_users'] = []
-                          if current_user.id not in c['used_by_users']:
-                               c['used_by_users'].append(current_user.id)
-                          break
-                 write_json(COUPONS_FILE, coupons)
-        
-        # --- WALLET DEDUCTION (If Partial) ---
-        if order.get('use_wallet') and order.get('wallet_deduction', 0) > 0:
-             # Deduct now that payment is verified
-             add_wallet_balance(current_user.id, -order['wallet_deduction'], "Order Payment (Partial/Online)", "PAID_ONLINE")
-             order['wallet_amount'] = order['wallet_deduction']
-             
-        # Save Final Order
-        orders = read_json(ORDERS_FILE)
-        orders.append(order)
-        write_json(ORDERS_FILE, orders)
-        
-        # CLEAR SESSION
+        order = finalize_paid_order(order, razorpay_payment_id)
+
         session.pop('pending_order', None)
         session.modified = True
-        
-        # --- SHIPROCKET ORDER CREATION (Prepaid) ---
-        try:
-            # Prepare Items & Stats
-            sr_items_subtotal = 0
-            sr_items = []
-            for item in order['items']:
-                s_price = float(item['price'])
-                u = int(item['quantity'])
-                sr_items_subtotal += (s_price * u)
-                sr_items.append({
-                    "name": item['name'],
-                    "sku": str(item['id']),
-                    "units": u,
-                    "selling_price": s_price,
-                    "discount": 0,
-                    "tax": 0,
-                    "hsn": 0
-                })
-
-            # Ensure sub_total is rounded
-            sr_items_subtotal = round(sr_items_subtotal, 2)
-
-            # Calculate Discount (Coupon + Wallet)
-            # order['amount'] is the Final Payable (which matches RP payment).
-            # We want Shiprocket Total to match this.
-            # Total = Subtotal - Discount + Shipping
-            # Discount = Subtotal + Shipping - Total
-            
-            shipping_charges = round(float(order.get('shipping_amount', 0)), 2)
-            
-            # Use stored values if available, else derive
-            wallet_ded = float(order.get('wallet_deduction', 0))
-            coupon_disc = float(order.get('discount_amount', 0))
-            total_discount = round(wallet_ded + coupon_disc, 2)
-
-            # Format Phone
-            billing_phone = current_user.phone or ""
-            clean_phone = ''.join(filter(str.isdigit, billing_phone))
-            if len(clean_phone) > 10: clean_phone = clean_phone[-10:]
-
-            pickup_loc = os.environ.get('SHIPROCKET_PICKUP_LOCATION', 'Primary')
-
-            # 1. Check Serviceability & Pick Best Courier
-            # Default pickup location
-            pickup_loc_pincode = os.environ.get('SHIPROCKET_PICKUP_PINCODE', '122004')
-            
-            # Sanitize ZIP
-            raw_zip = str(order['address'].get('zip', ''))
-            clean_zip = ''.join(filter(str.isdigit, raw_zip))
-            
-            serviceability = shiprocket_service.check_serviceability(pickup_loc_pincode, clean_zip, 0.5, 0) # 0 for Prepaid
-            best_courier_prepaid = shiprocket_service.select_best_courier(serviceability)
-            
-            selected_courier_id = best_courier_prepaid['courier_company_id'] if best_courier_prepaid else None
-
-            sr_order_data = {
-                "order_id": order['id'], # Channel Order ID
-                "order_date": datetime.now().strftime("%Y-%m-%d %H:%M"),
-                "pickup_location": pickup_loc,
-                "billing_customer_name": current_user.first_name,
-                "billing_last_name": current_user.last_name,
-                "billing_address": order['address'].get('street'),
-                "billing_address_2": order['address'].get('landmark', ''),
-                "billing_city": order['address'].get('city'),
-                "billing_pincode": int(clean_zip) if clean_zip else 0,
-                "billing_state": order['address'].get('state'),
-                "billing_country": order['address'].get('country'),
-                "billing_email": current_user.email or "", 
-                "billing_phone": clean_phone,
-                "shipping_is_billing": True,
-                "order_items": sr_items,
-                "payment_method": "Prepaid",
-                "sub_total": sr_items_subtotal,
-                "discount": total_discount,
-                "shipping_charges": shipping_charges,
-                "length": 10, "breadth": 10, "height": 10, "weight": 0.5
-            }
-            
-            print(f"DEBUG: Prepaid Order SR Payload: {json.dumps(sr_order_data, indent=2)}")
-            
-            sr_response = shiprocket_service.create_order(sr_order_data)
-            print(f"DEBUG: Prepaid Order SR Response: {sr_response}")
-
-            # Update order with Shiprocket ID if successful
-            if sr_response and 'order_id' in sr_response:
-                 order['shiprocket_order_id'] = sr_response['order_id']
-                 order['shiprocket_shipment_id'] = sr_response.get('shipment_id')
-                 
-                 # AUTOMATE: Generate AWB
-                 if selected_courier_id and sr_response.get('shipment_id'):
-                     awb_res = shiprocket_service.generate_awb(sr_response['shipment_id'], selected_courier_id)
-                     if awb_res and awb_res.get('awb_assign_status') == 1:
-                         sr_response['awb_code'] = awb_res['response']['data']['awb_code']
-                         order['awb_code'] = sr_response['awb_code']
-                     # else:
-                         # print(f"AWB Generation Failed (Prepaid): {awb_res}")
-
-                 write_json(ORDERS_FILE, orders)
-
-
-        except Exception as e:
-             print(f"Shiprocket Integration Error (Prepaid): {e}")
 
         return jsonify({'status': 'success', 'order_id': order['id']})
     except razorpay.errors.SignatureVerificationError:
@@ -1823,6 +2293,31 @@ def verify_payment():
     except Exception as e:
         print(f"Verify Error: {e}")
         return jsonify({'error': 'Server error'}), 500
+
+
+@app.route('/api/payment/webhook', methods=['POST'])
+@csrf.exempt
+@limiter.exempt
+def razorpay_webhook():
+    """Razorpay server-to-server callback: records paid orders even if the shopper's browser never calls /verify.
+    Configure in Razorpay Dashboard -> Webhooks with events payment.captured and order.paid."""
+    secret = os.environ.get('RAZORPAY_WEBHOOK_SECRET')
+    if not secret or not razorpay_client:
+        return jsonify({'error': 'Webhook not configured'}), 503
+    body = request.get_data(as_text=True)
+    try:
+        razorpay_client.utility.verify_webhook_signature(body, request.headers.get('X-Razorpay-Signature', ''), secret)
+    except razorpay.errors.SignatureVerificationError:
+        return jsonify({'error': 'Invalid signature'}), 400
+
+    event = json.loads(body)
+    if event.get('event') in ('payment.captured', 'order.paid'):
+        payment = event.get('payload', {}).get('payment', {}).get('entity', {})
+        pending = _find_pending_order(payment.get('order_id'))
+        if pending:
+            finalize_paid_order(pending, payment.get('id'))
+    return jsonify({'status': 'ok'})
+
 
 @app.route('/api/orders/cancel', methods=['POST'])
 @login_required
@@ -1868,6 +2363,8 @@ def cancel_order():
     
     # HANDLE RETURNS separately if status is 'delivered'
     if current_status == 'delivered':
+        if not return_window_open(target_order):
+            return jsonify({'error': f"The {BUSINESS['return_days']}-day return window for this order has closed."}), 400
         # PROCESS RETURN - Initiate Shiprocket Return
         # 1. Prepare Return Data
         # Sanitize Data
@@ -1914,7 +2411,7 @@ def cancel_order():
         # Using hardcoded/Env values for now as 'shipping_*'
         return_data.update({
             "sub_total": sub_total,
-            "shipping_customer_name": "SIXN Warehouse",
+            "shipping_customer_name": "NTS Warehouse",
             "shipping_last_name": "",
             "shipping_address": "Sector 48, Sohna Road",
             "shipping_address_2": "",
@@ -1922,7 +2419,7 @@ def cancel_order():
             "shipping_state": "Haryana",
             "shipping_country": "India",
             "shipping_pincode": 122004, # Merchant Zip
-            "shipping_email": "support@sixn.com",
+            "shipping_email": os.environ.get('SUPPORT_EMAIL', ''),
             "shipping_phone": "9876543210" # Merchant Phone
         })
         
@@ -2066,6 +2563,9 @@ def admin_update_order_status():
         if not order:
             return jsonify({'error': 'Order not found'}), 404
             
+        if new_status in ('shipped', 'delivered') and order.get('status') in RESERVING_STATUSES and not order.get('stock_deducted'):
+            _adjust_stock(order.get('items', []), -1)  # manual dispatch outside the fulfilment desk
+            order['stock_deducted'] = True
         order['status'] = new_status
         if new_status == 'delivered' and 'delivered_at' not in order:
              order['delivered_at'] = datetime.now().isoformat()
@@ -2176,6 +2676,71 @@ def update_address(address_id):
             return jsonify({'error': 'Address not found'}), 404
     
     return jsonify({'error': 'User not found'}), 404
+
+@app.route('/api/cart', methods=['POST'])
+@limiter.limit("60 per hour")
+def save_cart():
+    """Store the shopper's cart against their email once they type it at checkout (abandoned-cart follow-up)."""
+    data = request.json or {}
+    email = normalize_email(data.get('email'))
+    items = data.get('items')
+    if not email or not isinstance(items, list) or len(items) > 20:
+        return jsonify({'error': 'Invalid cart'}), 400
+    clean = [{'id': i.get('id'), 'selectedSize': i.get('selectedSize'), 'quantity': int(i.get('quantity', 1))}
+             for i in items if isinstance(i, dict)]
+    with order_lock:
+        carts = [c for c in read_json(CARTS_FILE) if c['id'] != email]
+        carts.append({'id': email, 'email': email, 'user_id': current_user.id if current_user.is_authenticated else None,
+                      'items': clean, 'updated_at': datetime.now().isoformat()})
+        write_json(CARTS_FILE, carts)
+    return jsonify({'status': 'success'})
+
+
+def _oauth_redirect_uri(provider):
+    """Must match the redirect URI registered with the provider exactly. PUBLIC_BASE_URL pins it behind proxies."""
+    base = env_value('PUBLIC_BASE_URL').rstrip('/')
+    path = url_for('social_callback', provider=provider)
+    return base + path if base else url_for('social_callback', provider=provider, _external=True)
+
+
+def _safe_next(target):
+    """Only allow redirects back to our own pages."""
+    return target if target and target.startswith('/') and not target.startswith('//') and '\\' not in target else None
+
+
+def _auth_failed(message):
+    return redirect('/?' + urlencode({'login': '1', 'auth_error': message}))
+
+
+@app.route('/auth/<provider>/login')
+def social_login(provider):
+    p = AUTH_PROVIDERS.get(provider)
+    if not p or not p.enabled:
+        return jsonify({'error': f'{provider} sign-in is not enabled'}), 404
+    state = uuid.uuid4().hex
+    session['oauth_state'] = state
+    session['oauth_next'] = _safe_next(request.args.get('next'))
+    return redirect(p.authorize_url(state, _oauth_redirect_uri(provider)))
+
+
+@app.route('/auth/<provider>/callback')
+def social_callback(provider):
+    p = AUTH_PROVIDERS.get(provider)
+    if not p or not p.enabled:
+        return jsonify({'error': f'{provider} sign-in is not enabled'}), 404
+    if request.args.get('error'):
+        return _auth_failed(f'{p.label} sign-in was cancelled.')
+    if not request.args.get('state') or request.args.get('state') != session.pop('oauth_state', None):
+        return _auth_failed('Sign-in expired, please try again.')
+    try:
+        identity = p.fetch_identity(request.args.get('code'), _oauth_redirect_uri(provider))
+        user_id = link_social_identity(identity)
+    except ValueError as e:
+        return _auth_failed(str(e))
+    login_user(load_user(user_id), remember=True)
+    session['customer_email'] = normalize_email(identity.email)
+    return redirect(session.pop('oauth_next', None) or url_for('my_orders'))
+
 
 # --- SHIPROCKET ROUTES ---
 
@@ -2368,14 +2933,26 @@ def sync_order_status():
         return jsonify({'status': current_status})
 
 @app.route('/api/track-order')
+@limiter.limit("30 per minute")
 def track_order_api():
-    order_id = request.args.get('order_id')
-    if not order_id:
-        return jsonify({'error': 'Order ID required'}), 400
-    
-    # Simple wrapper
-    response = shiprocket_service.track_awb(order_id) 
-    return jsonify(response)
+    """Order status by email + order number (works for guest checkout), or courier tracking by AWB."""
+    email = normalize_email(request.args.get('email'))
+    number = (request.args.get('order') or '').strip()
+    if email and number:
+        order = next((o for o in read_json(ORDERS_FILE) if o.get('customer_email') == email
+                      and number in (o.get('razorpay_order_id'), o.get('id'))), None)
+        if not order:
+            return jsonify({'error': 'Order not found. Check the email and order number.'}), 404
+        tracking = (shiprocket_service.track_awb(order['awb_code']) or {}).get('tracking_data') if order.get('awb_code') else None
+        return jsonify({'order_number': order.get('razorpay_order_id'), 'status': order.get('status'),
+                        'placed_at': order.get('created_at'), 'awb': order.get('awb_code'),
+                        'items': [{'name': i.get('name'), 'size': i.get('selectedSize'), 'quantity': i.get('quantity')}
+                                  for i in order.get('items', [])],
+                        'tracking': tracking})
+    awb = (request.args.get('order_id') or '').strip()
+    if not awb:
+        return jsonify({'error': 'Enter your email and order number.'}), 400
+    return jsonify({'tracking': (shiprocket_service.track_awb(awb) or {}).get('tracking_data')})
 
 @app.route('/api/addresses/<address_id>', methods=['DELETE'])
 @login_required
@@ -2443,6 +3020,8 @@ def request_return(order_id):
         # Security: Order MUST be delivered to Request Return
         if order.get('status') != 'delivered':
             return jsonify({'error': 'Return can only be requested for Delivered items.'}), 400
+        if not return_window_open(order):
+            return jsonify({'error': f"The {BUSINESS['return_days']}-day return window for this order has closed."}), 400
             
         if order.get('user_id') != current_user.id:
             return jsonify({'error': 'Unauthorized'}), 403
@@ -2513,7 +3092,7 @@ def approve_return(order_id):
             "pickup_pincode": addr.get('zip', ''),
             "pickup_email": order.get('user_id'), # We don't have email in address always, user ID fallback or fetch user
             "pickup_phone": "9876543210", # Placeholder if encrypted, ideally decrypt phone
-            "shipping_customer_name": "SIXN Warehouse", # Return TO
+            "shipping_customer_name": "NTS Warehouse", # Return TO
             "shipping_last_name": "",
             "shipping_address": "Main Warehouse",
             "shipping_city": "New Delhi",
@@ -2637,6 +3216,8 @@ def signup():
     phone = data.get('phone')
     password = data.get('password')
 
+    if not PHONE_LOGIN_ENABLED:
+        return jsonify({'error': 'Phone sign-up is turned off. You can check out as a guest with your email.'}), 403
     if not all([first_name, phone, password]):
         return jsonify({'error': 'Missing required fields'}), 400
     
@@ -2676,7 +3257,8 @@ def signup():
             }
             write_json(OTPS_FILE, otps)
             
-            send_otp_sms(phone, otp)
+            if not send_otp_sms(phone, otp):
+                return jsonify({'error': 'SMS verification is not available right now.'}), 503
             session['pending_phone_hash'] = phone_hash
             
             return jsonify({'status': 'otp_sent', 'message': 'Verification code sent.'})
@@ -2716,7 +3298,8 @@ def signup():
     write_json(OTPS_FILE, otps)
     
     # print(f"\n[DEV] OTP for {phone}: {otp}\n")
-    send_otp_sms(phone, otp)
+    if not send_otp_sms(phone, otp):
+        return jsonify({'error': 'SMS verification is not available right now.'}), 503
     session['pre_auth_phone'] = phone
     session['auth_flow'] = 'signup'
     
@@ -2735,6 +3318,9 @@ def login():
     phone_hash = hash_data(phone)
     user = next((u for u in users if u.get('phone_hash') == phone_hash), None)
 
+    is_admin_account = bool(user) and (user.get('is_admin') or user.get('id') == app.config.get('ADMIN_USER_ID'))
+    if user and not PHONE_LOGIN_ENABLED and not is_admin_account:
+        user = None  # customer phone login is off; same message as a wrong password
     if user and bcrypt.check_password_hash(user['password'], password):
         # Rate Limit Check (Simple: 1 min cooldown logic could go here, but focusing on structure first)
         
@@ -2752,7 +3338,8 @@ def login():
         write_json(OTPS_FILE, otps)
         
         # print(f"\n[DEV] OTP for {phone}: {otp}\n")
-        send_otp_sms(phone, otp)
+        if not send_otp_sms(phone, otp):
+            return jsonify({'error': 'SMS verification is not available right now.'}), 503
         session['pre_auth_phone'] = phone
         session['auth_flow'] = 'login'
         return jsonify({'message': 'Credentials valid. OTP sent.', 'step': 'verify'})
@@ -2788,7 +3375,8 @@ def resend_otp():
     write_json(OTPS_FILE, otps)
     
     # print(f"\n[DEV] RESEND OTP for {phone}: {otp}\n")
-    send_otp_sms(phone, otp)
+    if not send_otp_sms(phone, otp):
+        return jsonify({'error': 'SMS verification is not available right now.'}), 503
     return jsonify({'message': 'OTP sent successfully.'})
 
 @app.route('/api/auth/forgot-password', methods=['POST'])
@@ -2821,7 +3409,8 @@ def forgot_password():
     write_json(OTPS_FILE, otps)
     
     # print(f"\n[DEV] FORGOT OTP for {phone}: {otp}\n")
-    send_otp_sms(phone, otp)
+    if not send_otp_sms(phone, otp):
+        return jsonify({'error': 'SMS verification is not available right now.'}), 503
     
     session['pre_auth_phone'] = phone
     session['auth_flow'] = 'reset'
@@ -3243,5 +3832,8 @@ def set_security_headers(response):
     # Note: unsafe-inline/eval required for some JS libs/razorpay unless strictly refactored.
     return response
 
+log_integration_status()
+
 if __name__ == '__main__':
-    app.run(debug=True)
+    # Dev server only. Never enable debug in production: the Werkzeug debugger allows remote code execution.
+    app.run(debug=os.environ.get('FLASK_DEBUG') == '1')
